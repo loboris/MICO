@@ -2,8 +2,8 @@
 #ifndef __USER_CONFIG_H__
 #define __USER_CONFIG_H__
 
-#define MCU_VERSION	"WiFiMCU 0.9.5b"
-#define BUILD_DATE	"build 20151001"
+#define MCU_VERSION	"WiFiMCU 0.9.6 lobo"
+#define BUILD_DATE	"build 20151103"
 
 #define USE_GPIO_MODULE
 #define USE_ADC_MODULE
@@ -33,7 +33,12 @@
   if( !platform_ ## mod ## _exists( id ) )\
     return luaL_error( L, #mod" %d does not exist", ( unsigned )id )
 
+//v0.9.6 
+//Solve system corrupt bug when reading file in callback function
+//Print version infomation when startup
+      
 //v0.9.5@2015-9-5
+//Release Integer and Float version
 //enable LTR function to save ram(48k free)
 //update logo
 //change exlibs, delete usb folder
