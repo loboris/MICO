@@ -1,0 +1,60 @@
+{
+	
+	"folders":
+	[
+		{
+			"path": "../../../../include"
+		},
+		{
+			"path": "../../../../Platform"
+		},
+		{
+			"path": "../../../../Support"
+		},
+		{
+			"path": "../../../../Board/EMW5088"
+		},
+		{
+			"path": "../../../../Demos/COM.MXCHIP.SPP"
+		},
+		{
+			"path": "../../../../External"
+		},
+		{
+			"path": "../../../../MICO"
+		}
+	],
+	"settings":
+	{
+		"sublimeclang_options":
+		[
+			"-Wno-typedef-redefinition",
+			"-Wno-unused-parameter",
+			"-Wno-empty-body",
+			"-Wno-attributes",
+			"-ferror-limit=0",
+			"-W",
+			"-c",
+			"-D__int64=long long",
+			"-D__pure=__attribute__((const))",
+			"-D__value_in_regs=__attribute__(())",
+			"-DDEBUG",
+			"-I/Users/william/Develop/MiCO/Demos/COM.MXCHIP.SPP/",
+			"-I/Users/william/Develop/MiCO/External/",
+			"-I/Users/william/Develop/MiCO/Platform/",
+			"-I/Users/william/Develop/MiCO/Platform/include/",
+			"-I/Users/William/Develop/MiCO/Platform/Cortex-M4/",
+			"-I/Users/william/Develop/MiCO/Platform/MCU/",
+			"-I/Users/william/Develop/MiCO/Platform/drivers/spi_flash/",
+			"-I/Users/william/Develop/MiCO/Platform/MCU/MX1101/",
+			"-I/Users/william/Develop/MiCO/Platform/MCU/MX1101/peripherals/",
+			"-I/Users/william/Develop/MiCO/Platform/MCU/MX1101/peripherals/Libraries/inc/",
+			"-I/Users/william/Develop/MiCO/Board/EMW5088/",
+			"-I/Users/william/Develop/MiCO/include/",
+			"-I/Users/william/Develop/MiCO/MICO/",
+			"-I/Users/william/Develop/MiCO/Support/",
+			"-I/Users/william/Develop/Clang_lib/Include/",
+			"-I/Users/william/Develop/Clang_lib/ARMCC/include/"
+		]
+	}
+}

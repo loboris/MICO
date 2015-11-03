@@ -1,0 +1,1080 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"uint",
+				"uint16_t	typedef"
+			],
+			[
+				"MICO_PA",
+				"MICO_PARTITION_APPLICATION	macro"
+			],
+			[
+				"mico_pa",
+				"mico_logic_partition_t	typedef"
+			],
+			[
+				"MICOF",
+				"MICO_FLASH_NONE	mico_flash_t"
+			],
+			[
+				"MICO_P",
+				"MICO_PARTITION_PARAMETER_1	mico_partition_t"
+			],
+			[
+				"p",
+				"partition_length	uint32_t"
+			],
+			[
+				"PAR_OPT_RE",
+				"PAR_OPT_READ_WRITE	macro"
+			],
+			[
+				"PAR",
+				"PAR_OPT_NOT_ACCESSABLE	macro"
+			],
+			[
+				"m",
+				"wifi_mode	char"
+			],
+			[
+				"MicoUA",
+				"MicoUartSend(mico_uart_t uart, const void *data, uint32_t size)	OSStatus"
+			],
+			[
+				"GPIOA",
+				"GPIOA0	macro"
+			],
+			[
+				"mico_g",
+				"mico_gpio_t	typedef"
+			],
+			[
+				"ch",
+				"chunkedDataBufferLen	unsigned int"
+			],
+			[
+				"req",
+				"require_action(X, LABEL, ACTION)	macro"
+			],
+			[
+				"c",
+				"onClearCallback	OSStatus (*)(struct _HTTPHeader_t *, void *)"
+			],
+			[
+				"kUn",
+				"kUnknownErr	macro"
+			],
+			[
+				"o",
+				"onReceivedDataCallback	bool (*)(struct _HTTPHeader_t *)"
+			],
+			[
+				"wla",
+				"wLanUnConfigured	Config_State_t"
+			],
+			[
+				"WL_",
+				"WL_GPIO1_PIN	macro"
+			],
+			[
+				"platform",
+				"platform_log(M, ...)	macro"
+			],
+			[
+				"mico",
+				"mico_flash_t	typedef"
+			],
+			[
+				"pi",
+				"pin_rx	const platform_pin_mapping_t *"
+			],
+			[
+				"MicoGpio",
+				"MicoGpioEnableIRQ(mico_gpio_t gpio, mico_gpio_irq_trigger_t trigger, mico_gpio_irq_handler_t handler, void *arg)	OSStatus"
+			],
+			[
+				"MicoGP",
+				"MicoGpioEnableIRQ(mico_gpio_t gpio, mico_gpio_irq_trigger_t trigger, mico_gpio_irq_handler_t handler, void *arg)	OSStatus"
+			],
+			[
+				"OUTPUT_OD",
+				"OUTPUT_OPEN_DRAIN_NO_PULL	mico_gpio_config_t"
+			],
+			[
+				"MICOSYS",
+				"MicoSystemStandBy()	void"
+			],
+			[
+				"MicoWd",
+				"MicoWdgInitialize(uint32_t timeout)	OSStatus"
+			],
+			[
+				"MicoR",
+				"MicoRtcSetTime(mico_rtc_time_t *time)	OSStatus"
+			],
+			[
+				"MICO_I",
+				"MICO_I2C_CP	macro"
+			],
+			[
+				"ke",
+				"keyLength	int"
+			],
+			[
+				"s",
+				"security	SECURITY_TYPE_E"
+			],
+			[
+				"MicoGpioO",
+				"MicoGpioOutputLow(mico_gpio_t gpio)	OSStatus"
+			],
+			[
+				"k",
+				"kBackoffErr	macro"
+			],
+			[
+				"mico_rtos_in",
+				"mico_rtos_init_semaphore(mico_semaphore_t *semaphore, int count)	OSStatus"
+			],
+			[
+				"tm",
+				"tm_wday	int"
+			],
+			[
+				"tm_m",
+				"tm_mon	int"
+			],
+			[
+				"tm_",
+				"tm_mday	int"
+			],
+			[
+				"mico_rtos_d",
+				"mico_rtos_delete_thread(mico_thread_t *thread)	OSStatus"
+			],
+			[
+				"MICORe",
+				"MICORemoveNotification(mico_notify_types_t notify_type, void *functionAddress)	OSStatus"
+			],
+			[
+				"I",
+				"INADDR_ANY	macro"
+			],
+			[
+				"mico_th",
+				"mico_thread_sleep	macro"
+			],
+			[
+				"MICOWlan",
+				"MICOWlanEnablePowerSave	macro"
+			],
+			[
+				"MICOWlanS",
+				"MICOWlanStopEasyLink	macro"
+			],
+			[
+				"MICOW",
+				"MICOWlanGetIPStatus	macro"
+			],
+			[
+				"MICOWl",
+				"MICOWlanGetIPStatus	macro"
+			],
+			[
+				"MICOWlanGe",
+				"MICOWlanGetIPStatus	macro"
+			],
+			[
+				"MICOWlanStart",
+				"MICOWlanStartAdv	macro"
+			],
+			[
+				"MICO",
+				"MICO_NO_WAIT	macro"
+			],
+			[
+				"micoGet",
+				"micoGetMemoryInfo	macro"
+			],
+			[
+				"DEF",
+				"DEFAULT_REMOTE_UDP_PORT	macro"
+			],
+			[
+				"send",
+				"sendto(int sockfd, const void *buf, unsigned int len, int flags, const struct sockaddr_t *dest_addr, socklen_t addrlen)	int"
+			],
+			[
+				"DHCP",
+				"DHCP_Disable	DHCPOperationMode"
+			],
+			[
+				"DHC",
+				"DHCP_Client	DHCPOperationMode"
+			],
+			[
+				"b",
+				"BundleSeedID	char [32]"
+			],
+			[
+				"ma",
+				"manufacturer	char [32]"
+			],
+			[
+				"n",
+				"name	char [32]"
+			],
+			[
+				"uin",
+				"uint8_t	typedef"
+			],
+			[
+				"Platform",
+				"PlatformWDGReload()	void"
+			],
+			[
+				"RE",
+				"REMOTE_CONNECT	enum <anonymous>"
+			],
+			[
+				"_us",
+				"_uart_send_mutex	mico_mutex_t"
+			],
+			[
+				"requi",
+				"require(X, LABEL)	macro"
+			],
+			[
+				"_uart",
+				"_uart_send_mutex	mico_mutex_t"
+			],
+			[
+				"mico_rtos_init_s",
+				"mico_rtos_init_semaphore(mico_semaphore_t *semaphore, int count)	MxchipStatus"
+			],
+			[
+				"mico_rtosge",
+				"mico_rtos_get_semaphore(mico_semaphore_t *semaphore, unsigned int timeout_ms)	MxchipStatus"
+			],
+			[
+				"MICO_",
+				"MICO_NEVER_TIMEOUT	macro"
+			],
+			[
+				"eState_",
+				"eState_Wlan_Powerdown	SYS_State_t"
+			],
+			[
+				"plat",
+				"PlatformUartIn"
+			],
+			[
+				"memc",
+				"memcmp(const void *, const void *, size_t)	int"
+			],
+			[
+				"re",
+				"require_noerr(ERR, LABEL)	macro"
+			],
+			[
+				"mico_rtos",
+				"mico_rtos_init_mutex(mico_mutex_t *mutex)	MxchipStatus"
+			],
+			[
+				"mico_t",
+				"mico_mutex_t	typedef"
+			],
+			[
+				"mico_rt",
+				"mico_rtos_set_semaphore(mico_semaphore_t *semaphore)	MxchipStatus"
+			],
+			[
+				"DE",
+				"DEAFULT_REMOTE_SERVER	macro"
+			],
+			[
+				"fl",
+				"flashContentInRam	flash_content_t"
+			],
+			[
+				"kNo",
+				"kNoErr	macro"
+			],
+			[
+				"lo",
+				"localTcpClient_fd	int *"
+			],
+			[
+				"PlatformFlash",
+				"PlatformFlashWrite(volatile uint32_t *FlashAddress, uint32_t *Data, uint32_t DataLength)	OSStatus"
+			],
+			[
+				"Platformf",
+				"PlatformFlashInitialize()	OSStatus"
+			],
+			[
+				"kc",
+				"kChecksumErr	macro"
+			],
+			[
+				"kun",
+				"kUnknownErr	macro"
+			],
+			[
+				"kC",
+				"kChecksumErr	macro"
+			],
+			[
+				"f",
+				"flashContentInRam	flash_content_t"
+			],
+			[
+				"fla",
+				"flashContentInRam	flash_content_t"
+			],
+			[
+				"mico_l",
+				"mico_log(M, ...)	macro"
+			],
+			[
+				"Button_STANDBY_",
+				"Button_STANDBY_PIN	macro"
+			],
+			[
+				"GPIO_Read",
+				"GPIO_ReadInputDataBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)	uint8_t"
+			],
+			[
+				"easylink",
+				"easylinkClient_fd	int"
+			],
+			[
+				"mico_rtos_set",
+				"mico_rtos_set_semaphore(mico_semaphore_t *semaphore)	MxchipStatus"
+			],
+			[
+				"es",
+				"eState_Software_Reset	SYS_State_t"
+			],
+			[
+				"mico_rtos_init_",
+				"mico_rtos_init_semaphore(mico_semaphore_t *semaphore, int count)	MxchipStatus"
+			],
+			[
+				"mico_s",
+				"mico_semaphore_t	typedef"
+			],
+			[
+				"e",
+				"easyLinkSkip	bool"
+			],
+			[
+				"require_noerr",
+				"require_noerr_action(ERR, LABEL, ACTION)	macro"
+			],
+			[
+				"DH",
+				"DHCP_Client	DHCPOperationMode"
+			],
+			[
+				"kn",
+				"kNoErr	macro"
+			],
+			[
+				"requ",
+				"require(X, LABEL)	macro"
+			],
+			[
+				"l",
+				"localIp	char [16]"
+			],
+			[
+				"ip",
+				"local_ip_addr	char [16]"
+			],
+			[
+				"int",
+				"int32_t	typedef"
+			],
+			[
+				"d",
+				"dhcpEnable	bool"
+			],
+			[
+				"inet",
+				"inet_ntoa(char *s, unsigned int x)	char *"
+			],
+			[
+				"a",
+				"allConfigured	config_type"
+			],
+			[
+				"Clos",
+				"CloseEasylink2()	int"
+			],
+			[
+				"mico_notify_WIFI_S",
+				"mico_notify_WIFI_STATUS_CHANGED	mico_notify_types_t"
+			],
+			[
+				"us",
+				"user_key	char [64]"
+			],
+			[
+				"u",
+				"user_key	char [64]"
+			],
+			[
+				"key",
+				"key_len	int"
+			],
+			[
+				"MX",
+				"MXCHIP_SUCCESS	MxchipStatus"
+			],
+			[
+				"require_",
+				"require_action(X, LABEL, ACTION)	macro"
+			],
+			[
+				"strn",
+				"strncpy(char *restrict, const char *restrict, size_t)	char *"
+			],
+			[
+				"__str",
+				"__strdup_trans_dot(char *src)	char *"
+			],
+			[
+				"temp",
+				"temp2	WiFi_Status_Notify *"
+			],
+			[
+				"kOper",
+				"kNotPreparedErr	macro"
+			],
+			[
+				"mico_rtos_i",
+				"mico_rtos_init_mutex(mico_mutex_t *mutex)	MxchipStatus"
+			],
+			[
+				"kU",
+				"kUnknownErr	macro"
+			],
+			[
+				"in",
+				"inContext"
+			],
+			[
+				"mico_rtos_ge",
+				"mico_rtos_get_semaphore(mico_semaphore_t *semaphore, unsigned int timeout_ms)	MxchipStatus"
+			],
+			[
+				"t",
+				"txt_att	char *"
+			],
+			[
+				"MF",
+				"MFi_SERVICE_MFi	macro"
+			],
+			[
+				"mico_rtos_de",
+				"mico_rtos_delete_thread(mico_thread_t *thread)	MxchipStatus"
+			],
+			[
+				"mico_re",
+				"mico_rtos_init_mutex(mico_mutex_t *mutex)	MxchipStatus"
+			],
+			[
+				"E",
+				"ENABLE	FunctionalState"
+			],
+			[
+				"ea",
+				"eaBundleSeedID	char *"
+			],
+			[
+				"support",
+				"supports5GHzWiFi	bool"
+			],
+			[
+				"supportsAirp",
+				"supportsAirPrint	bool"
+			],
+			[
+				"w",
+				"supportsWakeOnWireless	bool"
+			],
+			[
+				"wi",
+				"wifi_key	char [32]"
+			],
+			[
+				"WAC_N",
+				"WAC_NetConfig	network_InitTypeDef_st *"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/platform_init.c",
+			"settings":
+			{
+				"buffer_size": 9672,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/Users/William/Develop/MiCO/Platform/MCU/MX1101/platform_init.c",
+			"settings":
+			{
+				"buffer_size": 11076,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/Users/William/Develop/MiCO/Platform/MCU/STM32F4xx/platform_init.c",
+			"settings":
+			{
+				"buffer_size": 9908,
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 287.0,
+		"selected_items":
+		[
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			],
+			[
+				"",
+				"Package Control: Install Package"
+			],
+			[
+				"git",
+				"Package Control: Install Package"
+			],
+			[
+				"v",
+				"View: Toggle Side Bar"
+			],
+			[
+				"Cscope:Look up symbol",
+				"Cscope: Look up symbol"
+			],
+			[
+				":",
+				"View: Toggle Tabs"
+			],
+			[
+				":q",
+				"Set Syntax: SQL"
+			],
+			[
+				"Package Control: install		",
+				"Package Control: Install Package"
+			],
+			[
+				"Snippet: ",
+				"Snippet: Lorem ipsum"
+			]
+		],
+		"width": 449.0
+	},
+	"console":
+	{
+		"height": 125.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/william/Develop/Clang_lib/Include/core_cm3.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F4xx/peripherals/platform_flash.c",
+		"/Users/William/Develop/MiCO/MICO/Library/MICOConfig.c",
+		"/Users/William/Develop/MiCO/Platform/Cortex-M4/CMSIS/core_cm4.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F4xx/platform_init.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/MX1101/platform_init.c",
+		"/Users/William/Develop/MiCO/Platform/Cortex-M3/CMSIS/core_cm3.h",
+		"/Users/William/Develop/MiCO/Projects/MX1101/COM.MXCHIP.SPP/sublime/COM.MXCHIP.SPP.sublime-project",
+		"/Users/William/Develop/MiCO/Board/EMW5088/platform.c",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-3088/platform.c",
+		"/Users/William/Develop/MiCO/Board/EMW5088/platform.h",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-3088/platform.h",
+		"/Users/William/Develop/MiCO/include/MicoDrivers/MicoDriverFlash.h",
+		"/Users/William/Develop/MiCO/MICO/MICOForceOTA.c",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-3162/platform.c",
+		"/Users/William/Develop/MiCO/Support/CheckSumUtils.h",
+		"/Users/William/Develop/MiCO/Support/HTTPUtils.c",
+		"/Users/William/Develop/MiCO/Bootloader/ymodem.c",
+		"/Users/William/Develop/MiCO/Support/CheckSumUtils.c",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-3165/platform.c",
+		"/Users/William/Develop/MiCO/Support/AESUtils.h",
+		"/Users/William/Develop/MiCO/Bootloader/Update_for_OTA.c",
+		"/Users/William/Develop/MiCO/Demos/COM.ALINK.HA/thread_ota.c",
+		"/Users/William/Develop/MiCO/MICO/MICOConfigServer.c",
+		"/Users/william/Develop/MiCO/Support/HTTPUtils.h",
+		"/Users/william/Develop/MiCO/include/MicoDrivers/MICODriverFlash.h",
+		"/Users/William/Develop/MiCO/MICO/MICOEntrance.c",
+		"/Users/William/Develop/MiCO/Bootloader/BootloaderEntrance.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/mico_platform_common.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/platform_init.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_flash.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/MX1101/peripherals/platform_flash.c",
+		"/Users/William/Develop/MiCO/Platform/Drivers/spi_flash/spi_flash_internal.h",
+		"/Users/William/Develop/MiCO/Platform/Drivers/spi_flash/spi_flash.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/Libraries/STM32F2xx_StdPeriph_Driver/inc/stm32f2xx_flash.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/platform_flash.c",
+		"/Users/William/Develop/MiCO/MICO/tftp/tftp.h",
+		"/Users/william/Develop/MiCO/Board/MiCOKit-F205/platform.h",
+		"/Users/William/Develop/MiCO/bootloader/BootloaderEntrance.c",
+		"/Users/William/Develop/MiCO/bootloader/menu.c",
+		"/Users/william/Develop/MiCO/include/MicoPlatform.h",
+		"/Users/william/Develop/MiCO/include/Debug.h",
+		"/Users/William/Develop/MiCO/Bootloader/bootloader.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/MX1101/peripherals/platform_mcu_peripheral.h",
+		"/Users/William/Develop/MiCO/Platform/include/platform_peripheral.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/wlan_platform_common.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/MX1101/wlan_bus_driver/read_wifi_firmware.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F4xx/peripherals/platform_mcu_peripheral.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_mcu_peripheral.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/platform_mcu_peripheral.h",
+		"/Users/William/Develop/MiCO/MICO/Library/RF driver/wlan_firmware.c",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-3088/platform_config.h",
+		"/Users/William/Develop/MiCO/MICO/MICOParaStorage.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/MX1101/peripherals/platform_mcu_peripheral.h",
+		"/Users/william/Develop/MiCO/Platform/include/PlatformLogging.h",
+		"/Users/William/Develop/MiCO/Platform/Cortex-M3/platform_assert.h",
+		"/Users/william/Develop/MiCO/Platform/include/platform_peripheral.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/MX1101/peripherals/Libraries/inc/spi_flash.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/platform_init.c",
+		"/Users/William/Develop/MiCO/Platform/Cortex-M4/platform_assert.h",
+		"/Users/william/Develop/Clang_lib/ARMCC/include/stdlib.h",
+		"/Users/william/Develop/MiCO/Platform/drivers/spi_flash/spi_flash.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/MX1101/peripherals/platform_uart.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/MX1101/peripherals/Libraries/inc/wakeup.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/MX1101/peripherals/Libraries/inc/clk.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/MX1101/peripherals/Libraries/inc/type.h",
+		"/Users/William/Develop/MiCO/Demos/COM.MXCHIP.BASIC/power_measure/main.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/MX1101/peripherals/platform_mcu_powersave.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/MicoDriverUart.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/MicoDriverFlash.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/BoardConfig/LPCXpresso54102/platform.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/AP80xx_Drv/inc/sdio.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/MICO/MICONotificationCenter.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/AP80xx_Drv/inc/irqs.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Demos/COM.MXCHIP.SPP/RemoteTcpClient.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Demos/COM.MXCHIP.SPP/LocalTcpServer.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Library/support/SocketUtils.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Demos/COM.MXCHIP.SPP/MICOAppEntrance.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Projects/AP80xx/COM.MXCHIP.SPP/sublime/COM.MXCHIP.SPP.sublime-project",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/EMW5000/platform.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/MICO/MICOEntrance.c",
+		"/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/include/MicoDrivers/MICODriverGpio.h",
+		"/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Demos/COM.MXCHIP.SPP/MICOAppDefine.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/MicoDriverGpio.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2xx/EMW1062_Driver/SPI/wwd_bus.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2xx/EMW1062_Driver/SDIO/wlan_bus.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2xx/STM32F2xx_Drv/STM32F2xx_HAL_Driver/Src/stm32f2xx_hal.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/MicoDriverCommon_debug.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2xx/STM32F2xx_Drv/STM32F2xx_StdPeriph_Driver/inc/misc.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2xx/STM32F2xx_Drv/STM32F2xx_StdPeriph_Driver/src/misc.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/CMSIS/core_cm3.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2xx/STM32F2xx_Drv/STM32F2xx_StdPeriph_Driver/inc/stm32f2xx.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Demos/COM.MXCHIP.SPP/MICOAppDefine.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/EMW1062_Driver/SDIO/wlan_bus.c",
+		"/Users/William/Desktop/MV_OS_libsrc_20150217/library/os/mach/mv-O18/mach.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/MicoDriverCommon.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/AP80xx_Drv/inc/AP80xx.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2xx/EMW1062_Driver/wlan_platform.c",
+		"/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/AP80xx_Drv/inc/sdio.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/include/MicoWlan.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/EMW1062_Driver/wlan_platform.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/MICO/MICOCli.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/include/MICORTOS.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2xx/stm32f2xx_platform.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2xx/gpio_irq.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/EMW5000/platform_common_config.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/AP80xx_EVB/platform.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/AP80xx_EVB/platform_common_config.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/EMW5000/platform.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/AP80xx_EVB/platform.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/AP80xx_Drv/inc/gpio.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/MICO/EasyLink/EasyLink.c",
+		"/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Platform/AP80xx_EVB/platform_common_config.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/AP80xx_Drv/inc/uart.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/EMW3162/platform_common_config.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/EMW3162/platform.c",
+		"/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/EMW1062_Driver/wwd_bus_protocol_interface.h",
+		"/Users/William/Library/Application Support/Sublime Text 2/Packages/Compare Side-By-Side/SBSCompare.sublime-settings",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/IDEs/Keil/patch_keil_temp.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2xx/MicoDriverUart.c",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/EMW3165/platform_common_config.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2xx/MicoDriverFlash.c",
+		"/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Library/support/Common.h",
+		"/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Library/support/RingBufferUtils.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/MicoDriverMapping.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2xx/stm32f2xx_platform.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/MICO_EVB_1/platform_common_config.h",
+		"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/include/MicoDrivers/MicoDriverUart.h"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+			"",
+			"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/",
+			"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/AP80xx_EVB",
+			"",
+			"/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/AP80xx/AP80xx__Drv",
+			"<open folders>",
+			"",
+			"<open folders>",
+			"/Users/william/Develop/E-DICE",
+			"",
+			"<open folders>",
+			"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/",
+			"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/复件 Data_Send&Recv",
+			"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/STM32F4xx_StdPeriph_Examples"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"__NVIC_PRIO_BITS",
+			"CFG_PRIO_BITS",
+			"mico_ota_finished",
+			"MICO_PARTITION_BOOTLOADER",
+			"userContext",
+			"crc16_context",
+			"HTTPHeaderCreateWithCallback",
+			"uint8_t *",
+			"AES_ECB_Update",
+			"data",
+			"CRC16_F",
+			"Cal_CRC16",
+			"CalChecksum",
+			"checksum",
+			"crc",
+			"MICORestoreMFG",
+			"partition",
+			"_GetSector",
+			"FLASH_Sector_10",
+			"generic_sflash_command",
+			"tsend",
+			"SerialUpload",
+			"mico_partitions",
+			"FLASH_TYPE_SPI",
+			"configContext_t",
+			"_configContext_t",
+			"configContext_t",
+			"flashStorageAddress",
+			"MICO_FLASH_FOR_UPDATE",
+			"mico_partitions",
+			"platform_get_wifi_image",
+			"wifi_firmware_image",
+			"platform_flash_init",
+			"platform_flash_enable_security",
+			"MICO_ASSERTION_FAIL_ACTION",
+			"Heap_Mem",
+			"BME280_SPI_bus_write",
+			"MicoFlashInitialize",
+			"mico_logic_partition_t",
+			"FLASH_NONE_ERR",
+			"FlashUnlock",
+			"internalFlashWrite",
+			"platform_mcu_enter_standby",
+			"RtcGetRefCnt",
+			"host_platform_power_wifi",
+			"SysSetWakeUpSrcInPowerDown",
+			"SysGetWakeUpFlag",
+			"FSHC_CLK_EN",
+			"BOOTLOADER",
+			"NO_MICO_RTOS",
+			"USE_MICO_SPI_FLASH",
+			"MicoSysLed",
+			"NVIC_PRIORITYGROUP_4",
+			"NVIC_SetPriorityGrouping",
+			"NVIC_SetPriorityGrouping\nNVIC_SetPriorityGrouping",
+			"NVIC_SetPriorityGrouping",
+			"ISPR",
+			"ISPR\nISPR",
+			"ISPR",
+			"NVIC_Init",
+			"NVIC_PriorityGroup_4",
+			"NVIC",
+			"NVIC_Type",
+			"NVIC_BASE",
+			"NVIC",
+			"IRQn_PRIO_TYPE",
+			"__NVIC_PRIO_BITS",
+			"IRQn_PRIO_TYPE",
+			"AIRCR_VECTKEY_MASK",
+			"NVIC_PriorityGroup_4",
+			"NVIC_PriorityGroupConfig",
+			"get_version",
+			"micoNotify_WifiStatusHandler",
+			"bus_direction_mapping",
+			"sdio_prepare_data_transfer",
+			"BUS_READ",
+			"restart",
+			"SDIO_ReadWaitMode_CLK",
+			"wiced_bus_flow_controlled",
+			"sdio_oob_irq_handler",
+			"sdio_prepare_data_transfer",
+			"sdio_disable_bus_irq",
+			"sdio_enable_bus_irq",
+			"SDIO_1_BIT",
+			"host_platform_enable_high_speed_sdio",
+			"sdio_oob_irq_handler",
+			"ClkPorRcToDpll",
+			"sdio_transfer_mode_t",
+			"SDIO_BLOCK_MODE",
+			"host_platform_sdio_transfer",
+			"MicoUartGetLengthInBuffer",
+			"platform_uart_receive_bytes",
+			"platform_uart_receive_bytes\nplatform_uart_receive_bytes",
+			"platform_uart_receive_bytes",
+			"tx_complete",
+			"    BuartInit(config->baud_rate, config->data_width + 5, config->parity, config->stop_bits + 1);\nDATA_WIDTH_9BIT",
+			"DATA_WIDTH_9BIT",
+			"uart_mapping",
+			"host_enable_oob_interrupt",
+			"WL_GPIO1",
+			"WL_GPIO0",
+			"response_expected",
+			"host_platform_sdio_transfer",
+			"user_data",
+			"memcpy",
+			"user_data",
+			"dma_data_source",
+			"dma_data_source\ndma_data_source",
+			"dma_data_source",
+			"sdio_prepare_data_transfer",
+			"sdio_oob_irq_handler",
+			"host_platform_get_oob_interrupt_pin",
+			"sdio_oob_irq_handler",
+			"host_enable_oob_interrupt",
+			"IRQ",
+			"host_platform_sdio_transfer",
+			"sdio_transfer_finished_semaphore",
+			"user_data",
+			"host_platform_sdio_transfer",
+			"    \n",
+			");\n",
+			"SdioSendCommand",
+			"check_string",
+			"sdio_prepare_data_transfer",
+			"host_platform_sdio_transfer",
+			"SDIO_ENUMERATION_TIMEOUT_MS",
+			"GpioSdIoConfig",
+			"SD_PORT_NUM"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"MICO",
+			"MICO_DISABLE_STDIO"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/platform_init.c",
+					"settings":
+					{
+						"buffer_size": 9672,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4370,
+								4374
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1732.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/Users/William/Develop/MiCO/Platform/MCU/MX1101/platform_init.c",
+					"settings":
+					{
+						"buffer_size": 11076,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4435,
+								4435
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1689.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/Users/William/Develop/MiCO/Platform/MCU/STM32F4xx/platform_init.c",
+					"settings":
+					{
+						"buffer_size": 9908,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5049,
+								5049
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2190.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 34.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.clang":
+	{
+		"height": 125.0
+	},
+	"output.exec":
+	{
+		"height": 100.0
+	},
+	"output.git":
+	{
+		"height": 100.0
+	},
+	"replace":
+	{
+		"height": 64.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"micode",
+				"MICO/MICODefine.h"
+			],
+			[
+				"",
+				"STM32F2xx_StdPeriph_Driver/src/stm32f2xx_i2c.c"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 326.0,
+	"status_bar_visible": true
+}

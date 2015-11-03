@@ -1,0 +1,41 @@
+.header {
+	/*文字阴影*/
+	text-shadow: none;
+	/*background-color: #2addb0;*/
+	/*background: -webkit-linear-gradient(#2addb0,#24c5c1);*/
+	/*background: url(../image/biaoti.png) 50% 0 no-repeat;*/
+	/*position: fixed;*/
+	/*z-index: 10;*/
+	width: 100%;
+	text-align: center;
+	padding: 15px 0;
+	background-color: #3db481;
+}
+.left {
+	/*padding-left: 18px;*/
+	position: absolute;
+	top: 17px;
+	height: 20px;
+	left: 0px;
+	display: none;
+}
+.center {
+	/*padding-left: 18px;*/
+	/*top: 15px;*/
+	/*height: 20px;*/
+	/*font-size: 18px;*/
+	font: 22px Arial;
+	color: #FEFEFE;
+}
+.left img {
+	height: 20px;
+}
+.right {
+	position: absolute;
+	top: 17px;
+	height: 20px;
+	right: 0px;
+}
+.right img {
+	height: 20px;
+}

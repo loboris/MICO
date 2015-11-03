@@ -1,0 +1,1 @@
+由于KEIL版编译的结果size比IAR的大，导致debug版的bin超出了flash的size，所以只能用release版编译，因此串口没有log输出。

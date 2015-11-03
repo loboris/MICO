@@ -1,0 +1,54 @@
+{
+	
+	"folders":
+	[
+		{
+			"path": "../../../include"
+		},
+		{
+			"path": "../../../Platform"
+		},
+		{
+			"path": "../../../Library"
+		},
+		{
+			"path": "../../../Bootloader"
+		},
+		{
+			"path": "../../../External"
+		},
+		{
+			"path": "../../../MICO"
+		}
+	],
+	"settings":
+	{
+		"sublimeclang_options":
+		[
+			"-Wno-typedef-redefinition",
+			"-Wno-unused-parameter",
+			"-Wno-empty-body",
+			"-Wno-attributes",
+			"-ferror-limit=0",
+			"-W",
+			"-c",
+			"-D__int64=long long",
+			"-D__pure=__attribute__((const))",
+			"-D__value_in_regs=__attribute__(())",
+			"-DUSE_STDPERIPH_DRIVER",
+			"-DDebug",
+			"-I/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Bootloader/",
+			"-I/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Platform/MICO_EVB_1/",
+			"-I/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Platform/include/",
+			"-I/Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/",
+			"-I/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2XX/",
+			"-I/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Drivers/spi_flash/",
+			"-I/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2XX/STM32F2XX_Drv/",
+			"-I/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Platform/Common/Cortex-M3/STM32F2XX/STM32F2XX_Drv/STM32F2xx_StdPeriph_Driver/inc/",
+			"-I/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/include/",
+			"-I/Users/william/Develop/mxchipWNet Pro Demo@EMW316x/Library/support/",
+			"-I/Users/william/Develop/Clang_lib/Include/",
+			"-I/Users/william/Develop/Clang_lib/ARMCC/include/"
+		]
+	}
+}

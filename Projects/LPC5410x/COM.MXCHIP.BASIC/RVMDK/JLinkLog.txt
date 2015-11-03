@@ -1,0 +1,33 @@
+
+T0528 000:514 SEGGER J-Link V4.94j Log File (0002ms, 0268ms total)
+T0528 000:514 DLL Compiled: Dec 10 2014 13:52:41 (0002ms, 0268ms total)
+T0528 000:514 Logging started @ 2015-06-18 14:54 (0002ms, 0268ms total)
+T0528 000:516 JLINK_SetWarnOutHandler(...) (0000ms, 0268ms total)
+T0528 000:516 JLINK_OpenEx(...)
+Firmware: J-Link ARM V7 compiled Jun 20 2012 19:45:53
+Hardware: V7.00
+S/N: 19087980
+Feature(s): RDI, FlashDL, FlashBP, JFlash, GDBFull  returns O.K. (0264ms, 0532ms total)
+T0528 000:780 JLINK_SetErrorOutHandler(...) (0000ms, 0532ms total)
+T0528 000:780 JLINK_ExecCommand("ProjectFile = "E:\MICO\MICO_GIT_MICOKIT\mico\Projects\STM32F4xx\COM.MXCHIP.BASIC\RVMDK\JLinkSettings.ini"", ...)Device "UNSPECIFIED" selected.  returns 0x00 (0002ms, 0534ms total)
+T0528 000:782 JLINK_ExecCommand("Device = STM32F411CEUx", ...)Device "UNSPECIFIED" selected.  returns 0x00 (0001ms, 0535ms total)
+T0528 000:783 JLINK_ExecCommand("DisableConnectionTimeout", ...)  returns 0x01 (0000ms, 0535ms total)
+T0528 000:783 JLINK_GetHardwareVersion()  returns 0x11170 (0000ms, 0535ms total)
+T0528 000:783 JLINK_GetDLLVersion()  returns 49410 (0000ms, 0535ms total)
+T0528 000:783 JLINK_GetFirmwareString(...) (0000ms, 0535ms total)
+T0528 000:783 JLINK_GetDLLVersion()  returns 49410 (0000ms, 0535ms total)
+T0528 000:783 JLINK_GetCompileDateTime() (0000ms, 0535ms total)
+T0528 000:783 JLINK_GetFirmwareString(...) (0000ms, 0535ms total)
+T0528 000:783 JLINK_GetHardwareVersion()  returns 0x11170 (0000ms, 0535ms total)
+T0528 000:783 JLINK_TIF_Select(JLINKARM_TIF_SWD)  returns 0x00 (0002ms, 0537ms total)
+T0528 000:785 JLINK_SetMaxSpeed() >0x108 TIF>Found SWD-DP with ID 0x2BA01477 >0x0D TIF> >0x21 TIF> >0x0D TIF> >0x28 TIF> >0x0D TIF> >0x28 TIF> >0x0D TIF> >0x21 TIF> >0x0D TIF> >0x28 TIF> >0x0D TIF> >0x21 TIF> >0x0D TIF> >0x21 TIF> >0x0D TIF> >0x21 TIF> >0x0D TIF> >0x28 TIF> >0x0D TIF> >0x21 TIF> >0x0D TIF> >0x28 TIF> >0x0D TIF> >0x28 TIF> >0x0D TIF> >0x21 TIF> >0x0D TIF> >0x28 TIF> >0x0D TIF> >0x28 TIF> >0x0D TIF> >0x28 TIF> >0x0D TIF> >0x21 TIF> >0x0D TIF> >0x21 TIF> >0x0D TIF> >0x28 TIF> >0x0D TIF>
+ >0x21 TIF> >0x0D TIF> >0x21 TIF>Found Cortex-M4 r0p1, Little endian. >0x0D TIF> >0x28 TIF> -- CPU_WriteMem(4 bytes @ 0xE0002000) -- CPU_ReadMem(4 bytes @ 0xE000EDF0) -- CPU_ReadMem(4 bytes @ 0xE0002000)FPUnit: 6 code (BP) slots and 2 literal slots -- CPU_ReadMem(4 bytes @ 0xE000EDFC) -- CPU_ReadMem(4 bytes @ 0xE0001000) -- CPU_WriteMem(4 bytes @ 0xE0001000) -- CPU_ReadMem(4 bytes @ 0xE000ED88) -- CPU_WriteMem(4 bytes @ 0xE000ED88) -- CPU_ReadMem(4 bytes @ 0xE000ED88)
+ -- CPU_WriteMem(4 bytes @ 0xE000ED88) -- CPU_ReadMem(4 bytes @ 0xE00FF010)TPIU fitted. -- CPU_ReadMem(4 bytes @ 0xE00FF014)ETM fitted. -- CPU_ReadMem(4 bytes @ 0xE00FF018) (0054ms, 0591ms total)
+T0528 000:839 JLINK_GetSpeed()  returns 0x7D0 (0000ms, 0591ms total)
+T0528 000:840 JLINK_SetResetType(JLINKARM_RESET_TYPE_NORMAL)  returns JLINKARM_RESET_TYPE_NORMAL (0000ms, 0591ms total)
+T0528 000:840 JLINK_Reset() -- CPU_WriteMem(4 bytes @ 0xE0002000) -- CPU_ReadMem(4 bytes @ 0xE000EDFC) -- CPU_ReadMem(4 bytes @ 0xE0001000) (0018ms, 0609ms total)
+T0528 000:858 JLINK_GetId() >0x0D TIF> >0x21 TIF>  returns 0x2BA01477 (0002ms, 0611ms total)
+T0528 000:866 JLINK_GetFirmwareString(...) (0000ms, 0611ms total)
+T0528 009:153 JLINK_Close() -- CPU_WriteMem(4 bytes @ 0xE0001004) >0x42 TIF> >0x28 TIF> >0x0D TIF> >0x21 TIF> (0003ms, 0614ms total)
+T0528 009:153  (0003ms, 0614ms total)
+T0528 009:153 Closed (0003ms, 0614ms total)

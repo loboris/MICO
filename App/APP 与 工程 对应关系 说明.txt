@@ -1,0 +1,18 @@
+App中包含3个文件夹，分别是WeiXin，APICloud，MiCO总动员。其中：
+（1）WeiXin文件夹中是：开发 微信控制MiCOKit 所需的Demo示例 页面html文件。
+（2）APICloud文件夹是：APICloud端开发 APP 控制MiCOKit 所需的代码文件。
+（3）MiCO总动员是： MiCOKit出厂体验版的二维码及安装说明。
+其中（1）（2）的详细使用方法，在MiCOKit开发实例教程中提供。
+
+
+与工程的对应关系，如下：
+
+^ 序号    ^  文件夹              ^  内容                                              ^ 对应工程名                                   ^   功能说明   ^                                                             
+|    1         |   WeiXin               |WeiXinCloud_RGB_LED                 |Cloud_RGB_LED                              |微信控制RGB灯                                           |    
+|               |    :::                        |WeiXinCloud_Read_Humiture         |Cloud_Read_Humiture                       |微信读取温湿度传感器数值                      |
+|               |    :::                        |WeiXinCloud_RGB_Humiture         |Cloud_RGB_Humiture                        |微信控制RGB和读取温湿度传感器数值  |
+|    2        |    APICloud           |APICloud_RGB_LED                      |Cloud_RGB_LED                              | APP控制RGB灯                                            |
+|              |     :::                       |APICloud_RGB_LED                      |Cloud_Read_Humiture                       | APP读取温湿度传感器数值                        |
+|              |     :::                       |APICloud_RGB_LED                      |Cloud_RGB_Humiture                       | APP控制RGB和读取温湿度传感器数值     |
+|              |     :::                       |APICloud_moduleV1.0.1                 |3个Demo公用                                  | APP控制中所需的3个模块                          |
+|    3        |    MiCO总动员    |MiCOKit_Enjoy                               | MiCO总动员                                   | “MiCO总动员”功能体验                              |

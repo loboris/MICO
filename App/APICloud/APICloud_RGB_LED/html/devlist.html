@@ -1,0 +1,269 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<!--<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>-->
+		<meta name="format-detection" content="telephone=no"/>
+		<title>设备列表</title>
+		<link rel="stylesheet" type="text/css" href="../css/swiper.min.css">
+		<link rel="stylesheet" type="text/css" href="../css/header.css">
+		<link rel="stylesheet" type="text/css" href="../css/devices.css">
+		<script type="text/javascript" src="../script/jquery-2.1.3.js"></script>
+		<script type="text/javascript" src="../script/av-0.5.0.min.js"></script>
+		<script type="text/javascript" src="../script/config.js"></script>
+		<script type="text/javascript" src="../script/api.js"></script>
+		<script type="text/javascript" src="../script/mico-user-0.1.js"></script>
+		<script type="text/javascript" src="../script/mico-bind-0.1.js"></script>
+		<script type="text/javascript" src="../script/mico_app_easylink.js"></script>
+		<script type="text/javascript" src="../script/mico_app_user.js"></script>
+		<script type="text/javascript" src="../script/msgdic-zh.js"></script>
+		<script type="text/javascript" src="../script/swiper.min.js"></script>
+		<style>
+			.devlistrefresh {
+				text-align: center;
+			}
+			#devlistlodingid a {
+				color: #3DB481;
+				text-decoration: none;
+				font-size: 15px;
+			}
+			#devlistshowid {
+				display: none;
+			}
+			.left {
+				display: block;
+			}
+		</style>
+	</head>
+	<body>
+		<!--顶部标题-->
+		<header id="header" class="header">
+			<a class="left" onclick="logout()"><img src="../image/02-exit.png" alt=""/></a>
+			<span class="center" id="titleName">设备列表</span>
+			<a class="right" id="toeasylink"><img src="../image/smallicon-4.png" alt=""/></a>
+		</header>
+		<div class="devcontent" id="devlistid">
+			<div class="devlistrefresh">
+				<p id="devlistlodingid">
+					<a href="#" data-transition="none">加载设备...</a>
+				</p>
+				<p id="devlistshowid">
+					<img src="../image/device_refresh.png" alt=""/>
+				</p>
+			</div>
+		</div>
+	</body>
+	<script type="text/javascript">
+		var swiper;
+		// 登录的初始化动作
+		apiready = function() {
+			api.removeLaunchView();
+			// 	获取userTocken
+			userToken = getUserInfo().get("userToken");
+			// 	获取设备列表
+			getdevlist();
+			// 	如果是Android的手机监听返回键
+			if (api.systemType != 'ios') {
+				api.addEventListener({
+					name : "keyback"
+				}, function(ret, err) {
+					closeApp();
+				});
+			}
+			if(api.systemVersion > "4.4"){
+				$(".header").css("padding-top", "30px");
+				$(".left").css("top", "32px");
+				$(".right").css("top", "32px");
+			}
+		};
+		
+		// 退出登录
+		function logout() {
+			api.confirm({
+				title : "请三思而行~",
+				buttons : ["去意已决", "容朕想想"]
+			}, function(ret, err) {
+				if (ret.buttonIndex == 1) {
+					// 退出登录
+					AV.User.logOut();
+					window.location.href = "./login.html";
+				} else {
+					apiToast(GOOD_JOB, 2000);
+				}
+			});
+		}
+
+		// 跳转到EasyLink配网界面
+		$("#toeasylink").click(function() {
+			window.location.href = "./easylink.html";
+		});
+		
+		// 获取设备列表
+		var timetag = 0;
+		function getdevlist() {
+			setTimeout("timeout()", 4000);
+			// 	获取列表
+			$mico.getDevList(userToken, function(ret, err, devinfocb) {
+				if(ret.length>0){
+					timetag = 1;
+					var html = "";
+					// 解析返回的设备数组
+					$.each(ret, function(n, value) {
+						html += showDev(value.online, value.id, value.alias, value.bssid, value.ip);
+					});
+					// 将设备显示在页面
+					$("#devlistid").html(html);
+					// 初始化左滑菜单
+					initdevlist();
+					$("#devlistlodingid").css("display", "none");
+				}else if(0 == ret.length){
+					apiToast("未发现绑定设备", 2000);
+					timetag = 1;
+					// 添加演示设备
+					var html = showDev("0", "", "演示设备", "00016C06A629", "192.168.1.1");
+					// 将设备显示在页面
+					$("#devlistid").html(html);
+					// 初始化左滑菜单
+					initdevlist();
+					$("#devlistlodingid").css("display", "none");
+				}
+			});
+		}
+		
+		// 超时判断
+		function timeout(){
+			if(0 == timetag){
+				$("#devlistlodingid").css("display", "none");
+				$("#devlistshowid").css("display", "block");
+			}
+		}
+		
+		// 再次刷新的按钮
+		$("#devlistshowid").click(function(){
+			$("#devlistlodingid").css("display", "block");
+			$("#devlistshowid").css("display", "none");
+			getdevlist();
+		});
+
+		// 初始化列表的左滑菜单
+		function initdevlist() {
+			swiper = new Swiper('.swiper-container', {
+				slidesPerView : 'auto',
+				paginationClickable : true,
+				resistanceRatio : 0,
+				longSwipesRatio : 0.1
+			});
+		}
+
+		// 显示设备列表
+		function showDev(online,id, devname, devmac, devip) {
+			if ("" == devname) {
+				devname = "未命名";
+			}
+			var devid = id;
+			var imgpath = "../image/devimg.svg";
+			var namecls = "dev_name";
+			// 	如果设备不在线，修改其显示的图标和显示的文字样式
+			if(0 == online){
+				imgpath = "../image/devoffline.png";
+				devid = "0";
+				namecls = "dev_name_offline";
+			}
+			// 	每条设备信息的详细样式
+			var devinfo = '<div class="swiper-container">' 
+						+ '<div class="swiper-wrapper">' 
+						+ '	<div class="swiper-slide message" onclick="torgbctrl(\'' + devid + '\',\'' + devname + '\')">' 
+						+ '		<img src="'+imgpath+'">' 
+						+ '		<p>' 
+						+ '			<span class="'+namecls+'">' + devname + '</span>' 
+						+ '			<br>' 
+						+ '			产品ID: ' + id.substring(0, 7) 
+						+ '			<br>' 
+						+ '			MAC: ' + devmac 
+						+ '		</p>' 
+						+ '	</div>' 
+						+ '	<div class="swiper-slide edit" onclick="changeDevName(\'' + id + '\')"></div>' 
+						+ '	<div class="swiper-slide delete"  onclick="deleteDev(\'' + id + '\')"></div>' 
+						+ '</div>' 
+						+ '</div>';
+			return devinfo;
+		}
+		
+		// 解绑设备
+		function deleteDev(devid){
+			if("" == devid){
+				apiToast("这只是个演示设备", 2000);
+				return;
+			}
+			api.confirm({
+				title : R_U_SURE,
+				buttons : ["我就删", "容朕想想"]
+			}, function(ret, err) {
+				if (ret.buttonIndex == 1) {
+					// 解绑设备
+					$mico.deleteDev(APP_ID, userToken, devid, function(ret, err) {
+						if (ret) {
+							apiToast('好吧', 3000);
+							getdevlist();
+						} else {
+							alert(JSON.stringify(err));
+						}
+					});
+				} else {
+					apiToast(GOOD_JOB, 2000);
+				}
+			});
+		}
+		
+		// 修改设备名字
+		function changeDevName(devid){
+			if("" == devid){
+				apiToast("这只是个演示设备", 2000);
+				return;
+			}
+			api.prompt({
+				title : ENTER_DEV_NAME,
+				buttons : [OK_BTN, CANCEL_BTN]
+			}, function(ret, err) {
+				if (ret.buttonIndex == 1) {
+					var inputname = ret.text;
+					if (inputname) {
+						// 修改设备名字
+						$mico.editDevName(APP_ID, userToken, inputname, devid, function(ret, err) {
+							if (ret) {
+								apiToast('好名字', 3000);
+								getdevlist();
+							} else {
+								alert(JSON.stringify(err));
+							}
+						});
+					} else {
+						apiToast(R_U_SURE, 2000);
+					}
+				}
+			});
+		}
+
+		// 跳转到控制设备的页面，如果设备离线则不让跳转
+		function torgbctrl(id, name) {
+			if("0" == id){
+				apiToast("设备离线中", 2000);
+			}else{
+				api.openWin({
+					name : 'rgbctrl',
+					url : './rgbctrl.html',
+					slidBackEnabled : false,
+					reload : true,
+					bgColor : '#F0F0F0',
+					animation : {
+						type : 'none'
+					},
+					pageParam : {
+						"deviceid" : id,
+						"devicename" : name
+					}
+				});
+			}
+		}
+	</script>
+</html>

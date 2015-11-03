@@ -1,0 +1,101 @@
+==================================================================
+=                      MiCOKit SDK Change Log                    =
+==================================================================
+
+----------------------------------------------------------------
+[DATE   ] 2015.9.1
+
+[VERSION] SDK_MiCOKit_V2.3.0.2
+
+[NOTE   ]
+    
+[CHANGES]
+          1. Update MiCO;
+
+          2. Add Arrayent cloud support(Arrayent_Enjoy demo);
+
+          3. Remove unused Sitewhere_RGB_LED demo.
+
+----------------------------------------------------------------
+[DATE   ] 2015.8.17
+
+[VERSION] SDK_MiCOKit_V2.3.0.1
+
+[NOTE   ]
+          Update from SDK_MiCO_v2.3.0
+    
+[CHANGES]
+          1. MiCO sdk updated to v2.3.0;
+
+          2. More MCU support:
+               ATSAMG55
+               LPC5410x
+
+          3. Add SiteWhere demo projects.
+
+----------------------------------------------------------------
+[DATE   ] 2015.7.27
+
+[VERSION] SDK_MiCOKit_V2.2.0.4_Beta
+
+[NOTE   ]
+          MiCOKit-3165 support.
+    
+[CHANGES]
+          1.Add platform MiCOKit-3165 for all projects;
+
+          2.Demos for MiCOKit-3165:
+              bootloader
+              Cloud_RGB_LED         <===>  Wecaht APP
+              Cloud_Read_Humiture   <===>  Wecaht APP
+              Cloud_RGB_Humiture    <===>  Wecaht APP
+              MiCOKit_Enjoy         <===>  MiCO总动员APP
+
+----------------------------------------------------------------
+[DATE   ] 2015.7.25
+
+[VERSION] SDK_MiCOKit_V2.2.0.3_Beta
+
+[NOTE   ]
+          1.The sdk provide a bootloader project for MiCOKit-3288;
+
+          2.The sdk provide four demos for MiCOKit-3288;
+              Cloud_RGB_LED         <===>  Wecaht APP
+              Cloud_Read_Humiture   <===>  Wecaht APP
+              Cloud_RGB_Humiture    <===>  Wecaht APP
+              MiCOKit_Enjoy         <===>  MiCO总动员APP
+
+          3.All these projects can be built both with 
+            IAR && MDK IDE;
+
+          4.IDE version:
+              IAR: 7.30.4
+              MDK: 5.13.0.0
+
+          5.MiCOKit-3165 will coming soon...
+             
+[CHANGES]
+          1.Add project:
+              MiCOKit_Enjoy
+              bootloader project of STM32F4XE for MDK IDE.
+
+----------------------------------------------------------------
+[DATE   ] 2015.7.23
+
+[VERSION] SDK_MiCOKit_V2.2.0.2_Beta
+
+[CHANGES]
+          1.Add Demos:
+              Cloud_Read_Humiture
+              Cloud_RGB_Humiture
+
+----------------------------------------------------------------
+[DATE   ] 2015.7.21
+
+[VERSION] SDK_MiCOKit_V2.2.0.1_Beta
+
+[CHANGES]
+          1.Add Demo:
+              Cloud_RGB_LED
+
+===================================================================

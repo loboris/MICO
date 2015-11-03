@@ -1,0 +1,462 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"Log",
+				"Log_NeedUpdate	"
+			],
+			[
+				"re",
+				"return expression	"
+			],
+			[
+				"up",
+				"updateLog	UpdateLog *"
+			],
+			[
+				"ty",
+				"typedef type name	"
+			],
+			[
+				"inc",
+				"include \"header\"	"
+			],
+			[
+				"in",
+				"include \"header\"	"
+			],
+			[
+				"def",
+				"define macro	"
+			],
+			[
+				"DMA_IT_H",
+				"DMA_IT_HT	"
+			],
+			[
+				"USART_Get",
+				"USART_GetFlagStatus(USART_TypeDef *USARTx, uint16_t USART_FLAG)	FlagStatus"
+			],
+			[
+				"uint32",
+				"uint32_t	"
+			],
+			[
+				"uint",
+				"uint16_t	"
+			],
+			[
+				"STM_EVA",
+				"STM_EVAL_LEDInit(Led_TypeDef Led)	void"
+			],
+			[
+				"LCD_Dis",
+				"LCD_DisplayStringLine(uint16_t Line, uint8_t *ptr)	void"
+			],
+			[
+				"ST",
+				"STM_EVAL_LEDOn(Led_TypeDef Led)	void"
+			],
+			[
+				"STM",
+				"STM_EVAL_LEDOn(Led_TypeDef Led)	void"
+			],
+			[
+				"sen",
+				"send_data(void *data, uint32_t datalen)	uint32_t"
+			],
+			[
+				"swit",
+				"switch(expression){\n}	"
+			],
+			[
+				"for",
+				"for	For Loop"
+			],
+			[
+				"au",
+				"autoSendLastMsTick"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "/Users/william/Develop/E-DICE/simplemac/demos/sample/solar-system.c",
+			"settings":
+			{
+				"buffer_size": 49272,
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 267.0,
+		"selected_items":
+		[
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			],
+			[
+				"v",
+				"View: Toggle Side Bar"
+			],
+			[
+				"",
+				"View: Toggle Minimap"
+			],
+			[
+				"Cscope:Look up symbol",
+				"Cscope: Look up symbol"
+			],
+			[
+				":",
+				"View: Toggle Tabs"
+			],
+			[
+				":q",
+				"Set Syntax: SQL"
+			],
+			[
+				"Package Control: install		",
+				"Package Control: Install Package"
+			],
+			[
+				"Snippet: ",
+				"Snippet: Lorem ipsum"
+			]
+		],
+		"width": 494.0
+	},
+	"console":
+	{
+		"height": 125.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/william/Develop/E-DICE/simplemac/demos/sample/sublime/DICE.sublime-project",
+		"/Users/william/Develop/dice/v3.9.3/simplemac/demos/sample/transmit.h",
+		"/Users/william/Develop/dice/v3.9.3/simplemac/demos/sample/solar-system.c",
+		"/Users/William/Develop/LIS3DH_SimpleMAC_mems_v3.9/hal/micro/cortexm3/button.c",
+		"/Volumes/C/Program Files/IAR Systems/Embedded Workbench 5.4/arm/inc/yvals.h",
+		"/Users/William/Develop/LIS3DH_SimpleMAC_mems_v3.9/simplemac/demos/sample/I2C_Driver.h",
+		"/Users/William/Develop/LIS3DH_SimpleMAC_mems_v3.9/simplemac/demos/sample/lis3dh_driver.h",
+		"/Users/William/Develop/LIS3DH_SimpleMAC_mems_v3.9/simplemac/demos/sample/transmit.c",
+		"/Users/William/Develop/LIS3DH_SimpleMAC_mems_v3.9/simplemac/demos/sample/lis3dh_driver.c",
+		"/Users/William/Develop/LIS3DH_SimpleMAC_mems_v3.9/simplemac/demos/sample/solar-system.c",
+		"/Users/William/Develop/LIS3DH_SimpleMAC_mems_v3.9/hal/micro/cortexm3/compiler/iar.h",
+		"/Users/William/Develop/LIS3DH_SimpleMAC_mems_v3.9/simplemac/demos/sample/sublime/DICE.sublime-project",
+		"/Volumes/C/Program Files/IAR Systems/Embedded Workbench 5.4/arm/inc/intrinsics.h",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/MDK-ARM/startup_stm32f2xx.s",
+		"/Users/William/Develop/EMW3280BOOT/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F2xx/system_stm32f2xx.c",
+		"/Users/William/Develop/EMW3280BOOT/Libraries/STM32F2xx_StdPeriph_Driver/src/stm32f2xx_flash.c",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/inc/chip_id.h",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/src/chip_id.c",
+		"/Users/William/Develop/LIS3DH_SimpleMAC_mems_v3.9/simplemac/demos/sample/sublime/EMW3280_BOOT.sublime-project",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/src/main.c",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/src/update.c",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/src/Retarget.c",
+		"/Users/William/Develop/EMW3280BOOT/Libraries/STM32F2xx_StdPeriph_Driver/inc/stm32f2xx_flash.h",
+		"/usr/include/stdio.h",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/sublime/EMW3280_BOOT.sublime-project",
+		"/Volumes/C/Keil/ARM/RV31/INC/stdio.h",
+		"/Volumes/C/Keil/ARM/RV31/INC/stdlib.h",
+		"/Users/William/Develop/EMW3280BOOT/Libraries/STM32F2xx_StdPeriph_Driver/inc/stm32f2xx_rcc.h",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/src/flash_if.c",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/inc/menu.h",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/inc/common.h",
+		"/Users/William/Develop/EMW3280BOOT/Utilities/STM32_EVAL/STM3210C_EVAL/stm3210c_eval.h",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/src/update.h",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/MDK-ARM/STM322xG_EVAL.sct",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/inc/stm32f2xx_conf.h",
+		"/Users/William/Develop/EMW3280BOOT/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F2xx/stm32f2xx.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/src/main.c",
+		"/Users/William/Library/Application Support/Sublime Text 2/Packages/SublimeClang/sublimeclang.sublime-project",
+		"/Users/William/Develop/EMW3280BOOT/EMW_BOOT/src/common.c",
+		"/Users/William/Library/Application Support/Sublime Text 2/Packages/SublimeClang/SublimeClang.sublime-settings",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/src/update.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/src/update.c",
+		"/Users/William/Develop/LIS3DH_SimpleMAC_mems_v3.5_alter/simplemac/demos/sample/sublime/EDICE.sublime-project",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/Libraries/CMSIS/CM3/CoreSupport/core_cm3.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F2xx/system_stm32f2xx.c",
+		"/Users/William/Library/Application Support/Sublime Text 2/Packages/GoSublime/USAGE.md",
+		"/Users/William/Library/Application Support/Sublime Text 2/Packages/GoSublime/README.md",
+		"/Users/William/Library/Application Support/Sublime Text 2/Packages/Git/README.markdown",
+		"/Users/William/Library/Application Support/Sublime Text 2/Packages/Function Name Display/README.md",
+		"/Users/William/Library/Application Support/Sublime Text 2/Packages/akrabat-SublimeFunctionNameDisplay/README.md",
+		"/Users/William/Library/Application Support/Sublime Text 2/Packages/Function Name Display/Function Name Display.sublime-settings",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/Libraries/STM32F2xx_StdPeriph_Driver/inc/stm32f2xx_flash.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/inc/flash_if.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/src/menu.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/src/ymodem.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/inc/menu.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/inc/stm32f2xx_conf.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/inc/common.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/Libraries/CMSIS/CM3/CoreSupport/core_cm3.h",
+		"/Volumes/C/Keil/ARM/RV31/INC/stdint.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/Libraries/STM32F2xx_StdPeriph_Driver/src/stm32f2xx_can.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/inc/chip_id.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/src/chip_id.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/src/flash_if.c",
+		"/Volumes/C/Keil/ARM/RV31/INC/string.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/inc/ymodem.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/Libraries/STM32F2xx_StdPeriph_Driver/src/stm32f2xx_flash.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/src/Getline.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/src/Serial.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/Libraries/STM32F2xx_StdPeriph_Driver/src/stm32f2xx_pwr.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/Libraries/STM32F2xx_StdPeriph_Driver/inc/stm32f2xx_gpio.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/Utilities/STM32_EVAL/stm322xg_eval/stm322xg_eval.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/Utilities/STM32_EVAL/STM322xG_EVAL/stm322xg_eval.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/src/common.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/src/stm32f2xx_it.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/Libraries/STM32F2xx_StdPeriph_Driver/inc/stm32f2xx_syscfg.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/Libraries/STM32F2xx_StdPeriph_Driver/inc/stm32f2xx_rcc.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/Libraries/STM32F2xx_StdPeriph_Driver/src/stm32f2xx_syscfg.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/sublime/EMW3280_BOOT.sublime-project",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/MDK-ARM/Project.uvproj",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/STM32F2xx_IAP/src/common.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/STM32F2xx_IAP/src/flash_if.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/STM32F2xx_IAP/inc/flash_if.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/STM32F2xx_IAP/src/main.c",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/STM32F2xx_IAP/inc/menu.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOT/STM32F2xx_IAP/inc/common.h",
+		"/Volumes/C/develop/EMWBOOT/EMW3280_BOOT/EMW_BOOTXX/Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/stm32f10x.h",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Utilities/EMSP/EMSP_typedef.h",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/2.Data_Send&Recv/wifi_test.h",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Utilities/EMSP/EMSP.c",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/2.Data_Send&Recv/main.h",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Utilities/EMSP/EMSP_configuration.h",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Utilities/STM32_EVAL/STM3240_41_G_EVAL/stm324xg_eval_lcd.c",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/2.Data_Send&Recv/wifi_test.c",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Utilities/EMSP/EMW_hal.c",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/2.Data_Send&Recv/main.c",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Libraries/STM32F4xx_StdPeriph_Driver/inc/stm32f4xx_dma.h",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Utilities/EMSP/EMW_hal.h",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/2.Data_Send&Recv/sublime/untitled.sublime-project",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Utilities/EMSP/EMSP.h",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Utilities/EMSP/EMSP_API.c",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Utilities/EMSP/EMSP_API.h",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Utilities/STM32_EVAL/STM3240_41_G_EVAL/stm324xg_eval.h",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/2.Data_Send&Recv/stm32f4xx_it.c",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Utilities/EMSP/compiler/keil-cm4.h",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_can.c",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Libraries/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h",
+		"/Users/William/Library/Application Support/Sublime Text 2/Packages/User/Preferences.sublime-settings",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Utilities/STM32_EVAL/STM3240_41_G_EVAL/stm324xg_eval.c",
+		"/Users/William/Library/Application Support/Sublime Text 2/Packages/Default/Preferences.sublime-settings",
+		"/Users/William/Library/Application Support/Sublime Text 2/Packages/Package Control/Package Control.sublime-settings",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Libraries/STM32F4xx_StdPeriph_Driver/inc/stm32f4xx_dbgmcu.h",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/2.Data_Send&Recv/Data_Send&Recv.sublime-project",
+		"/Users/William/Library/Application Support/Sublime Text 2/Packages/User/Plain text.sublime-settings",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/Data_Send&Recv/wifi_test.c",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/Data_Send&Recv/main.c",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/Data_Send&Recv/main.h",
+		"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Libraries/CMSIS/index.htm"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+			"<open folders>",
+			"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/",
+			"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/复件 Data_Send&Recv",
+			"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/STM32F4xx_StdPeriph_Examples"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"TURN_RADIO_ON",
+			"testProcess",
+			"atomic",
+			"ST_RadioReceiveIsrCallback",
+			"routine",
+			"qsToNextEvent",
+			"framePendingPktEnrout",
+			"framePendingPktEnroute",
+			"old_mems_state",
+			"mems_int_come",
+			"framePendingPktEnroute",
+			")\n",
+			"ackIsReceived",
+			"timer_is_on",
+			"timer_is_done",
+			"mems_int_come",
+			"joinCmd",
+			"PLATFORM_HEADER",
+			"FLASH_ProgramWord",
+			"UNIQUE_CODE_ADDR",
+			"realloc",
+			"malloc",
+			"vsnprintf",
+			"NVIC_SystemReset",
+			"reset",
+			"rese",
+			"reset",
+			"vect reset",
+			"reset",
+			"UPDATE_FLASH_SIZE",
+			"flashdestination",
+			"USER_FLASH_END_ADDRESS",
+			"reset",
+			"FLASH_OB_GetWRP",
+			"APPLICATION_ADDRESS",
+			"ramsource",
+			"Ymodem_Receive",
+			"int2",
+			"page",
+			"FlashProtection",
+			"STM_EVAL_PBInit",
+			"JumpAddress",
+			"DMA_RX_TIMER_CTR",
+			"EMW_Init",
+			";",
+			" */",
+			"\",           ",
+			"uint32_t",
+			"showCountRate",
+			"EMW_InitTypeDef",
+			"Sublime"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "/Users/william/Develop/E-DICE/simplemac/demos/sample/solar-system.c",
+					"settings":
+					{
+						"buffer_size": 49272,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								41573,
+								41533
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 20557.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 34.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.clang":
+	{
+		"height": 25.0
+	},
+	"output.exec":
+	{
+		"height": 100.0
+	},
+	"replace":
+	{
+		"height": 0.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"",
+				"Libraries/CMSIS/CM3/CoreSupport/core_cm3.c"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 227.0,
+	"status_bar_visible": true
+}

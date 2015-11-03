@@ -1,0 +1,141 @@
+* {
+	margin: 0px;
+	padding: 0px;
+}
+.content {
+	margin: 21px 30px 0px 30px;
+	padding: 21px 19px;
+	/*background-color: #18161d;*/
+	border-radius: 5px;
+}
+.serachText {
+	color: #3DB481;
+	margin: 0 auto;
+}
+.serachText span {
+	color: #3DB481;
+	font-family: arial;
+	font-size: 13px;
+}
+.serachText img {
+	height: 8px;
+	width: 8px;
+}
+#wifi_ssid::-webkit-input-placeholder {
+	color: #FFFFFF;
+}
+#wifi_psw::-webkit-input-placeholder {
+	color: #3DB481;
+}
+#wifi_ssid:-moz-placeholder {
+	color: #FFFFFF;
+}
+#wifi_psw:-moz-placeholder {
+	color: #3DB481;
+}
+.p img {
+	width: 75px;
+	margin-top: 17.5px;
+}
+.p {
+	text-align: center;
+}
+.serachText2 {
+	color: #24c5c1;
+	/*margin: 0 auto;*/
+	text-align: center;
+}
+.serachText2 span {
+	color: #24c5c1;
+	font-family: arial;
+	font-size: 13px;
+}
+.serachText2 img {
+	height: 8px;
+	width: 8px;
+}
+.phoned {
+	background: #3DB481;
+	border-radius: 20px;
+	margin-top: 16px;
+	padding-left: 20px;
+}
+.phoned input {
+	background: #3DB481;
+	color: #FFFFFF;
+	height: 35px;
+	line-height: 35px;
+	border: solid #3DB481 1px;
+	-webkit-appearance: none; 
+}
+.pswed {
+	background: #FFFFFF;
+	border-radius: 20px;
+	margin-top: 16px;
+	padding-left: 20px;
+}
+.pswed input {
+	background: #ffffff;
+	color: #3DB481;
+	height: 35px;
+	line-height: 35px;
+	border: solid #ffffff 1px;
+	-webkit-appearance: none; 
+}
+.subbutton {
+	height: 35px;
+	line-height: 35px;
+	margin-top: 30px;
+	text-align: center;
+	background: #3DB481;
+	border-radius: 20px;
+}
+.subbutton span a {
+	height: 35px;
+	line-height: 35px;
+	color: #FFFFFF;
+	text-decoration: none;
+	font-size: large;
+	/*font-weight: 700;*/
+}
+.mdnsdevlistcls ul li {
+	/*color: #FFFFFF;*/
+	height: 85px;
+}
+.mdnsdjhsb {
+	/*padding: 10px 0px 10px 49px;*/
+	padding-left: 50px;
+	margin: 15px auto;
+	display: none;
+}
+.mdnsdjhsb span {
+	color: #3DB481;
+	font-family: arial;
+	font-size: 13px;
+}
+
+.mdnsdevcls {
+	/*会错位*/
+	/*height: 85px;title*/
+	background-color: #ffffff;
+	margin-bottom: 2px;
+}
+.mdnsdevcls a {
+	width: 100%;
+}
+.mdnsdevcls a img {
+	height: 53px;
+	float: left;
+	margin: 16px 16px 16px 16px;
+}
+.mdnsdevcls a div {
+	display: inline;
+	margin: 25px 16px 16px 16px;
+}
+.mdnsdevcls a div p{
+	margin-top: 8px;
+}
+.mdnsdjhsbname {
+	color: #3DB481;
+	font-size: 15px;
+}

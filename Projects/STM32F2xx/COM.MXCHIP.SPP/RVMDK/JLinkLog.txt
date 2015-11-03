@@ -1,0 +1,33 @@
+
+T2088 000:225 SEGGER J-Link V4.94j Log File (0000ms, 0014ms total)
+T2088 000:225 DLL Compiled: Dec 10 2014 13:52:41 (0000ms, 0014ms total)
+T2088 000:225 Logging started @ 2015-08-05 14:31 (0000ms, 0014ms total)
+T2088 000:225 JLINK_SetWarnOutHandler(...) (0000ms, 0014ms total)
+T2088 000:225 JLINK_OpenEx(...)
+Firmware: J-Link ARM V8 compiled Jan 31 2018 18:34:52
+Hardware: V8.00
+S/N: 20080643
+Feature(s): RDI,FlashDL,FlashBP,JFlash,GDBFull  returns O.K. (0014ms, 0028ms total)
+T2088 000:239 JLINK_SetErrorOutHandler(...) (0001ms, 0029ms total)
+T2088 000:240 JLINK_ExecCommand("ProjectFile = "F:\MiCOKit\mico\Projects\STM32F2xx\COM.MXCHIP.SPP\RVMDK\JLinkSettings.ini"", ...)Device "UNSPECIFIED" selected.  returns 0x00 (0001ms, 0030ms total)
+T2088 000:241 JLINK_ExecCommand("Device = STM32F205RGTx", ...)Device "UNSPECIFIED" selected.  returns 0x00 (0001ms, 0031ms total)
+T2088 000:242 JLINK_ExecCommand("DisableConnectionTimeout", ...)  returns 0x01 (0000ms, 0031ms total)
+T2088 000:242 JLINK_GetHardwareVersion()  returns 0x13880 (0000ms, 0031ms total)
+T2088 000:242 JLINK_GetDLLVersion()  returns 49410 (0000ms, 0031ms total)
+T2088 000:242 JLINK_GetFirmwareString(...) (0000ms, 0031ms total)
+T2088 000:242 JLINK_GetDLLVersion()  returns 49410 (0000ms, 0031ms total)
+T2088 000:242 JLINK_GetCompileDateTime() (0000ms, 0031ms total)
+T2088 000:242 JLINK_GetFirmwareString(...) (0000ms, 0031ms total)
+T2088 000:242 JLINK_GetHardwareVersion()  returns 0x13880 (0000ms, 0031ms total)
+T2088 000:242 JLINK_TIF_Select(JLINKARM_TIF_SWD)  returns 0x00 (3800ms, 3831ms total)
+T2088 004:043 JLINK_SetMaxSpeed() >0x2F8 JTAG>TotalIRLen = 9, IRPrint = 0x0011 >0x30 JTAG> >0x210 JTAG> >0x70 JTAG> >0x40 JTAG> >0x40 JTAG> >0x40 JTAG> >0x50 JTAG> >0x80 JTAG> >0x40 JTAG> >0x30 JTAG> >0x40 JTAG> >0x40 JTAG> >0x30 JTAG> >0x40 JTAG> >0x50 JTAG>Found Cortex-M3 r2p0, Little endian. -- CPU_WriteMem(4 bytes @ 0xE0002000) -- CPU_ReadMem(4 bytes @ 0xE000EDF0) -- CPU_ReadMem(4 bytes @ 0xE0002000)FPUnit: 6 code (BP) slots and 2 literal slots -- CPU_ReadMem(4 bytes @ 0xE000EDFC)
+ -- CPU_ReadMem(4 bytes @ 0xE0001000) -- CPU_WriteMem(4 bytes @ 0xE0001000) -- CPU_ReadMem(4 bytes @ 0xE000ED88) -- CPU_WriteMem(4 bytes @ 0xE000ED88) -- CPU_ReadMem(4 bytes @ 0xE000ED88) -- CPU_WriteMem(4 bytes @ 0xE000ED88) -- CPU_ReadMem(4 bytes @ 0xE00FF010)TPIU fitted. -- CPU_ReadMem(4 bytes @ 0xE00FF014)ETM fitted. -- CPU_ReadMem(4 bytes @ 0xE00FF018) >0x38 JTAG> (0030ms, 3861ms total)
+T2088 004:074 JLINK_GetSpeed()  returns 0xFA0 (0000ms, 3861ms total)
+T2088 004:074 JLINK_SetResetType(JLINKARM_RESET_TYPE_NORMAL)  returns JLINKARM_RESET_TYPE_NORMAL (0000ms, 3861ms total)
+T2088 004:074 JLINK_Reset() -- CPU is running -- CPU_WriteMem(4 bytes @ 0xE000EDF0) -- CPU is running -- CPU_WriteMem(4 bytes @ 0xE000EDFC) -- CPU is running -- CPU_WriteMem(4 bytes @ 0xE000ED0C) -- CPU is running -- CPU_ReadMem(4 bytes @ 0xE000EDF0) -- CPU is running -- CPU_ReadMem(4 bytes @ 0xE000EDF0) -- CPU is running -- CPU_WriteMem(4 bytes @ 0xE000EDF0) -- CPU is running -- CPU_WriteMem(4 bytes @ 0xE000EDFC) -- CPU is running -- CPU_ReadMem(4 bytes @ 0xE000EDF0) >0x80 JTAG> >0x40 JTAG> >0x30 JTAG>
+ >0x40 JTAG> >0x50 JTAG> >0x40 JTAG> -- CPU_WriteMem(4 bytes @ 0xE000EDFC) -- CPU_WriteMem(4 bytes @ 0xE0001028) -- CPU_WriteMem(4 bytes @ 0xE0001038) -- CPU_WriteMem(4 bytes @ 0xE0001048) -- CPU_WriteMem(4 bytes @ 0xE0001058) -- CPU_WriteMem(4 bytes @ 0xE0002000) -- CPU_ReadMem(4 bytes @ 0xE000EDFC) -- CPU_ReadMem(4 bytes @ 0xE0001000) (0033ms, 3894ms total)
+T2088 004:107 JLINK_GetId() >0x38 JTAG>  returns 0x4BA00477 (0001ms, 3895ms total)
+T2088 004:110 JLINK_GetFirmwareString(...) (0000ms, 3895ms total)
+T2088 017:998 JLINK_Close() -- CPU_WriteMem(4 bytes @ 0xE0001004) >0x08 JTAG> (0003ms, 3898ms total)
+T2088 017:998  (0003ms, 3898ms total)
+T2088 017:998 Closed (0003ms, 3898ms total)

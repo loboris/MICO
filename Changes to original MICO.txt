@@ -1,0 +1,1 @@
+include\MicoDrivers\MicoDriverFlash.h		added MICO_PARTITION_LUA

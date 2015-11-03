@@ -1,0 +1,133 @@
+/*login页面*/
+.ui-body-f {
+	background-color: #106EB7;
+}
+.ui-focus {
+	-moz-box-shadow: none !important;
+	-webkit-box-shadow: none !important;
+	box-shadow: none !important;
+}
+/*背景*/
+.login {
+	background: url(../image/login.png) 50% 0 no-repeat;
+	background-size: cover;
+}
+.register {
+	background: url(../image/login.png) 50% 0 no-repeat;
+	background-size: cover;
+}
+.nextstep {
+	background: url(../image/login.png) 50% 0 no-repeat;
+	background-size: cover;
+}
+.content {
+	margin: 0px 30px;
+	padding: 0px 19px;
+	/*background-color: #FFFFFF;*/
+	border-radius: 5px;
+}
+.pi {
+	width: 28px;
+}
+.styled {
+	border-bottom: 1px solid #3DB481;
+	width: 85%;
+	float: right;
+	color: #3DB481;
+	font-size: 16px;
+	margin-top: 5px;
+	/*padding-left: 5px;*/
+	border-radius: 1px;
+}
+.phone {
+	margin-bottom: 30px;
+	height: 35px;
+	line-height: 35px;
+}
+.subbutton {
+	height: 35px;
+	line-height: 35px;
+	margin: 30px 19px 0px 19px;
+	text-align: center;
+	/*background-image: url(../image/login-330-60.png);*/
+	/*background: -webkit-linear-gradient(left, #3ee8db,#b89bd7);*/
+	background-color: #3DB481;
+	/*border-radius: 3px;*/
+	border-radius: 20px;
+}
+.subbutton span a {
+	height: 35px;
+	line-height: 35px;
+	font-size: 16px;
+	color: #FFFFFF;
+}
+.forgotpsw {
+	margin-top: 10px;
+	text-align: center;
+	/*text-decoration: underline;*/
+}
+.forgotpsw a {
+	/*color: #b5b4b5;*/
+	color: #5b666c;
+	font-size: 12px;
+	margin-top: 3px;
+	text-decoration: underline;
+}
+.toregistcls {
+	margin: 0px 70px;
+}
+.toregistbtn {
+	height: 35px;
+	line-height: 35px;
+	border: 1px solid #3DB481;
+	text-align: center;
+	border-radius: 20px;
+}
+.toregistbtn span a {
+	color: #3DB481;
+	font-size: 15px;
+}
+/*注册页面*/
+.registcls {
+	margin: 39px 30px 0px 30px;
+	padding: 0px 19px;
+}
+.registbtn {
+	height: 35px;
+	line-height: 35px;
+	border: 1px solid #FEFEFE;
+	text-align: center;
+	border-radius: 20px;
+}
+.registbtn span a {
+	color: #FEFEFE;
+}
+.rightbox {
+	width: 85%;
+	float: right;
+}
+.sendverify {
+	height: 30px;
+	line-height: 30px;
+	border-radius: 20px;
+	text-align: center;
+	/*background: -webkit-linear-gradient(left, #3ee8db,#b89bd7);*/
+	background-color: #3DB481;
+	background-repeat: repeat;
+	width: 30%;
+}
+.sendverifyhs {
+	height: 30px;
+	line-height: 30px;
+	border-radius: 20px;
+	text-align: center;
+	background: #CCCCCC;
+	width: 30%;
+}
+.styl {
+	border-bottom: 1px solid #3DB481;
+	width: 65%;
+	color: #3DB481;
+	font-size: 16px;
+	border-radius: 1px;
+}

@@ -1,0 +1,60 @@
+{
+	"folders":
+	[
+		{
+			"path": "../../../../hal"
+		},
+		{
+			"path": "../../../../shared"
+		},
+		{
+			"path": "../../../../simplemac/include"
+		},
+		{
+			"path": "../../../../simplemac/demos/sample"
+		}
+	],
+	"settings":
+	{
+		"sublimeclang_options":
+		[
+			"-Wno-typedef-redefinition",
+			"-Wno-attributes",
+			"-ferror-limit=0",
+			"-DUSE_STM322xG_EVAL",
+			"-W",
+			"-c",
+			"-DBOARD_MB851",
+			"-DCORTEXM3",
+			"-DCORTEXM3_STM32W108",
+			"-DPHY_STM32W108XX",
+			"-DDISABLE_WATCHDOG",
+			"-DPLANET_ROLE",
+			"D__ICCARM__",
+			"D__VER__ = 5100005",
+
+			"D__intrinsic=",
+
+			"-DUSE_STDPERIPH_DRIVER",
+			"-DLCD_Debug",
+			"-DPLATFORM_HEADER=<hal/micro/cortexm3/compiler/iar.h>",
+
+			"-I/Volumes/C/Program Files/IAR Systems/Embedded Workbench 5.4/arm/inc/",
+			"-I/Users/William/Develop/E-Dice/shared/",
+			"-I/Users/William/Develop/E-Dice/simplemac/",
+			"-I/Users/William/Develop/E-Dice/simplemac/include/",
+			"-I/Users/William/Develop/E-Dice/",
+			"-I/Users/William/Develop/E-Dice/hal/",
+			"-I/Users/William/Develop/E-Dice/hal/**"
+		]
+	}
+}
+
+
+// PLATFORM_HEADER="hal/micro/cortexm3/compiler/iar.h"
+// BOARD_HEADER="hal/micro/cortexm3/stm32w108/board.h"
+
+// __SOURCEFILE__="$FILE_FNAME$"
+
+
+//C:\Program Files\IAR Systems\Embedded Workbench 5.4\arm\inc

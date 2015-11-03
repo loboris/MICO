@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<workspace>
+  <project>
+    <path>$WS_DIR$\bootloader\EWARM\Bootloader.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\COM.MXCHIP.BASIC\EWARM\COM.MXCHIP.BASIC.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\COM.MXCHIP.SPP\EWARM\COM.MXCHIP.SPP.ewp</path>
+  </project>
+
+    <project>
+    <path>$WS_DIR$\Cloud_RGB_LED\EWARM\Cloud_RGB_LED.ewp</path>
+  </project>
+    <project>
+    <path>$WS_DIR$\Cloud_Read_Humiture\EWARM\Cloud_Read_Humiture.ewp</path>
+  </project>
+    <project>
+    <path>$WS_DIR$\Cloud_RGB_Humiture\EWARM\Cloud_RGB_Humiture.ewp</path>
+  </project>
+    <project>
+    <path>$WS_DIR$\MiCOKit_Enjoy\EWARM\MiCOKit_Enjoy.ewp</path>
+  </project>
+
+  <batchBuild>
+    <batchDefinition>
+      <name>all</name>
+      <member>
+        <project>Bootloader</project>
+        <configuration>MiCOKit-3161</configuration>
+      </member>
+      <member>
+        <project>Bootloader</project>
+        <configuration>MiCOKit-3162</configuration>
+      </member>
+      <member>
+        <project>Bootloader</project>
+        <configuration>MICOKit-F205</configuration>
+      </member>
+      <member>
+        <project>COM.Apple.HomeKit</project>
+        <configuration>MiCOKit-3162</configuration>
+      </member>
+      <member>
+        <project>COM.Apple.HomeKit</project>
+        <configuration>MiCOKit-F205</configuration>
+      </member>
+      <member>
+        <project>COM.MXCHIP.EASYCLOUD</project>
+        <configuration>MiCOKit-3162</configuration>
+      </member>
+      <member>
+        <project>COM.MXCHIP.EASYCLOUD</project>
+        <configuration>MiCOKit-F205</configuration>
+      </member>
+      <member>
+        <project>COM.MXCHIP.SPP</project>
+        <configuration>MiCOKit-3161</configuration>
+      </member>
+      <member>
+        <project>COM.MXCHIP.SPP</project>
+        <configuration>MiCOKit-3162</configuration>
+      </member>
+      <member>
+        <project>COM.MXCHIP.SPP</project>
+        <configuration>MiCOKit-F205</configuration>
+      </member>
+      <member>
+        <project>COM.WECHAT.SPP</project>
+        <configuration>MiCOKit-3162</configuration>
+      </member>
+      <member>
+        <project>COM.WECHAT.SPP</project>
+        <configuration>MiCOKit-F205</configuration>
+      </member>
+    </batchDefinition>
+  </batchBuild>
+</workspace>
+
+

@@ -1,0 +1,1870 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"ID_F",
+				"ID_FLEXCOM3	macro"
+			],
+			[
+				"kUn",
+				"kUnsupportedErr	macro"
+			],
+			[
+				"reque",
+				"require_quiet(X, LABEL)	macro"
+			],
+			[
+				"f",
+				"flexcom_base	Flexcom *"
+			],
+			[
+				"i",
+				"i2c_id	uint8_t"
+			],
+			[
+				"require_no",
+				"require_noerr_quiet(ERR, LABEL)	macro"
+			],
+			[
+				"mico_rtos_ini",
+				"mico_rtos_init_semaphore(mico_semaphore_t *semaphore, int count)	OSStatus"
+			],
+			[
+				"US_IMR_RX",
+				"US_IMR_RXBUFF	macro"
+			],
+			[
+				"uint",
+				"uint8_t	typedef"
+			],
+			[
+				"cs",
+				"cs_pin	const platform_gpio_t *"
+			],
+			[
+				"pin",
+				"pin_mosi	const platform_gpio_t *"
+			],
+			[
+				"int",
+				"int8_t	typedef"
+			],
+			[
+				"req",
+				"require_action(X, LABEL, ACTION)	macro"
+			],
+			[
+				"r",
+				"rx_ring_buffer	ring_buffer_t *"
+			],
+			[
+				"MicoGpioO",
+				"MicoGpioOutputTrigger(mico_gpio_t gpio)	OSStatus"
+			],
+			[
+				"MICO_GP",
+				"MICO_GPIO_0	mico_gpio_t"
+			],
+			[
+				"MicoGpio",
+				"MicoGpioInitialize(mico_gpio_t gpio, mico_gpio_config_t configuration)	OSStatus"
+			],
+			[
+				"mico",
+				"mico_gpio_t	typedef"
+			],
+			[
+				"p",
+				"peripheral_clock_reg	uint32_t"
+			],
+			[
+				"re",
+				"require_noerr(ERR, LABEL)	macro"
+			],
+			[
+				"require_ac",
+				"require_action_quiet(X, LABEL, ACTION)	macro"
+			],
+			[
+				"SPIX",
+				"SPIX_AF	macro"
+			],
+			[
+				"platform_po",
+				"platform_mcu_powersave_enable()	OSStatus"
+			],
+			[
+				"platform_g",
+				"platform_gpio_enable(const platform_gpio_t *gpio)	OSStatus"
+			],
+			[
+				"platform_w",
+				"platform_watchdog_kick()	OSStatus"
+			],
+			[
+				"ch",
+				"chunkedDataBufferLen	unsigned int"
+			],
+			[
+				"c",
+				"onClearCallback	OSStatus (*)(struct _HTTPHeader_t *, void *)"
+			],
+			[
+				"o",
+				"onReceivedDataCallback	bool (*)(struct _HTTPHeader_t *)"
+			],
+			[
+				"wla",
+				"wLanUnConfigured	Config_State_t"
+			],
+			[
+				"WL_",
+				"WL_GPIO1_PIN	macro"
+			],
+			[
+				"platform",
+				"platform_log(M, ...)	macro"
+			],
+			[
+				"pi",
+				"pin_rx	const platform_pin_mapping_t *"
+			],
+			[
+				"MicoGP",
+				"MicoGpioEnableIRQ(mico_gpio_t gpio, mico_gpio_irq_trigger_t trigger, mico_gpio_irq_handler_t handler, void *arg)	OSStatus"
+			],
+			[
+				"OUTPUT_OD",
+				"OUTPUT_OPEN_DRAIN_NO_PULL	mico_gpio_config_t"
+			],
+			[
+				"MICOSYS",
+				"MicoSystemStandBy()	void"
+			],
+			[
+				"MicoWd",
+				"MicoWdgInitialize(uint32_t timeout)	OSStatus"
+			],
+			[
+				"MicoR",
+				"MicoRtcSetTime(mico_rtc_time_t *time)	OSStatus"
+			],
+			[
+				"m",
+				"month	uint8_t"
+			],
+			[
+				"MICO_I",
+				"MICO_I2C_CP	macro"
+			],
+			[
+				"ke",
+				"keyLength	int"
+			],
+			[
+				"s",
+				"security	SECURITY_TYPE_E"
+			],
+			[
+				"k",
+				"kBackoffErr	macro"
+			],
+			[
+				"mico_rtos_in",
+				"mico_rtos_init_semaphore(mico_semaphore_t *semaphore, int count)	OSStatus"
+			],
+			[
+				"tm",
+				"tm_wday	int"
+			],
+			[
+				"tm_m",
+				"tm_mon	int"
+			],
+			[
+				"tm_",
+				"tm_mday	int"
+			],
+			[
+				"mico_rtos_d",
+				"mico_rtos_delete_thread(mico_thread_t *thread)	OSStatus"
+			],
+			[
+				"MICORe",
+				"MICORemoveNotification(mico_notify_types_t notify_type, void *functionAddress)	OSStatus"
+			],
+			[
+				"I",
+				"INADDR_ANY	macro"
+			],
+			[
+				"mico_th",
+				"mico_thread_sleep	macro"
+			],
+			[
+				"MICOWlan",
+				"MICOWlanEnablePowerSave	macro"
+			],
+			[
+				"MICOWlanS",
+				"MICOWlanStopEasyLink	macro"
+			],
+			[
+				"MICOW",
+				"MICOWlanGetIPStatus	macro"
+			],
+			[
+				"MICOWl",
+				"MICOWlanGetIPStatus	macro"
+			],
+			[
+				"MICOWlanGe",
+				"MICOWlanGetIPStatus	macro"
+			],
+			[
+				"MICOWlanStart",
+				"MICOWlanStartAdv	macro"
+			],
+			[
+				"MICO",
+				"MICO_NO_WAIT	macro"
+			],
+			[
+				"micoGet",
+				"micoGetMemoryInfo	macro"
+			],
+			[
+				"DEF",
+				"DEFAULT_REMOTE_UDP_PORT	macro"
+			],
+			[
+				"send",
+				"sendto(int sockfd, const void *buf, unsigned int len, int flags, const struct sockaddr_t *dest_addr, socklen_t addrlen)	int"
+			],
+			[
+				"DHCP",
+				"DHCP_Disable	DHCPOperationMode"
+			],
+			[
+				"DHC",
+				"DHCP_Client	DHCPOperationMode"
+			],
+			[
+				"b",
+				"BundleSeedID	char [32]"
+			],
+			[
+				"ma",
+				"manufacturer	char [32]"
+			],
+			[
+				"n",
+				"name	char [32]"
+			],
+			[
+				"uin",
+				"uint8_t	typedef"
+			],
+			[
+				"Platform",
+				"PlatformWDGReload()	void"
+			],
+			[
+				"RE",
+				"REMOTE_CONNECT	enum <anonymous>"
+			],
+			[
+				"_us",
+				"_uart_send_mutex	mico_mutex_t"
+			],
+			[
+				"requi",
+				"require(X, LABEL)	macro"
+			],
+			[
+				"_uart",
+				"_uart_send_mutex	mico_mutex_t"
+			],
+			[
+				"mico_rtos_init_s",
+				"mico_rtos_init_semaphore(mico_semaphore_t *semaphore, int count)	MxchipStatus"
+			],
+			[
+				"mico_rtosge",
+				"mico_rtos_get_semaphore(mico_semaphore_t *semaphore, unsigned int timeout_ms)	MxchipStatus"
+			],
+			[
+				"MICO_",
+				"MICO_NEVER_TIMEOUT	macro"
+			],
+			[
+				"eState_",
+				"eState_Wlan_Powerdown	SYS_State_t"
+			],
+			[
+				"plat",
+				"PlatformUartIn"
+			],
+			[
+				"memc",
+				"memcmp(const void *, const void *, size_t)	int"
+			],
+			[
+				"mico_rtos",
+				"mico_rtos_init_mutex(mico_mutex_t *mutex)	MxchipStatus"
+			],
+			[
+				"mico_t",
+				"mico_mutex_t	typedef"
+			],
+			[
+				"mico_rt",
+				"mico_rtos_set_semaphore(mico_semaphore_t *semaphore)	MxchipStatus"
+			],
+			[
+				"DE",
+				"DEAFULT_REMOTE_SERVER	macro"
+			],
+			[
+				"fl",
+				"flashContentInRam	flash_content_t"
+			],
+			[
+				"kNo",
+				"kNoErr	macro"
+			],
+			[
+				"lo",
+				"localTcpClient_fd	int *"
+			],
+			[
+				"PlatformFlash",
+				"PlatformFlashWrite(volatile uint32_t *FlashAddress, uint32_t *Data, uint32_t DataLength)	OSStatus"
+			],
+			[
+				"Platformf",
+				"PlatformFlashInitialize()	OSStatus"
+			],
+			[
+				"kc",
+				"kChecksumErr	macro"
+			],
+			[
+				"kun",
+				"kUnknownErr	macro"
+			],
+			[
+				"kC",
+				"kChecksumErr	macro"
+			],
+			[
+				"fla",
+				"flashContentInRam	flash_content_t"
+			],
+			[
+				"mico_l",
+				"mico_log(M, ...)	macro"
+			],
+			[
+				"Button_STANDBY_",
+				"Button_STANDBY_PIN	macro"
+			],
+			[
+				"GPIO_Read",
+				"GPIO_ReadInputDataBit(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)	uint8_t"
+			],
+			[
+				"easylink",
+				"easylinkClient_fd	int"
+			],
+			[
+				"mico_rtos_set",
+				"mico_rtos_set_semaphore(mico_semaphore_t *semaphore)	MxchipStatus"
+			],
+			[
+				"es",
+				"eState_Software_Reset	SYS_State_t"
+			],
+			[
+				"mico_rtos_init_",
+				"mico_rtos_init_semaphore(mico_semaphore_t *semaphore, int count)	MxchipStatus"
+			],
+			[
+				"mico_s",
+				"mico_semaphore_t	typedef"
+			],
+			[
+				"e",
+				"easyLinkSkip	bool"
+			],
+			[
+				"require_noerr",
+				"require_noerr_action(ERR, LABEL, ACTION)	macro"
+			],
+			[
+				"DH",
+				"DHCP_Client	DHCPOperationMode"
+			],
+			[
+				"kn",
+				"kNoErr	macro"
+			],
+			[
+				"requ",
+				"require(X, LABEL)	macro"
+			],
+			[
+				"l",
+				"localIp	char [16]"
+			],
+			[
+				"ip",
+				"local_ip_addr	char [16]"
+			],
+			[
+				"d",
+				"dhcpEnable	bool"
+			],
+			[
+				"inet",
+				"inet_ntoa(char *s, unsigned int x)	char *"
+			],
+			[
+				"a",
+				"allConfigured	config_type"
+			],
+			[
+				"Clos",
+				"CloseEasylink2()	int"
+			],
+			[
+				"mico_notify_WIFI_S",
+				"mico_notify_WIFI_STATUS_CHANGED	mico_notify_types_t"
+			],
+			[
+				"us",
+				"user_key	char [64]"
+			],
+			[
+				"u",
+				"user_key	char [64]"
+			],
+			[
+				"key",
+				"key_len	int"
+			],
+			[
+				"MX",
+				"MXCHIP_SUCCESS	MxchipStatus"
+			],
+			[
+				"require_",
+				"require_action(X, LABEL, ACTION)	macro"
+			],
+			[
+				"strn",
+				"strncpy(char *restrict, const char *restrict, size_t)	char *"
+			],
+			[
+				"__str",
+				"__strdup_trans_dot(char *src)	char *"
+			],
+			[
+				"temp",
+				"temp2	WiFi_Status_Notify *"
+			],
+			[
+				"kOper",
+				"kNotPreparedErr	macro"
+			],
+			[
+				"mico_rtos_i",
+				"mico_rtos_init_mutex(mico_mutex_t *mutex)	MxchipStatus"
+			],
+			[
+				"kU",
+				"kUnknownErr	macro"
+			],
+			[
+				"in",
+				"inContext"
+			],
+			[
+				"mico_rtos_ge",
+				"mico_rtos_get_semaphore(mico_semaphore_t *semaphore, unsigned int timeout_ms)	MxchipStatus"
+			],
+			[
+				"t",
+				"txt_att	char *"
+			],
+			[
+				"MF",
+				"MFi_SERVICE_MFi	macro"
+			],
+			[
+				"mico_rtos_de",
+				"mico_rtos_delete_thread(mico_thread_t *thread)	MxchipStatus"
+			],
+			[
+				"mico_re",
+				"mico_rtos_init_mutex(mico_mutex_t *mutex)	MxchipStatus"
+			],
+			[
+				"E",
+				"ENABLE	FunctionalState"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_i2c.c",
+			"settings":
+			{
+				"buffer_size": 7931,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"contents": "Searching 1880 files for \"flexcom_enable\" (whole word)\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_i2c.c:\n   88    /* Enable the peripheral and set I2C mode. */\n   89    if( sysclk_module_is_enabled(enum power_red_id port, uint8_t id)==false )\n   90:   flexcom_enable( i2c->flexcom_base );\n   91    flexcom_set_opmode( i2c->flexcom_base, FLEXCOM_TWI );\n   92    \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_spi.c:\n   86  \n   87    /* Enable the peripheral and set SPI mode. */\n   88:   flexcom_enable( driver->peripheral->flexcom_base );\n   89    flexcom_set_opmode( driver->peripheral->flexcom_base, FLEXCOM_SPI );\n   90  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_uart.c:\n  126  \n  127    /* Enable the clock. */\n  128:   flexcom_enable( peripheral->flexcom_base );\n  129    flexcom_set_opmode( peripheral->flexcom_base, FLEXCOM_USART );\n  130  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/flexcom/flexcom.c:\n   64   *\n   65   */\n   66: void flexcom_enable(Flexcom *p_flexcom)\n   67  {\n   68  	sleepmgr_lock_mode(SLEEPMGR_ACTIVE);\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/flexcom/flexcom.h:\n   81  };\n   82  \n   83: void flexcom_enable(Flexcom *p_flexcom);\n   84  void flexcom_disable(Flexcom *p_flexcom);\n   85  void flexcom_set_opmode(Flexcom *p_flexcom, enum flexcom_opmode opmode);\n   ..\n  122   * \\subsection flexcom_basic_use_case_setup_code Example code\n  123   * -# Enable flexcom module access:\n  124:  *   - \\code flexcom_enable(FLEXCOM0); \\endcode\n  125   * -# Set  flexcom operation module:\n  126   *   - \\code flexcom_set_opmode(FLEXCOM0, FLEXCOM_USART); \\endcode\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/wlan_bus_driver/wlan_bus_spi.c:\n  148    \n  149    /* Enable the peripheral and set SPI mode. */\n  150:   flexcom_enable( flexcom_base[ wifi_spi.spi_id ] );\n  151    flexcom_set_opmode( flexcom_base[ wifi_spi.spi_id ], FLEXCOM_SPI );\n  152    \n\n7 matches across 6 files\n\n\nSearching 1880 files for \"sysclk_disable_peripheral_clock\" (whole word)\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sysclk.h:\n  143   * portable:\n  144   *   - sysclk_enable_peripheral_clock()\n  145:  *   - sysclk_disable_peripheral_clock()\n  146   *   - sysclk_enable_module()\n  147   *   - sysclk_disable_module()\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/mega/sysclk.h:\n  459   * \\param module Pointer to the module's base address.\n  460   */\n  461: static inline void sysclk_disable_peripheral_clock(const volatile void *module)\n  462  {\n  463  	if (module == NULL) {\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam3n/sysclk.h:\n  340   * \\param ul_id Id (number) of the peripheral clock.\n  341   */\n  342: static inline void sysclk_disable_peripheral_clock(uint32_t ul_id)\n  343  {\n  344  	pmc_disable_periph_clk(ul_id);\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam3s/sysclk.h:\n  429   * \\param ul_id Id (number) of the peripheral clock.\n  430   */\n  431: static inline void sysclk_disable_peripheral_clock(uint32_t ul_id)\n  432  {\n  433  	pmc_disable_periph_clk(ul_id);\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam3u/sysclk.h:\n  342   * \\param ul_id Id (number) of the peripheral clock.\n  343   */\n  344: static inline void sysclk_disable_peripheral_clock(uint32_t ul_id)\n  345  {\n  346  	pmc_disable_periph_clk(ul_id);\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam3x/sysclk.h:\n  348   * \\param ul_id Id (number) of the peripheral clock.\n  349   */\n  350: static inline void sysclk_disable_peripheral_clock(uint32_t ul_id)\n  351  {\n  352  	pmc_disable_periph_clk(ul_id);\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4c/sysclk.h:\n  465   * \\param ul_id Id (number) of the peripheral clock.\n  466   */\n  467: static inline void sysclk_disable_peripheral_clock(uint32_t ul_id)\n  468  {\n  469  	pmc_disable_periph_clk(ul_id);\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4cm/sysclk.h:\n  453   * \\param ul_id Id (number) of the peripheral clock.\n  454   */\n  455: static inline void sysclk_disable_peripheral_clock(uint32_t ul_id)\n  456  {\n  457  	pmc_disable_periph_clk(ul_id);\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4cp/sysclk.h:\n  445   * \\param ul_id Id (number) of the peripheral clock.\n  446   */\n  447: static inline void sysclk_disable_peripheral_clock(uint32_t ul_id)\n  448  {\n  449  	pmc_disable_periph_clk(ul_id);\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4e/sysclk.h:\n  427   * \\param ul_id Id (number) of the peripheral clock.\n  428   */\n  429: static inline void sysclk_disable_peripheral_clock(uint32_t ul_id)\n  430  {\n  431  	pmc_disable_periph_clk(ul_id);\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4l/sysclk.c:\n  558   * \\param module Pointer to the module's base address.\n  559   */\n  560: void sysclk_disable_peripheral_clock(const volatile void *module)\n  561  {\n  562  	switch ((uintptr_t)module) {\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4l/sysclk.h:\n  776  \n  777  extern void sysclk_enable_peripheral_clock(const volatile void *module);\n  778: extern void sysclk_disable_peripheral_clock(const volatile void *module);\n  779  \n  780  //@}\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4n/sysclk.h:\n  309   * \\param ul_id Id (number) of the peripheral clock.\n  310   */\n  311: static inline void sysclk_disable_peripheral_clock(uint32_t ul_id)\n  312  {\n  313  	pmc_disable_periph_clk(ul_id);\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4s/sysclk.h:\n  425   * \\param ul_id Id (number) of the peripheral clock.\n  426   */\n  427: static inline void sysclk_disable_peripheral_clock(uint32_t ul_id)\n  428  {\n  429  	pmc_disable_periph_clk(ul_id);\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/samg/sysclk.h:\n  353   * \\param ul_id Id (number) of the peripheral clock.\n  354   */\n  355: static inline void sysclk_disable_peripheral_clock(uint32_t ul_id)\n  356  {\n  357  	pmc_disable_periph_clk(ul_id);\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/uc3a0_a1/sysclk.h:\n  794   * \\param module Pointer to the module's base address.\n  795   */\n  796: static inline void sysclk_disable_peripheral_clock(const volatile void *module)\n  797  {\n  798  	switch ((uintptr_t)module) {\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/uc3a3_a4/sysclk.h:\n  840   * \\param module Pointer to the module's base address.\n  841   */\n  842: static inline void sysclk_disable_peripheral_clock(const volatile void *module)\n  843  {\n  844  	switch ((uintptr_t)module) {\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/uc3b0_b1/sysclk.h:\n  739   * \\param module Pointer to the module's base address.\n  740   */\n  741: static inline void sysclk_disable_peripheral_clock(const volatile void *module)\n  742  {\n  743  	switch ((uintptr_t)module) {\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/uc3c/sysclk.h:\n 1159   * \\param module Pointer to the module's base address.\n 1160   */\n 1161: static inline void sysclk_disable_peripheral_clock(const volatile void *module)\n 1162  {\n 1163  	switch ((uintptr_t)module) {\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/uc3d/sysclk.h:\n  863   * \\param module Pointer to the module's base address.\n  864   */\n  865: static inline void sysclk_disable_peripheral_clock(const volatile void *module)\n  866  {\n  867  	switch ((uintptr_t)module) {\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/uc3l/sysclk.h:\n  816   * \\param module Pointer to the module's base address.\n  817   */\n  818: static inline void sysclk_disable_peripheral_clock(const volatile void *module)\n  819  {\n  820  	switch ((uintptr_t)module) {\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/xmega/sysclk.h:\n 1145   * \\param module Pointer to the module's base address.\n 1146   */\n 1147: static inline void sysclk_disable_peripheral_clock(const volatile void *module)\n 1148  {\n 1149  	if (module == NULL) {\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/abdacb/abdacb.c:\n   87  \n   88  	/* Disable APB clock for AES */\n   89: 	sysclk_disable_peripheral_clock(abdac);\n   90  \n   91  	return status;\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/adcife/adcife.c:\n   96  \n   97  	/* Disable APB clock for ADC */\n   98: 	sysclk_disable_peripheral_clock(adc);\n   99  \n  100  	return STATUS_OK;\n  ...\n  226  	dev_inst->hw_dev->ADCIFE_CR = ADCIFE_CR_DIS | ADCIFE_CR_REFBUFDIS |\n  227  			ADCIFE_CR_BGREQDIS;\n  228: 	sysclk_disable_peripheral_clock(dev_inst->hw_dev);\n  229  	sleepmgr_unlock_mode(SLEEPMGR_SLEEP_1);\n  230  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/aes/aes.c:\n  120  \n  121  	/* Disable clock for AES */\n  122: 	sysclk_disable_peripheral_clock(ID_AES);\n  123  }\n  124  \n  ...\n  137  void aes_disable(void)\n  138  {\n  139: 	sysclk_disable_peripheral_clock(ID_AES);\n  140  	sleepmgr_unlock_mode(SLEEPMGR_SLEEP_WFI);\n  141  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/aesa/aesa.c:\n  118  \n  119  	/* Disable APB clock for AES */\n  120: 	sysclk_disable_peripheral_clock(aesa);\n  121  \n  122  	return true;\n  ...\n  152  {\n  153  	dev_inst->hw_dev->AESA_CTRL &= ~AESA_CTRL_ENABLE;\n  154: 	sysclk_disable_peripheral_clock(dev_inst->hw_dev);\n  155  	sleepmgr_unlock_mode(SLEEPMGR_SLEEP_0);\n  156  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/ast/ast.c:\n  100  	}\n  101  \n  102: 	sysclk_disable_peripheral_clock(ast);\n  103  	sleepmgr_unlock_mode(SLEEPMGR_BACKUP);\n  104  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/eic/eic.c:\n  115  void eic_disable(Eic *eic)\n  116  {\n  117: 	sysclk_disable_peripheral_clock(eic);\n  118  	sleepmgr_unlock_mode(SLEEPMGR_BACKUP);\n  119  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/events/events.c:\n   98  void events_disable(void)\n   99  {\n  100: 	sysclk_disable_peripheral_clock(PEVC);\n  101  	sleepmgr_unlock_mode(SLEEPMGR_BACKUP);\n  102  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/flashcalw/flashcalw.c:\n 1721  	}\n 1722  \n 1723: 	sysclk_disable_peripheral_clock(HCACHE);\n 1724  }\n 1725  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/flexcom/flexcom.c:\n  157  #ifdef ID_FLEXCOM7\n  158  	 if (p_flexcom == FLEXCOM7) {\n  159: 		 sysclk_disable_peripheral_clock(ID_FLEXCOM7);\n  160  		 /* Disable PCK output */\n  161  		pmc_disable_pck(PMC_PCK_7);\n  ...\n  164  #ifdef ID_FLEXCOM6\n  165  	if (p_flexcom == FLEXCOM6) {\n  166: 		sysclk_disable_peripheral_clock(ID_FLEXCOM6);\n  167  		/* Disable PCK output */\n  168  		pmc_disable_pck(PMC_PCK_7);\n  ...\n  171  #ifdef ID_FLEXCOM5\n  172  	if (p_flexcom == FLEXCOM5) {\n  173: 		sysclk_disable_peripheral_clock(ID_FLEXCOM5);\n  174  		/* Disable PCK output */\n  175  		pmc_disable_pck(PMC_PCK_7);\n  ...\n  178  #ifdef ID_FLEXCOM4\n  179  	if (p_flexcom == FLEXCOM4) {\n  180: 		sysclk_disable_peripheral_clock(ID_FLEXCOM4);\n  181  		/* Disable PCK output */\n  182  		pmc_disable_pck(PMC_PCK_7);\n  ...\n  185  #ifdef ID_FLEXCOM3\n  186  	if (p_flexcom == FLEXCOM3) {\n  187: 		sysclk_disable_peripheral_clock(ID_FLEXCOM3);\n  188  		/* Disable PCK output */\n  189  		pmc_disable_pck(PMC_PCK_6);\n  ...\n  192  #ifdef ID_FLEXCOM2\n  193  	if (p_flexcom == FLEXCOM2) {\n  194: 		sysclk_disable_peripheral_clock(ID_FLEXCOM2);\n  195  		/* Disable PCK output */\n  196  		pmc_disable_pck(PMC_PCK_6);\n  ...\n  199  #ifdef ID_FLEXCOM1\n  200  	if (p_flexcom == FLEXCOM1) {\n  201: 		sysclk_disable_peripheral_clock(ID_FLEXCOM1);\n  202  		/* Disable PCK output */\n  203  		pmc_disable_pck(PMC_PCK_6);\n  ...\n  208  		/* Disable PCK output */\n  209  		pmc_disable_pck(PMC_PCK_6);\n  210: 		sysclk_disable_peripheral_clock(ID_FLEXCOM0);\n  211  	} else\n  212  #endif\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/freqm/freqm.c:\n  178  		}\n  179  	}\n  180: 	sysclk_disable_peripheral_clock(dev_inst->hw_dev);\n  181  	sleepmgr_unlock_mode(SLEEPMGR_SLEEP_1);\n  182  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/gloc/gloc.c:\n   92  void gloc_disable(struct gloc_dev_inst *const dev_inst)\n   93  {\n   94: 	sysclk_disable_peripheral_clock(dev_inst->hw_dev);\n   95  	sleepmgr_unlock_mode(SLEEPMGR_SLEEP_0);\n   96  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/hmatrixb/hmatrixb.c:\n   74  void hmatrix_disable(void)\n   75  {\n   76: 	sysclk_disable_peripheral_clock(HMATRIX);\n   77  	sleepmgr_unlock_mode(SLEEPMGR_SLEEP_1);\n   78  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/ipc/ipc.c:\n  140  {\n  141  	if (p_ipc == IPC0) {\n  142: 		sysclk_disable_peripheral_clock(ID_IPC0);\n  143  	} else {\n  144: 		sysclk_disable_peripheral_clock(ID_IPC1);\n  145  	}\n  146  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/pdca/pdca.c:\n  137  void pdca_disable(Pdca *pdca)\n  138  {\n  139: 	sysclk_disable_peripheral_clock(pdca);\n  140  	sleepmgr_unlock_mode(SLEEPMGR_BACKUP);\n  141  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/picouart/picouart.c:\n   79  		dev_inst->dev_ptr->PICOUART_CFG = config->action\n   80  					| PICOUART_CFG_MATCH(config->match);\n   81: 		sysclk_disable_peripheral_clock(dev_inst->dev_ptr);\n   82  	}\n   83  	return STATUS_OK;\n   ..\n   94  {\n   95  	dev_inst->dev_ptr->PICOUART_CR = PICOUART_CR_DIS;\n   96: 	sysclk_disable_peripheral_clock(PICOUART);\n   97  	sleepmgr_unlock_mode(SLEEPMGR_BACKUP);\n   98  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/spi/spi.c:\n  135  #if (SAM4S || SAM3S || SAM3N || SAM3U || SAM4E || SAM4N || SAMG51|| SAMG53|| SAMG54)\n  136  	UNUSED(p_spi);\n  137: 	sysclk_disable_peripheral_clock(ID_SPI);\n  138  #elif (SAM3XA || SAM4C || SAM4CP || SAM4CM)\n  139  	if (p_spi == SPI0) {\n  140: 		sysclk_disable_peripheral_clock(ID_SPI0);\n  141  	}\n  142  	#ifdef SPI1\n  143  	else if (p_spi == SPI1) {\n  144: 		sysclk_disable_peripheral_clock(ID_SPI1);\n  145  	}\n  146  	#endif\n  147  #elif (SAMG55)\n  148  	if (p_spi == SPI0) {\n  149: 		sysclk_disable_peripheral_clock(ID_FLEXCOM0);\n  150  	}\n  151  	#ifdef SPI1\n  152  	else if (p_spi == SPI1) {\n  153: 		sysclk_disable_peripheral_clock(ID_FLEXCOM1);\n  154  	}\n  155  	#endif\n  156  	#ifdef SPI2\n  157  		else if (p_spi == SPI2) {\n  158: 			sysclk_disable_peripheral_clock(ID_FLEXCOM2);\n  159  		}\n  160  	#endif\n  161  	#ifdef SPI3\n  162  		else if (p_spi == SPI3) {\n  163: 			sysclk_disable_peripheral_clock(ID_FLEXCOM3);\n  164  		}\n  165  	#endif\n  166  	#ifdef SPI4\n  167  		else if (p_spi == SPI4) {\n  168: 			sysclk_disable_peripheral_clock(ID_FLEXCOM4);\n  169  		}\n  170  	#endif\n  171  	#ifdef SPI5\n  172  		else if (p_spi == SPI5) {\n  173: 			sysclk_disable_peripheral_clock(ID_FLEXCOM5);\n  174  		}\n  175  	#endif\n  176  	#ifdef SPI6\n  177  		else if (p_spi == SPI6) {\n  178: 			sysclk_disable_peripheral_clock(ID_FLEXCOM6);\n  179  		}\n  180  	#endif\n  181  	#ifdef SPI7\n  182  		else if (p_spi == SPI7) {\n  183: 			sysclk_disable_peripheral_clock(ID_FLEXCOM7);\n  184  		}\n  185  	#endif\n  186  #elif SAM4L\n  187: 	sysclk_disable_peripheral_clock(p_spi);\n  188  #endif\n  189  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/wdt/wdt_sam4l.c:\n  168  \n  169  	/* Disable APB clock for WDT */\n  170: 	sysclk_disable_peripheral_clock(wdt);\n  171  \n  172  	return true;\n  ...\n  208  \n  209  	/* Disable APB clock for WDT */\n  210: 	sysclk_disable_peripheral_clock(wdt);\n  211  }\n  212  \n\n63 matches across 39 files\n\n\nSearching 1880 files for \"pmc_enable_periph_clk\" (whole word)\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam3n/sysclk.h:\n  332  static inline void sysclk_enable_peripheral_clock(uint32_t ul_id)\n  333  {\n  334: 	pmc_enable_periph_clk(ul_id);\n  335  }\n  336  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam3s/sysclk.h:\n  421  static inline void sysclk_enable_peripheral_clock(uint32_t ul_id)\n  422  {\n  423: 	pmc_enable_periph_clk(ul_id);\n  424  }\n  425  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam3u/sysclk.h:\n  334  static inline void sysclk_enable_peripheral_clock(uint32_t ul_id)\n  335  {\n  336: 	pmc_enable_periph_clk(ul_id);\n  337  }\n  338  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam3x/sysclk.h:\n  340  static inline void sysclk_enable_peripheral_clock(uint32_t ul_id)\n  341  {\n  342: 	pmc_enable_periph_clk(ul_id);\n  343  }\n  344  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4c/sysclk.c:\n  207  \n  208  	/* Enable Core 1 SRAM1 and SRAM2 memories */\n  209: 	pmc_enable_periph_clk(42); /* ID_SRAM1_2 */\n  210  }\n  211  #endif\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4c/sysclk.h:\n  457  static inline void sysclk_enable_peripheral_clock(uint32_t ul_id)\n  458  {\n  459: 	pmc_enable_periph_clk(ul_id);\n  460  }\n  461  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4cm/sysclk.c:\n  178  \n  179  	/* Enable Core 1 SRAM1 and SRAM2 memories */\n  180: 	pmc_enable_periph_clk(42); /* ID_SRAM1_2 */\n  181  }\n  182  #endif\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4cm/sysclk.h:\n  445  static inline void sysclk_enable_peripheral_clock(uint32_t ul_id)\n  446  {\n  447: 	pmc_enable_periph_clk(ul_id);\n  448  }\n  449  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4cp/sysclk.c:\n  178  \n  179  	/* Enable Core 1 SRAM1 and SRAM2 memories */\n  180: 	pmc_enable_periph_clk(42); /* ID_SRAM1_2 */\n  181  }\n  182  #endif\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4cp/sysclk.h:\n  437  static inline void sysclk_enable_peripheral_clock(uint32_t ul_id)\n  438  {\n  439: 	pmc_enable_periph_clk(ul_id);\n  440  }\n  441  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4e/sysclk.h:\n  419  static inline void sysclk_enable_peripheral_clock(uint32_t ul_id)\n  420  {\n  421: 	pmc_enable_periph_clk(ul_id);\n  422  }\n  423  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4n/sysclk.h:\n  301  static inline void sysclk_enable_peripheral_clock(uint32_t ul_id)\n  302  {\n  303: 	pmc_enable_periph_clk(ul_id);\n  304  }\n  305  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/sam4s/sysclk.h:\n  417  static inline void sysclk_enable_peripheral_clock(uint32_t ul_id)\n  418  {\n  419: 	pmc_enable_periph_clk(ul_id);\n  420  }\n  421  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/samg/sysclk.h:\n  345  static inline void sysclk_enable_peripheral_clock(uint32_t ul_id)\n  346  {\n  347: 	pmc_enable_periph_clk(ul_id);\n  348  }\n  349  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/adc/adc2.c:\n  455  {\n  456  	/* Enable peripheral clock. */\n  457: 	pmc_enable_periph_clk(ID_ADC);\n  458  	sleepmgr_lock_mode(SLEEP_MODE_ADC);\n  459  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/afec/afec.c:\n  551  	pid = afec_find_pid(afec);\n  552  	/* Enable peripheral clock. */\n  553: 	pmc_enable_periph_clk(pid);\n  554  	sleepmgr_lock_mode(SLEEPMGR_SLEEP_WFI);\n  555  }\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/can/can.h:\n  210  	    can_mb_conf_t can1_mailbox;\n  211  \n  212: 	    pmc_enable_periph_clk(ID_CAN0);\n  213: 	    pmc_enable_periph_clk(ID_CAN1);\n  214  \n  215  	    can_init(CAN0, ul_sysclk, CAN_BPS_1000K);\n  ...\n  247   * -# Enable the module clock for CAN0 and CAN1:\n  248   *   - \\code\n  249: 	pmc_enable_periph_clk(ID_CAN0);\n  250: 	pmc_enable_periph_clk(ID_CAN1);\n  251  \\endcode\n  252   * -# Initialize CAN0 and CAN1, baudrate is 1Mb/s:\n  ...\n  357   *\n  358   * \\code\n  359: 	    pmc_enable_periph_clk(ID_CAN0);\n  360: 	    pmc_enable_periph_clk(ID_CAN1);\n  361  \n  362  	    can_init(CAN0, ul_sysclk, CAN_BPS_1000K);\n  ...\n  420   * -# Enable the module clock for CAN0 and CAN1:\n  421   *   - \\code\n  422: 	pmc_enable_periph_clk(ID_CAN0);\n  423: 	pmc_enable_periph_clk(ID_CAN1);\n  424  \\endcode\n  425   * -# Initialize CAN0 and CAN1, baudrate is 1Mb/s:\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/emac/emac.h:\n 1116  	       while (ul_delay--); \n 1117  \n 1118: 	       pmc_enable_periph_clk(ID_EMAC);\n 1119  \n 1120  	       emac_option.uc_copy_all_frame = 0;\n ....\n 1205  \\endcode\n 1206   * -# Enable PMC clock for EMAC:\n 1207:  *   - \\code pmc_enable_periph_clk(ID_EMAC); \\endcode\n 1208   * -# Set the EMAC options; it's set to copy all frame and support broadcast:\n 1209   *   - \\code\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/gmac/gmac_raw.h:\n  222   *       board_init();\n  223   *\n  224:  *       pmc_enable_periph_clk(ID_GMAC);\n  225   *\n  226   *       gmac_option.uc_copy_all_frame = 0;\n  ...\n  274   *   - \\code board_init(); \\endcode\n  275   * -# Enable PMC clock for GMAC:\n  276:  *   - \\code pmc_enable_periph_clk(ID_GMAC); \\endcode\n  277   * -# Set the GMAC options; it's set to copy all frame and support broadcast:\n  278   *   - \\code\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/hsmci/hsmci.c:\n  300  void hsmci_init(void)\n  301  {\n  302: 	pmc_enable_periph_clk(ID_HSMCI);\n  303  #ifdef HSMCI_SR_DMADONE\n  304  	// Enable clock for DMA controller\n  305: 	pmc_enable_periph_clk(ID_DMAC);\n  306  #endif\n  307  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/pio/pio.h:\n  246   * Add to the application initialization code:\n  247   * \\code\n  248: 	    pmc_enable_periph_clk(ID_PIOA);\n  249  \n  250  	    pio_set_output(PIOA, PIO_PA23, LOW, DISABLE, ENABLE);\n  ...\n  254   * \\subsection sam_pio_quickstart_use_case_1_setup_steps_workflow Workflow\n  255   * -# Enable the module clock to the PIOA peripheral:\n  256:  *    \\code pmc_enable_periph_clk(ID_PIOA); \\endcode\n  257   * -# Set pin 23 direction on PIOA as output, default low level:\n  258   *     \\code pio_set_output(PIOA, PIO_PA23, LOW, DISABLE, ENABLE); \\endcode\n  ...\n  297   * Add to the application initialization code:\n  298   * \\code\n  299: 	 pmc_enable_periph_clk(ID_PIOA);\n  300  \n  301  	 pio_set_output(PIOA, PIO_PA23, LOW, DISABLE, ENABLE);\n  ...\n  310   * \\subsection sam_pio_quickstart_use_case_2_setup_steps_workflow Workflow\n  311   * -# Enable the module clock to the PIOA peripheral:\n  312:  *    \\code pmc_enable_periph_clk(ID_PIOA); \\endcode\n  313   * -# Set pin 23 direction on PIOA as output, default low level:\n  314   *     \\code pio_set_output(PIOA, PIO_PA23, LOW, DISABLE, ENABLE); \\endcode\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/pmc/pmc.c:\n  651   * \\retval 1 Invalid parameter.\n  652   */\n  653: uint32_t pmc_enable_periph_clk(uint32_t ul_id)\n  654  {\n  655  	if (ul_id > MAX_PERIPH_ID) {\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/pmc/pmc.h:\n  208  //@{\n  209  \n  210: uint32_t pmc_enable_periph_clk(uint32_t ul_id);\n  211  uint32_t pmc_disable_periph_clk(uint32_t ul_id);\n  212  void pmc_enable_all_periph_clk(void);\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/pwm/pwm.h:\n  424  	    pwm_channel_t pwm_channel_instance;\n  425  \n  426: 	    pmc_enable_periph_clk(ID_PWM);\n  427  \n  428  	    pwm_channel_disable(PWM, PWM_CHANNEL_0);\n  ...\n  446   *   - \\code pwm_channel_t pwm_channel_instance; \\endcode\n  447   * -# Enable the module clock for the PWM peripheral:\n  448:  *   - \\code pmc_enable_periph_clk(ID_PWM); \\endcode\n  449   * -# Disable PWM channel 0:\n  450   *   - \\code pwm_channel_disable(PWM, PWM_CHANNEL_0); \\endcode\n  ...\n  545   *\n  546   * \\code\n  547: 	    pmc_enable_periph_clk(ID_PWM);\n  548  \n  549  	    pwm_channel_disable(PWM, PWM_CHANNEL_0);\n  ...\n  600  \\endcode\n  601   * -# Enable the PWM clock:\n  602:  *   - \\code pmc_enable_periph_clk(ID_PWM); \\endcode\n  603   * -# Disable PWM channel 0:\n  604   *   - \\code pwm_channel_disable(PWM, PWM_CHANNEL_0); \\endcode\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/udp/udp_device.h:\n  137  //!\n  138  //! @{\n  139: #define  udd_enable_periph_ck()              pmc_enable_periph_clk(ID_UDP)\n  140  #define  udd_disable_periph_ck()             pmc_disable_periph_clk(ID_UDP)\n  141  #define  Is_udd_periph_ck_enabled()          pmc_is_periph_clk_enabled(ID_UDP)\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/udphs/udphs_device.h:\n  156  //!\n  157  //! @{\n  158: #define  udd_enable_periph_ck()              pmc_enable_periph_clk(ID_UDPHS)\n  159  #define  udd_disable_periph_ck()             pmc_disable_periph_clk(ID_UDPHS)\n  160  #define  Is_udd_periph_ck_enabled()          pmc_is_periph_clk_enabled(ID_UDPHS)\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/uhdp/uhdp_device.c:\n  621  	// SINGLE DEVICE MODE INITIALIZATION\n  622  	sysclk_enable_usb();\n  623: 	pmc_enable_periph_clk(ID_UOTGHS);\n  624  \n  625  	// Here, only the device mode is possible, then link UHDP interrupt to UDD interrupt\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/uhdp/uhdp_host.c:\n  460  	// Enable USB hardware clock\n  461  	sysclk_enable_usb();\n  462: 	pmc_enable_periph_clk(ID_UOTGHS);\n  463  \n  464  	// Reset USB hardware\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/uhp/uhp_host.c:\n  327  	/* Enable USB hardware clock. */\n  328  	sysclk_enable_usb();\n  329: 	pmc_enable_periph_clk(ID_UHP);\n  330  \n  331  	/**\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/uotghs/uotghs_device.c:\n  660  #else\n  661  	// SINGLE DEVICE MODE INITIALIZATION\n  662: 	pmc_enable_periph_clk(ID_UOTGHS);\n  663  	sysclk_enable_usb();\n  664  \n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/uotghs/uotghs_host.c:\n  424  	bool b_mode_device;\n  425  \n  426: 	pmc_enable_periph_clk(ID_UOTGHS);\n  427  \n  428  	/* For fast wakeup clocks restore\n  ...\n  475  	//* Enable USB hardware clock\n  476  	sysclk_enable_usb();\n  477: 	pmc_enable_periph_clk(ID_UOTGHS);\n  478  \n  479  	// Always authorize asynchronous USB interrupts to exit of sleep mode\n  ...\n  548  \n  549  	sysclk_enable_usb();\n  550: 	pmc_enable_periph_clk(ID_UOTGHS);\n  551  \n  552  #ifdef USB_ID_GPIO // ID pin available in board.h\n\n/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/services/network/lin/lin.h:\n  179  		ul_sysclk = sysclk_get_cpu_hz();\n  180  \n  181: 		pmc_enable_periph_clk(ID_TC0);\n  182  \n  183  		tc_find_mck_divisor(TC_FREQ, ul_sysclk, &ul_div, &ul_tcclks, ul_sysclk);\n  ...\n  196  		board_init();\n  197  \n  198: 		pmc_enable_periph_clk(BOARD_ID_USART);\n  199  \n  200  		lin_init( USART0, true, LIN_MASTER_NODE_NUM, 9600, sysclk_get_cpu_hz());\n  ...\n  243   * -# Enable PMC for USART:\n  244   *   \\code\n  245: 	pmc_enable_periph_clk(BOARD_ID_USART);\n  246  \\endcode\n  247   * -# Initialize LIN master, set the master with baudrate 9600:\n  ...\n  354  		board_init();\n  355  \n  356: 		pmc_enable_periph_clk(BOARD_ID_USART);\n  357  \n  358  		lin_init( USART0, false, LIN_SLAVE_NODE_NUM, 9600, sysclk_get_cpu_hz());\n  ...\n  393   * -# Enable PMC for USART:\n  394   *   \\code\n  395: 	pmc_enable_periph_clk(BOARD_ID_USART);\n  396  \\endcode\n  397   * -# Initialize LIN master, set the master with baudrate 9600:\n\n54 matches across 32 files\n",
+			"settings":
+			{
+				"buffer_size": 29911,
+				"line_ending": "Unix",
+				"name": "Find Results",
+				"scratch": true
+			}
+		},
+		{
+			"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/pmc/pmc.c",
+			"settings":
+			{
+				"buffer_size": 34604,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/samg/sysclk.h",
+			"settings":
+			{
+				"buffer_size": 12945,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/flexcom/flexcom.c",
+			"settings":
+			{
+				"buffer_size": 6963,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/twi/twi.c",
+			"settings":
+			{
+				"buffer_size": 17444,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_mcu_peripheral.h",
+			"settings":
+			{
+				"buffer_size": 9409,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/Users/William/Develop/MiCO/Board/MiCOKit-G55/platform.c",
+			"settings":
+			{
+				"buffer_size": 14291,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_spi.c",
+			"settings":
+			{
+				"buffer_size": 8917,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_uart.c",
+			"settings":
+			{
+				"buffer_size": 15321,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/Users/william/Develop/MiCO/Support/MDNSUtils.h",
+			"settings":
+			{
+				"buffer_size": 4089,
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 287.0,
+		"selected_items":
+		[
+			[
+				"",
+				"Package Control: Install Package"
+			],
+			[
+				"git",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			],
+			[
+				"v",
+				"View: Toggle Side Bar"
+			],
+			[
+				"Cscope:Look up symbol",
+				"Cscope: Look up symbol"
+			],
+			[
+				":",
+				"View: Toggle Tabs"
+			],
+			[
+				":q",
+				"Set Syntax: SQL"
+			],
+			[
+				"Package Control: install		",
+				"Package Control: Install Package"
+			],
+			[
+				"Snippet: ",
+				"Snippet: Lorem ipsum"
+			]
+		],
+		"width": 449.0
+	},
+	"console":
+	{
+		"height": 125.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/emac/emac.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/pmc/pmc.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/mega/sysclk.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/mega/sysclk.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/twi/twi.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/twi/twi.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F4xx/peripherals/platform_i2c.c",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-3288/platform.h",
+		"/Users/william/Develop/MiCO/include/Debug.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_i2c.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/paltform_rtc.c",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-G55/platform.c",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-3288/platform.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_mcu_peripheral.h",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-G55/platform.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/utils/cmsis/samg/samg55/include/samg55j19.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/ioport/sam/ioport_gpio.h",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-G55/platform_config.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_spi.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_uart.c",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/flexcom/flexcom.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F4xx/peripherals/platform_mcu_peripheral.h",
+		"/Users/William/Develop/MiCO/Projects/ATSAMG55/COM.MXCHIP.SPP/sublime/COM.MXCHIP.SPP.sublime-project",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-3165/platform.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/platform_spi.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F4xx/peripherals/platform_spi.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/mico_platform_common.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F4xx/peripherals/platform_flash.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/wlan_platform_common.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/platform_flash.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/platform_mcu_peripheral.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/MX1101/peripherals/platform_mcu_peripheral.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_mcu_powersave.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/platform_init.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_gpio.c",
+		"/Users/william/Develop/Clang_lib/ARMCC/include/stdio.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/ioport/sam/ioport_pio.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/conf_board.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/conf_clock.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/conf_sleepmgr.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_watchdog.c",
+		"/Users/william/Develop/MiCO/Platform/include/platform_init.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/samg55/include/component/spi.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/wlan_bus_driver/wlan_bus_spi.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/wlan_bus_driver/wlan_bus_spi.c",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/sam/drivers/inc/spi.h",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-G55/samg55_xplained_pro.h",
+		"/Users/william/Develop/MiCO/Board/MiCOKit-G55/conf_board.h",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-F205/platform.c",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-3162/platform.c",
+		"/Users/William/Develop/MiCO/Support/HTTPUtils.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/platform_init.c",
+		"/Users/william/Develop/MiCO/Platform/include/wlan_platform_common.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/wlan_bus_driver/wlan_platform.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/wlan_bus_driver/wlan_bus_sdio.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/wlan_bus_driver/wlan_platform.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F4xx/wlan_bus_driver/wlan_platform.c",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-F205/platform_config.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/MX1101/peripherals/platform_uart.c",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/sam/services/flash_efc/flash_efc.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_flash.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/platform_uart.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/sam/services/flash_efc/flash_efc.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/sam/drivers/src/efc.c",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-G55/bootloaderLinkerForIAR.icf",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-3162/platform_config.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/sam/drivers/inc/efc.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/samg55/include/component/efc.h",
+		"/Users/William/Develop/MiCO/MICO/MICOEntrance.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/samg55/mico_driver_uart.c",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/common/services/ioport/ioport.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/samg55/include/samg55.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_mcu_peripheral.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/samg55/include/component/usart.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/EWARM/startup_ATSAMG55_EWARM.s",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/sam/drivers/inc/usart.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/sam/drivers/src/usart.c",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/samg55/include/component/flexcom.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/sam/drivers/inc/flexcom.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/common/services/ioport/sam/ioport_pio.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/samg55/include/samg55j19.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/common/services/clock/samg/osc.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/samg55/include/component/pio.h",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-3162/platform.h",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-F205/platform.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/EMW1062_Driver/wlan_bus_sdio.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/EMW1062_Driver/wlan_bus_spi.c",
+		"/Users/William/Develop/MiCO/Platform/include/wlan_platform_common.h",
+		"/Users/william/Develop/MiCO/Platform/drivers/spi_flash/spi_flash_platform_interface.h",
+		"/Users/William/Develop/MiCO/Board/MiCOKit-F205/platform_spi_flash.c",
+		"/Users/William/Develop/MiCO/Projects/STM32F2xx/COM.MXCHIP.SPP/sublime/COM.MXCHIP.SPP.sublime-project",
+		"/Users/William/Develop/MiCO/Platform/Drivers/spi_flash/spi_flash_platform.c",
+		"/Users/William/Develop/MiCO/Platform/Drivers/spi_flash/spi_flash_platform_interface.h",
+		"/Users/William/Develop/MiCO/include/MicoDrivers/MicoDriverSpi.h",
+		"/Users/william/Develop/MiCO/Platform/include/platform_peripheral.h",
+		"/Users/William/Develop/MiCO/Platform/Drivers/spi_flash/spi_flash.c",
+		"/Users/william/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/platform_mcu_peripheral.h",
+		"/Users/William/Develop/MiCO/include/MicoPlatform.h",
+		"/Users/William/Develop/MiCO/include/MicoDrivers/MicoDriverRtc.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/platform_gpio.c",
+		"/Users/william/Develop/MiCO/include/MicoDrivers/MICODriverSpi.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/Libraries/STM32F2xx_StdPeriph_Driver/src/stm32f2xx_dma.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/Libraries/STM32F2xx_StdPeriph_Driver/inc/stm32f2xx_dma.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/wlan_platform_common.h",
+		"/Users/william/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/Libraries/STM32F2xx_StdPeriph_Driver/inc/stm32f2xx.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F4xx/EMW1062_Driver/SPI/wwd_bus.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/EMW1062_Driver/read_wifi_firmware.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/platform_rng.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F4xx/peripherals/MicoDriverUart.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/MicoDriverWdg.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/MicoDriverUart.c",
+		"/Users/William/Develop/MiCO/Platform/include/platform_peripheral.h",
+		"/Users/William/Develop/MiCO/include/Common.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/platform_mcu_powersave.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/MicoDriverRtc.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/rtc.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/MicoDriverGpio.c",
+		"/Users/William/Develop/MiCO/MICO/MICOSystemMonitor.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/MicoDriverI2c.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/EMW1062_Driver/SDIO/wlan_bus.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/MicoDriverPwm.c",
+		"/Users/William/Develop/MiCO/Demos/COM.Apple.HomeKit/HomeKitUserInterface.c",
+		"/Users/William/Develop/MiCO/Demos/COM.Apple.HomeKit/HomeKitServer.c",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/MicoDriverAdc.c",
+		"/Users/william/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/Libraries/STM32F2xx_StdPeriph_Driver/inc/stm32f2xx_syscfg.h",
+		"/Users/William/Develop/MiCO/include/Debug.h",
+		"/Users/William/Develop/MiCO/Platform/MCU/STM32F2xx/peripherals/gpio_irq.h",
+		"/Users/william/Develop/MiCO/include/MicoDrivers/MICODriverI2c.h"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 93.0,
+		"where_history":
+		[
+			"<open folders>",
+			"",
+			"<open folders>",
+			"/Users/william/Develop/E-DICE",
+			"",
+			"<open folders>",
+			"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/",
+			"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/复件 Data_Send&Recv",
+			"/Volumes/C/develop/MDV-STM32-407/EMB_STM32_407_wifi_lib_V2.0.0/Project/STM32F4xx_StdPeriph_Examples"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"_initBonjourForEasyLink",
+			"pmc_enable_periph_clk",
+			"sysclk_disable_peripheral_clock",
+			"flexcom_enable",
+			"power_red_id",
+			"sysclk_enable_peripheral_clock",
+			"twi_mk_addr",
+			"i2c_transfer_message_no_dma",
+			"twi_master_read",
+			"MICO_EXT_I2C_BME280",
+			"MICO_SPI_1",
+			"i2c_tx_no_dma",
+			"i2c_transfer_message_no_dma",
+			"platform_i2c_t",
+			"flexcom_base",
+			"peripheral_id",
+			"flexcom_base",
+			"platform_flexcom_irq_numbers",
+			"peripheral_id",
+			"platform_i2c_port_t",
+			"tx_pin_mux_mode",
+			"twi_slave_config",
+			"MICO_GPIO_0",
+			"14",
+			"ioport_modes",
+			"FLASH_PIN_SPI_CS",
+			"30",
+			"29",
+			"29\n",
+			"28",
+			"27",
+			"30",
+			"FLASH_PIN_SPI_MOSI",
+			"MICO_SPI_1",
+			"lock",
+			"spi_transfer",
+			"FLASH_PIN_SPI_CS",
+			"samg5x_spi_transfer_internal",
+			"WL_GPIO0",
+			"platform_spi_driver_t",
+			"platform_powersave_enable_wakeup_pin",
+			"DISABLE_INTERRUPTS",
+			"platform",
+			"platform_",
+			"platform_init_s",
+			"platform_init",
+			"wait_mode_power_down_hook",
+			"SPI_DLYBS",
+			"SPI_DLYBCT",
+			"SPI_CLK_PHASE",
+			"SPI_DLYBCT",
+			"DMA_TIMEOUT_LOOPS",
+			"SPI_BAUD_RATE",
+			"spi_read",
+			"spi_read\\",
+			"spi_read",
+			"ENDTX",
+			"pdc_spi_packet",
+			"spi_get_pdc_base",
+			"FLEXCOM5_IRQn",
+			"SPI_Handler",
+			"wwd_irq",
+			"HARD_CS_NSS0",
+			"SPI_NPCS0_GPIO",
+			"SPI_CHIP_PCS",
+			"spi_get_pcs",
+			"SPI_CHIP_PCS",
+			"spi_get_pcs",
+			"USE_OWN_SPI_DRV",
+			"host_platform_init_wlan_powersave_clock",
+			"flash_lock",
+			"translate_address",
+			"flash_erase_page",
+			"efc_perform_command",
+			"pdc_uart_rx_packet",
+			"usart_init_hw_handshaking",
+			"platform_gpio_peripheral_pin_init",
+			"PIO_PA28B_TXD7",
+			"ioport_set_port_peripheral_mode",
+			"PIO_ESR",
+			"gpio_irq_data",
+			"samg5x_gpio_irq_data_t",
+			"Standby_SEL",
+			"platform_reset_wlan_powersave_clock",
+			"host_platform_deinit_wlan_powersave_clock",
+			"host_platform_sdio_transfer",
+			"MicoSpiTransfer",
+			"MICO_SPI_FLASH_CS",
+			"mico_spi_flash",
+			"USE_MICO_SPI_FLASH",
+			"generic_sflash_command",
+			"sflash_write_page",
+			"spi",
+			"spi_dma_transfer",
+			"platform_gpio_set_alternate_function",
+			"platform_spi_get_port_number",
+			"spi_irq_handler",
+			"DMA_ClearFlag",
+			"DMA_ClearITPendingBit",
+			"DMA_ClearITPendingBit\\",
+			"DMA_ClearFlag",
+			"DMA_ClearFlag\nDMA_ClearFlag",
+			"DMA_ClearFlag",
+			"DMA_IT_TCIF3",
+			"clear_dma_interrupts",
+			"dma_irq",
+			"MICO_USE_WIFI_32K_CLOCK_MCO",
+			"enable_clocl",
+			"platform_watchdog_init",
+			"GetLSIFrequency",
+			"RX_PIN_WAKEUP_handler",
+			"uart_number",
+			"uart_peripheral_clock_functions",
+			"platform_gpio_enable",
+			"thread_wakeup",
+			"sem_wakeup",
+			"thread_wakeup",
+			"wiced",
+			"WICED",
+			"convert_rtc_calendar_values_to_units_passed",
+			"stm32f2_rtc_change_clock",
+			"platform_power_down_hook",
+			"platform_idle_hook",
+			"platform_mcu_powersave_exit_notify",
+			"wake_up_interrupt_notify",
+			"WUT_COUNTER_MAX",
+			"wake_up_interrupt_triggered",
+			"host_platform_init"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"OSStatus",
+			"MICO",
+			"MICO_DISABLE_STDIO"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": true,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 10,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_i2c.c",
+					"settings":
+					{
+						"buffer_size": 7931,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3650,
+								3541
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1172.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"settings":
+					{
+						"buffer_size": 29911,
+						"regions":
+						{
+							"match":
+							{
+								"flags": 112,
+								"regions":
+								[
+									[
+										281,
+										295
+									],
+									[
+										542,
+										556
+									],
+									[
+										810,
+										824
+									],
+									[
+										1082,
+										1096
+									],
+									[
+										1316,
+										1330
+									],
+									[
+										1619,
+										1633
+									],
+									[
+										1929,
+										1943
+									],
+									[
+										2364,
+										2395
+									],
+									[
+										2693,
+										2724
+									],
+									[
+										3012,
+										3043
+									],
+									[
+										3327,
+										3358
+									],
+									[
+										3642,
+										3673
+									],
+									[
+										3957,
+										3988
+									],
+									[
+										4272,
+										4303
+									],
+									[
+										4588,
+										4619
+									],
+									[
+										4904,
+										4935
+									],
+									[
+										5219,
+										5250
+									],
+									[
+										5522,
+										5553
+									],
+									[
+										5858,
+										5889
+									],
+									[
+										6159,
+										6190
+									],
+									[
+										6474,
+										6505
+									],
+									[
+										6788,
+										6819
+									],
+									[
+										7108,
+										7139
+									],
+									[
+										7439,
+										7470
+									],
+									[
+										7770,
+										7801
+									],
+									[
+										8097,
+										8128
+									],
+									[
+										8424,
+										8455
+									],
+									[
+										8751,
+										8782
+									],
+									[
+										9079,
+										9110
+									],
+									[
+										9348,
+										9379
+									],
+									[
+										9588,
+										9619
+									],
+									[
+										9780,
+										9811
+									],
+									[
+										10047,
+										10078
+									],
+									[
+										10158,
+										10189
+									],
+									[
+										10423,
+										10454
+									],
+									[
+										10572,
+										10603
+									],
+									[
+										10813,
+										10844
+									],
+									[
+										11065,
+										11096
+									],
+									[
+										11322,
+										11353
+									],
+									[
+										11562,
+										11593
+									],
+									[
+										11809,
+										11840
+									],
+									[
+										12005,
+										12036
+									],
+									[
+										12200,
+										12231
+									],
+									[
+										12395,
+										12426
+									],
+									[
+										12590,
+										12621
+									],
+									[
+										12785,
+										12816
+									],
+									[
+										12980,
+										13011
+									],
+									[
+										13183,
+										13214
+									],
+									[
+										13398,
+										13429
+									],
+									[
+										13694,
+										13725
+									],
+									[
+										13970,
+										14001
+									],
+									[
+										14223,
+										14254
+									],
+									[
+										14291,
+										14322
+									],
+									[
+										14515,
+										14546
+									],
+									[
+										14843,
+										14874
+									],
+									[
+										15012,
+										15043
+									],
+									[
+										15341,
+										15372
+									],
+									[
+										15471,
+										15502
+									],
+									[
+										15586,
+										15617
+									],
+									[
+										15713,
+										15744
+									],
+									[
+										15832,
+										15863
+									],
+									[
+										15968,
+										15999
+									],
+									[
+										16105,
+										16136
+									],
+									[
+										16242,
+										16273
+									],
+									[
+										16379,
+										16410
+									],
+									[
+										16516,
+										16547
+									],
+									[
+										16653,
+										16684
+									],
+									[
+										16752,
+										16783
+									],
+									[
+										16984,
+										17015
+									],
+									[
+										17113,
+										17144
+									],
+									[
+										17472,
+										17493
+									],
+									[
+										17731,
+										17752
+									],
+									[
+										17990,
+										18011
+									],
+									[
+										18249,
+										18270
+									],
+									[
+										18487,
+										18508
+									],
+									[
+										18766,
+										18787
+									],
+									[
+										19005,
+										19026
+									],
+									[
+										19285,
+										19306
+									],
+									[
+										19524,
+										19545
+									],
+									[
+										19804,
+										19825
+									],
+									[
+										20063,
+										20084
+									],
+									[
+										20322,
+										20343
+									],
+									[
+										20581,
+										20602
+									],
+									[
+										20839,
+										20860
+									],
+									[
+										21050,
+										21071
+									],
+									[
+										21325,
+										21346
+									],
+									[
+										21577,
+										21598
+									],
+									[
+										21621,
+										21642
+									],
+									[
+										21805,
+										21826
+									],
+									[
+										21845,
+										21866
+									],
+									[
+										21995,
+										22016
+									],
+									[
+										22039,
+										22060
+									],
+									[
+										22223,
+										22244
+									],
+									[
+										22263,
+										22284
+									],
+									[
+										22537,
+										22558
+									],
+									[
+										22709,
+										22730
+									],
+									[
+										23024,
+										23045
+									],
+									[
+										23226,
+										23247
+									],
+									[
+										23529,
+										23550
+									],
+									[
+										23644,
+										23665
+									],
+									[
+										23887,
+										23908
+									],
+									[
+										24161,
+										24182
+									],
+									[
+										24442,
+										24463
+									],
+									[
+										24713,
+										24734
+									],
+									[
+										25082,
+										25103
+									],
+									[
+										25309,
+										25330
+									],
+									[
+										25624,
+										25645
+									],
+									[
+										25868,
+										25889
+									],
+									[
+										26058,
+										26079
+									],
+									[
+										26227,
+										26248
+									],
+									[
+										26564,
+										26585
+									],
+									[
+										26958,
+										26979
+									],
+									[
+										27361,
+										27382
+									],
+									[
+										27684,
+										27705
+									],
+									[
+										27946,
+										27967
+									],
+									[
+										28183,
+										28204
+									],
+									[
+										28416,
+										28437
+									],
+									[
+										28581,
+										28602
+									],
+									[
+										28752,
+										28773
+									],
+									[
+										29026,
+										29047
+									],
+									[
+										29193,
+										29214
+									],
+									[
+										29389,
+										29410
+									],
+									[
+										29561,
+										29582
+									],
+									[
+										29757,
+										29778
+									]
+								],
+								"scope": ""
+							}
+						},
+						"selection":
+						[
+							[
+								25096,
+								25096
+							]
+						],
+						"settings":
+						{
+							"detect_indentation": false,
+							"output_tag": 3,
+							"result_base_dir": "",
+							"result_file_regex": "^([A-Za-z\\\\/<].*):$",
+							"result_line_regex": "^ +([0-9]+):",
+							"scroll_past_end": true,
+							"syntax": "Packages/Default/Find Results.hidden-tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 11663.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/pmc/pmc.c",
+					"settings":
+					{
+						"buffer_size": 34604,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								17520,
+								17528
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 12148.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/common/services/clock/samg/sysclk.h",
+					"settings":
+					{
+						"buffer_size": 12945,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								12287,
+								12308
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 5676.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/flexcom/flexcom.c",
+					"settings":
+					{
+						"buffer_size": 6963,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4552,
+								4583
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2245.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/Libraries/asf-3.22.0/sam/drivers/twi/twi.c",
+					"settings":
+					{
+						"buffer_size": 17444,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								7732,
+								7732
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "/Users/william/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_mcu_peripheral.h",
+					"settings":
+					{
+						"buffer_size": 9409,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5564,
+								5577
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2621.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "/Users/William/Develop/MiCO/Board/MiCOKit-G55/platform.c",
+					"settings":
+					{
+						"buffer_size": 14291,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6331,
+								6331
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1845.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_spi.c",
+					"settings":
+					{
+						"buffer_size": 8917,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5242,
+								5104
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1861.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "/Users/William/Develop/MiCO/Platform/MCU/ATSAMG55/peripherals/platform_uart.c",
+					"settings":
+					{
+						"buffer_size": 15321,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								8606,
+								8606
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 3432.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "/Users/william/Develop/MiCO/Support/MDNSUtils.h",
+					"settings":
+					{
+						"buffer_size": 4089,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3874,
+								3874
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1844.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 34.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.clang":
+	{
+		"height": 188.0
+	},
+	"output.exec":
+	{
+		"height": 100.0
+	},
+	"output.git":
+	{
+		"height": 100.0
+	},
+	"replace":
+	{
+		"height": 64.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"micode",
+				"MICO/MICODefine.h"
+			],
+			[
+				"",
+				"STM32F2xx_StdPeriph_Driver/src/stm32f2xx_i2c.c"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 280.0,
+	"status_bar_visible": true
+}

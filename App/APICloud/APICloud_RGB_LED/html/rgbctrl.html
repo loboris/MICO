@@ -1,0 +1,320 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+		<title>设备联动</title>
+		<link rel="stylesheet" type="text/css" href="../css/header.css">
+		<script type="text/javascript" src="../script/api.js"></script>
+		<script type="text/javascript" src="../script/mqttws31.js"></script>
+		<script type="text/javascript" src="../script/jquery-2.1.3.js"></script>
+		<style>
+			* {
+				margin: 0px;
+				padding: 0px;
+			}
+			body {
+				background-color: #EBEBEB;
+				background-size: cover;
+				font-family: "黑体";
+				font-size: 13px;
+			}
+			.content {
+				margin: 1px;
+				padding: 1px;
+			}
+			.title {
+				margin: 10px 12px 5px 12px;
+				background-color: #FFFFFF;
+				text-align: center;
+				padding: 7px 0;
+				box-shadow: 3px 3px 3px #e1e1e1;
+			}
+			.title span {
+				color: #000000;
+				font-size: 18px;
+				position: relative;
+			}
+			.rgbbtnshow {
+				margin: 5px 12px;
+				padding: 20px 0;
+				background-color: #FFFFFF;
+				text-align: center;
+				box-shadow: 3px 3px 3px #e1e1e1;
+			}
+			.rgbbtnshow img {
+				height: 130px;
+			}
+			.switrgbhow {
+				margin: 5px 12px;
+				height: 114px;
+				background-color: #FFFFFF;
+				text-align: center;
+				box-shadow: 3px 3px 3px #e1e1e1;
+			}
+			.switrgbhow table tr td img {
+				height: 70px;
+			}
+			.humihis {
+				margin: 5px 12px;
+				padding: 20px 0;
+				background-color: #FFFFFF;
+				text-align: center;
+				box-shadow: 3px 3px 3px #e1e1e1;
+				height: 70px;
+			}
+			#backleft {
+				display: block;
+			}
+		</style>
+	</head>
+	<body>
+		<!--顶部标题-->
+		<header id="header" class="header">
+			<a class="left" onclick="checkpage()" id="backleft"><img src="../image/smallicon-2.png" alt=""/></a>
+			<span class="center" id="device_name">设备列表</span>
+		</header>
+		<div class="content">
+			<div class="title">
+				<span>RGB灯控制</span>
+			</div>
+			<div class="rgbbtnshow">
+				<img id="rgbshowimgid" src="../image/main_green.png" alt="">
+			</div>
+			<div class="switrgbhow">
+				<table width="100%">
+					<tr align="center" height="114px">
+						<td id="redbtnid" valign="middle"><img id="redimgid" src="../image/red_off.png" alt=""></td>
+						<td id="greenbtnid" valign="middle"><img id="greenimgid" src="../image/green_on.png" alt=""></td>
+						<td id="yellowbtnid" valign="middle"><img id="yellowimgid" src="../image/yellow_off.png" alt=""></td>
+					</tr>
+				</table>
+			</div>
+			<div class="humihis">
+				<br/>
+				<div id="device_id"></div>
+				<div id="debug"></div>
+			</div>
+		</div>
+	</body>
+	<script>
+		var device_id;
+		var micoMqtt = null;
+		apiready = function() {
+			device_id = api.pageParam.deviceid;
+			document.getElementById('device_name').innerHTML = api.pageParam.devicename;
+			// 如果设备ID不为空，则执行连接MQTT的操作
+			if (device_id !== null) {
+				ez_connect(device_id);
+			}
+			if (api.systemType != 'ios') {
+				api.addEventListener({
+					name : "keyback"
+				}, function(ret, err) {
+					checkpage();
+				});
+			} 
+			if(api.systemVersion > "4.4"){
+				$(".header").css("padding-top", "30px");
+				$(".left").css("top", "32px");
+			}
+		};
+		// 连接MQTT服务
+		function ez_connect(device_id) {
+			document.getElementById('device_id').innerHTML = "设备ID：" + device_id;
+			//首先引用MiCOmqtt
+			micoMqtt = api.require("micoMqtt2");
+			var host = "api.easylink.io";
+			var username = "";
+			var password = "";
+			//clientID，需要按照此标准来定义：v1-app-[MAC]	版本号-app-手机MAC(12位)
+			var clientID = "v1-app-" + parseInt(Math.random() * (1000000000000), 12);
+			var topic = device_id + '/out/#';
+			micoMqtt.startMqtt({
+				micoMqtt : micoMqtt,
+				host : host,
+				username : username,
+				password : password,
+				clientID : clientID,
+				topic : topic
+			}, function(ret, err) {
+				if (ret.status) {
+					console.log("连接成功");
+				} else {
+					console.log("连接失败");
+				}
+			});
+		}
+
+		// 控制按钮显示的事件
+		var nowtag = "";
+		$("#rgbshowimgid").click(function() {
+			var swtimg = $("#rgbshowimgid").attr("src");
+			if ("../image/main_close.png" == swtimg) {
+				//$("#rgbshowimgid").attr("src", "../image/main_red.png");
+				nowtag = "mainon";
+				imgswitch();
+				powerctrl("on");
+			} else {
+				nowtag = "mainoff";
+				imgswitch();
+				powerctrl("off");
+				//$("#rgbshowimgid").attr("src", "../image/main_close.png");
+			}
+		});
+		
+		//控制RGB的开关
+		function powerctrl(pwtag) {
+			var topic = device_id + '/in';
+			var command;
+			if ("on" == pwtag)
+				command = '{"rgbled_switch":true}';
+			else if ("off" == pwtag)
+				command = '{"rgbled_switch":false}';
+			publishcmd(topic, command);
+		}
+
+		//颜色按钮处理
+		$("#redbtnid").click(function() {
+			var swtimg = $("#redimgid").attr("src");
+			if ("../image/red_off.png" == swtimg) {
+				led_red();
+				nowtag = "redon";
+				//$("#redimgid").attr("src", "../image/red_on.png");
+			} else {
+				nowtag = "redoff";
+				//$("#redimgid").attr("src", "../image/red_off.png");
+			}
+			imgswitch();
+		});
+		$("#greenbtnid").click(function() {
+			var swtimg = $("#greenimgid").attr("src");
+			if ("../image/green_off.png" == swtimg) {
+				led_green();
+				nowtag = "greenon";
+				//$("#greenimgid").attr("src", "../image/green_on.png");
+			} else {
+				nowtag = "greenoff";
+				//$("#greenimgid").attr("src", "../image/green_off.png");
+			}
+			imgswitch();
+		});
+		$("#yellowbtnid").click(function() {
+			var swtimg = $("#yellowimgid").attr("src");
+			if ("../image/yellow_off.png" == swtimg) {
+				led_yellow();
+				nowtag = "yellowon";
+				//$("#yellowimgid").attr("src", "../image/yellow_on.png");
+			} else {
+				nowtag = "yellowoff";
+				//$("#yellowimgid").attr("src", "../image/yellow_off.png");
+			}
+			imgswitch();
+		});
+		//灯颜色判断
+		var rgbcolor;
+		function imgswitch() {
+			switch(nowtag) {
+				case "mainon":
+					if ("red" == rgbcolor) {
+						$("#rgbshowimgid").attr("src", "../image/main_red.png");
+					} else if ("green" == rgbcolor) {
+						$("#rgbshowimgid").attr("src", "../image/main_green.png");
+					} else if ("yellow" == rgbcolor) {
+						$("#rgbshowimgid").attr("src", "../image/main_yellow.png");
+					}
+					break;
+				case "mainoff":
+					$("#rgbshowimgid").attr("src", "../image/main_close.png");
+					break;
+				case "redon":
+					$("#redimgid").attr("src", "../image/red_on.png");
+					$("#greenimgid").attr("src", "../image/green_off.png");
+					$("#yellowimgid").attr("src", "../image/yellow_off.png");
+					$("#rgbshowimgid").attr("src", "../image/main_red.png");
+					rgbcolor = "red";
+					break;
+				case "redoff":
+					//$("#redimgid").attr("src", "../image/red_off.png");
+					break;
+				case "greenon":
+					$("#greenimgid").attr("src", "../image/green_on.png");
+					$("#redimgid").attr("src", "../image/red_off.png");
+					$("#yellowimgid").attr("src", "../image/yellow_off.png");
+					$("#rgbshowimgid").attr("src", "../image/main_green.png");
+					rgbcolor = "green";
+					break;
+				case "greenoff":
+					//$("#greenimgid").attr("src", "../image/green_off.png");
+					break;
+				case "yellowon":
+					$("#yellowimgid").attr("src", "../image/yellow_on.png");
+					$("#greenimgid").attr("src", "../image/green_off.png");
+					$("#redimgid").attr("src", "../image/red_off.png");
+					$("#rgbshowimgid").attr("src", "../image/main_yellow.png");
+					rgbcolor = "yellow";
+					break;
+				case "yellowoff":
+					//$("#yellowimgid").attr("src", "../image/yellow_off.png");
+					break;
+			}
+		}
+
+		//发送指令
+		function publishcmd(topic, command) {
+			micoMqtt.publish({
+				topic : topic,
+				command : command
+			}, function(ret, err) {
+			});
+		}
+
+		function led_red() {
+			var topic = device_id + '/in';
+			var command = '{"rgbled_switch":true,"rgbled_hues":0, "rgbled_saturation":100, "rgbled_brightness":100}';
+			publishcmd(topic, command);
+			powerctrl("on");
+		}
+
+		function led_green() {
+			var topic = device_id + '/in';
+			var command = '{"rgbled_switch":true,"rgbled_hues":120, "rgbled_saturation":100, "rgbled_brightness":100}';
+			publishcmd(topic, command);
+			powerctrl("on");
+		}
+
+		function led_yellow() {
+			var topic = device_id + '/in';
+			var command = '{"rgbled_switch":true,"rgbled_hues":60, "rgbled_saturation":100, "rgbled_brightness":100}';
+			publishcmd(topic, command);
+			powerctrl("on");
+		}
+
+		// 日志打印在页面的部分
+		var i = 0;
+		console.log = ( function(old_funct, div_log) {
+				return function(text) {
+					old_funct(text);
+					var p = '';
+					if (i % 2 == 0)
+						p = '<p>';
+					else
+						p = '<p class=\'gray\'>';
+					if ( typeof text === "object")
+						div_log.innerHTML += p + JSON.stringify(text) + '</p>';
+					else
+						div_log.innerHTML += p + text + '</p>';
+					div_log.scrollTop = div_log.scrollHeight;
+					i += 1;
+				};
+			}(console.log.bind(console), document.getElementById("debug")));
+		console.error = console.debug = console.info = console.log;
+		//		返回上一页
+		function checkpage() {
+			//关闭mqtt，关闭的时候需要同事关闭消息接收和MQTT连接
+			micoMqtt.stopMqtt(function(ret, err) {
+			});
+			window.location.href = "./devlist.html";
+		};
+	</script>
+</html>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ProjectWorkspace xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="project_mpw.xsd">
+
+  <SchemaVersion>1.0</SchemaVersion>
+
+  <Header>### uVision Project, (C) Keil Software</Header>
+
+  <WorkspaceName>WorkSpace</WorkspaceName>
+
+  <project>
+    <PathAndName>.\bootloader\RVMDK\bootloader.uvprojx</PathAndName>
+    <NodeIsActive>1</NodeIsActive>
+  </project>
+
+  <project>
+    <PathAndName>.\COM.MXCHIP.BASIC\RVMDK\COM.MXCHIP.BASIC.uvprojx</PathAndName>
+  </project>
+
+  <project>
+    <PathAndName>.\COM.MXCHIP.SPP\RVMDK\COM.MXCHIP.SPP.uvprojx</PathAndName>
+  </project>
+
+  <project>
+    <PathAndName>.\Cloud_RGB_LED\RVMDK\Cloud_RGB_LED.uvprojx</PathAndName>
+  </project>
+
+  <project>
+    <PathAndName>.\Cloud_Read_Humiture\RVMDK\Cloud_Read_Humiture.uvprojx</PathAndName>
+  </project>
+
+  <project>
+    <PathAndName>.\Cloud_RGB_Humiture\RVMDK\Cloud_RGB_Humiture.uvprojx</PathAndName>
+  </project>
+
+  <project>
+    <PathAndName>.\MiCOKit_Enjoy\RVMDK\MiCOKit_Enjoy.uvprojx</PathAndName>
+  </project>
+
+  <project>
+    <PathAndName>.\SiteWhere_Enjoy\RVMDK\SiteWhere_Enjoy.uvprojx</PathAndName>
+  </project>
+
+  <project>
+    <PathAndName>.\Arrayent_Enjoy\RVMDK\Arrayent_Enjoy.uvprojx</PathAndName>
+  </project>
+
+</ProjectWorkspace>
