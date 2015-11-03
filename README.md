@@ -55,4 +55,4 @@ WiFiMCU is developed based on EMW3165 module produced by [MXCHIP.INC](http://en.
 
 ### [Documentation](https://github.com/loboris/MICO/tree/master/Document/WiFiMCU)<br/>
 
-### [Tutoriam](https://fineshang.gitbooks.io/wifimcu-based-on-emw3165-user-manual/content/)<br/>
+### [Tutorial](https://fineshang.gitbooks.io/wifimcu-based-on-emw3165-user-manual/content/)<br/>
