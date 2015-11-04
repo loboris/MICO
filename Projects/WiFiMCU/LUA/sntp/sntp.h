@@ -33,8 +33,4 @@
 
 #include "common.h"
 
-//OSStatus sntp_client_start( void );
-OSStatus sntp_client_start( int tz );
-
-OSStatus sntp_current_time_get( struct tm* time );
-
+OSStatus sntp_client_start( int tz, char* ntpserv );

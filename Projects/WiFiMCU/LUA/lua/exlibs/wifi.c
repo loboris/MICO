@@ -645,8 +645,18 @@ static int lwifi_powersave( lua_State* L )
 static int lwifi_ntp_time (lua_State* L )
 {
   int tz = 0;
-  tz = luaL_checkinteger( L, 1 );
-  if ((tz > 12) || (tz < -12)) { tz = 0; }
+  int npar = 0;
+  size_t len;
+  char *ntpserv = "time1.google.com";
+  npar = lua_gettop(L);
+  
+  if (npar > 0) {
+    tz = luaL_checkinteger( L, 1 );
+    if ((tz > 14) || (tz < -12)) { tz = 0; }
+  }
+  if (npar > 1) {
+    ntpserv = (char *)luaL_checklstring( L, 2, &len );
+  }
   
   LinkStatusTypeDef link;
   memset(&link,0x00,sizeof(link));
@@ -655,13 +665,15 @@ static int lwifi_ntp_time (lua_State* L )
   if(link.is_connected==0)
   {
     lua_pushstring(L,"disconnected");
+    return 1;
   }
   else
   {
-    sntp_client_start(tz);
+    sntp_client_start(tz, (char *)ntpserv);
     lua_pushstring(L,"ntp thread started");
+    lua_pushstring(L,ntpserv);
+    return 2;
   }
-  return 1;
 }
 
 #define MIN_OPT_LEVEL       2

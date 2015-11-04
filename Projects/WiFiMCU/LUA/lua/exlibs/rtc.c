@@ -67,11 +67,60 @@ static int rtc_getalarm( lua_State* L )
 
 static int rtc_standby( lua_State* L )
 {
+   char buff[32];
+   int nsec = luaL_checkinteger( L, 1 );
+   if ((nsec < 0) || (nsec > 84559)) {
+     lua_pushstring(L, "wrong interval"); 
+     return 1;
+   }
+   sprintf(buff,"Going to standby for %d seconds\r\n", nsec);
+   l_message(NULL,buff);
    mico_rtos_suspend_all_thread();
-   MicoSystemStandBy(luaL_checkinteger( L, 1 ));
+   MicoSystemStandBy(nsec);
    mico_rtos_resume_all_thread();
    lua_pushstring(L, "RETURN FROM STANDBY"); 
    return 1;
+}
+
+static int rtc_standbyUntil( lua_State* L )
+{
+    RTC_AlarmTypeDef  RTC_AlarmStructure;
+ 
+    mico_rtos_suspend_all_thread();
+
+    RTC_AlarmStructure.RTC_AlarmTime.RTC_H12     = RTC_HourFormat_24;
+    RTC_AlarmStructure.RTC_AlarmTime.RTC_Hours   = luaL_checkinteger( L, 1 );
+    RTC_AlarmStructure.RTC_AlarmTime.RTC_Minutes = luaL_checkinteger( L, 2 );
+    RTC_AlarmStructure.RTC_AlarmTime.RTC_Seconds = luaL_checkinteger( L, 3 );
+    RTC_AlarmStructure.RTC_AlarmDateWeekDay = 0x31;
+    RTC_AlarmStructure.RTC_AlarmDateWeekDaySel = RTC_AlarmDateWeekDaySel_Date;
+    RTC_AlarmStructure.RTC_AlarmMask = RTC_AlarmMask_DateWeekDay ;
+
+    RTC_AlarmCmd(RTC_Alarm_A, DISABLE);
+    /* Disable the Alarm A */
+    RTC_ITConfig(RTC_IT_ALRA, DISABLE);
+
+    /* Clear RTC Alarm Flag */ 
+    RTC_ClearFlag(RTC_FLAG_ALRAF);
+
+    RTC_SetAlarm(RTC_Format_BIN, RTC_Alarm_A, &RTC_AlarmStructure);
+
+    /* Enable RTC Alarm A Interrupt: this Interrupt will wake-up the system from
+       STANDBY mode (RTC Alarm IT not enabled in NVIC) */
+    RTC_ITConfig(RTC_IT_ALRA, ENABLE);
+
+    /* Enable the Alarm A */
+    RTC_AlarmCmd(RTC_Alarm_A, ENABLE);
+
+    char buff[32];
+    sprintf(buff,"Wake up at %02d:%02d:%02d\r\n", RTC_AlarmStructure.RTC_AlarmTime.RTC_Hours, RTC_AlarmStructure.RTC_AlarmTime.RTC_Minutes, RTC_AlarmStructure.RTC_AlarmTime.RTC_Seconds);
+    l_message(NULL,buff);
+
+    PWR_EnterSTANDBYMode();
+   
+    mico_rtos_resume_all_thread();
+    lua_pushstring(L, "RETURN FROM STANDBY"); 
+    return 1;
 }
 
 static int rtc_set( lua_State* L )
@@ -103,6 +152,7 @@ const LUA_REG_TYPE rtc_map[] =
   { LSTRKEY( "get" ), LFUNCVAL( rtc_get )},
   { LSTRKEY( "getalarm" ), LFUNCVAL( rtc_getalarm )},
   { LSTRKEY( "standby" ), LFUNCVAL( rtc_standby )},
+  { LSTRKEY( "standbyUntil" ), LFUNCVAL( rtc_standbyUntil )},
 #if LUA_OPTIMIZE_MEMORY > 0
 #endif      
   {LNILKEY, LNILVAL}

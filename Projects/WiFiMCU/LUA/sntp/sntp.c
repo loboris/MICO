@@ -40,9 +40,7 @@
 #define ntp_log_trace() custom_log_trace("NTP client")
 
 
-//#define UNIX_OFFSET 		 2208960000U
 #define UNIX_OFFSET 		 2208988800U // seconds from 01/01/1900 to 01/01/1970
-#define NTP_Server               "time1.google.com"
 #define NTP_Port                 123
 #define NTP_Flags                0xdb 
 #define NTP_Stratum              0x0
@@ -55,6 +53,7 @@ static volatile bool _wifiConnected = false;
 static mico_semaphore_t  _wifiConnected_sem = NULL;
 
 static int ntp_time_zone = 0;
+char *NTP_Server  = "time1.google.com";
 
 struct NtpPacket
 {
@@ -110,6 +109,7 @@ void NTPClient_thread(void *arg)
   struct tm *currentTime;
   mico_rtc_time_t time;
   LinkStatusTypeDef wifi_link;
+  int contry = 0;
   
   /* Regisist notifications */
   err = mico_system_notify_register( mico_notify_WIFI_STATUS_CHANGED, (void *)ntpNotify_WifiStatusHandler, NULL );
@@ -142,9 +142,13 @@ void NTPClient_thread(void *arg)
   err = kNoErr;
   require_noerr(err, exit);
 
+   contry=0;
    while(1) {
+     //err = gethostbyname((char *)NTP_Server, (uint8_t *)ipstr, 16);
      err = gethostbyname(NTP_Server, (uint8_t *)ipstr, 16);
-     require_noerr(err, ReConnWithDelay);
+     contry+=1;
+     if (contry > 4) { require_noerr(err, exit); }
+     else { require_noerr(err, ReConnWithDelay); }
      ntp_log("NTP server address: %s",ipstr);
      break;
 
@@ -172,7 +176,7 @@ void NTPClient_thread(void *arg)
       trans_sec = inpacket.trans_ts_sec;
       trans_sec = ntohl(trans_sec);
       current = trans_sec - UNIX_OFFSET + (ntp_time_zone*3600);
-      ntp_log("Time Synchronised, %s, tz=%d\n\r",asctime(gmtime(&current)),ntp_time_zone);
+      ntp_log("Time Synchronised, %s, tz=%d, from %s\n\r",asctime(gmtime(&current)),ntp_time_zone, NTP_Server);
 
       //currentTime = localtime(&current);
       currentTime = gmtime(&current);
@@ -197,27 +201,11 @@ exit:
     return;
 }
 
-OSStatus sntp_client_start( int tz )
+OSStatus sntp_client_start( int tz, char *ntpserv )
 {
   ntp_time_zone = tz;
+  NTP_Server = ntpserv;
+  
   mico_rtos_init_semaphore(&_wifiConnected_sem, 1);
   return mico_rtos_create_thread(NULL, MICO_APPLICATION_PRIORITY, "NTP Client", NTPClient_thread, STACK_SIZE_NTP_CLIENT_THREAD, NULL );
-}
-
-
-OSStatus sntp_current_time_get( struct tm* time )
-{
-  mico_rtc_time_t mico_time;
-  /*Read current time from RTC.*/
-  if( MicoRtcGetTime(&mico_time) == kNoErr ){
-    time->tm_sec = mico_time.sec;
-    time->tm_min = mico_time.min;
-    time->tm_hour = mico_time.hr;
-    time->tm_mday = mico_time.date;
-    time->tm_wday = mico_time.weekday;
-    time->tm_mon = mico_time.month - 1;
-    time->tm_year = mico_time.year + 100;
-    return kNoErr;
-  }else
-    return kGeneralErr;
 }

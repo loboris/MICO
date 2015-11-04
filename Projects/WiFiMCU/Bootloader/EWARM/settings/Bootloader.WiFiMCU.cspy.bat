@@ -25,7 +25,7 @@ if not "%1" == "" goto debugFile
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.2\common\bin\cspybat" -f "C:\LoBo\WiFiMCU\MICO_v2.3\Projects\WiFiMCU\Bootloader\EWARM\settings\Bootloader.WiFiMCU.general.xcl" --backend -f "C:\LoBo\WiFiMCU\MICO_v2.3\Projects\WiFiMCU\Bootloader\EWARM\settings\Bootloader.WiFiMCU.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.2\common\bin\cspybat" -f "C:\LoBo\WiFiMCU\MICO_v2.3_git\Projects\WiFiMCU\Bootloader\EWARM\settings\Bootloader.WiFiMCU.general.xcl" --backend -f "C:\LoBo\WiFiMCU\MICO_v2.3_git\Projects\WiFiMCU\Bootloader\EWARM\settings\Bootloader.WiFiMCU.driver.xcl" 
 
 @echo off 
 goto end 
@@ -34,7 +34,7 @@ goto end
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.2\common\bin\cspybat" -f "C:\LoBo\WiFiMCU\MICO_v2.3\Projects\WiFiMCU\Bootloader\EWARM\settings\Bootloader.WiFiMCU.general.xcl" "--debug_file=%1" --backend -f "C:\LoBo\WiFiMCU\MICO_v2.3\Projects\WiFiMCU\Bootloader\EWARM\settings\Bootloader.WiFiMCU.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.2\common\bin\cspybat" -f "C:\LoBo\WiFiMCU\MICO_v2.3_git\Projects\WiFiMCU\Bootloader\EWARM\settings\Bootloader.WiFiMCU.general.xcl" "--debug_file=%1" --backend -f "C:\LoBo\WiFiMCU\MICO_v2.3_git\Projects\WiFiMCU\Bootloader\EWARM\settings\Bootloader.WiFiMCU.driver.xcl" 
 
 @echo off 
 :end

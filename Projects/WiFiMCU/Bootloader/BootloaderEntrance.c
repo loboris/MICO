@@ -57,7 +57,7 @@ char menu[] =
 #else
 char menu[] =
 "\r\n"
-"MICO bootloader for %s, %s, HARDWARE_REVISION: %s\r\n"
+"MICO bootloader for %s, %s\r\nHARDWARE_REVISION: %s\r\n"
 "+ command ------------------------+ function -------------+\r\n"
 "| 0:BOOTUPDATE    <-r>            | Update bootloader     |\r\n"
 "| 1:FWUPDATE      <-r>            | Update application    |\r\n"
@@ -73,14 +73,16 @@ char menu[] =
 "|    (C) COPYRIGHT 2015 MXCHIP Corporation  By William Xu |\r\n"
 "|    Modified by LoBo 10/2015                             |\r\n"
 "+---------------------------------------------------------+\r\n"
-"| Notes:                                                  |\r\n"
+"| Notes: (use ymodem protocol for file upload/download)   |\r\n"
 "| -dev   flash device number  (0=internal, 1=spi)         |\r\n"
 "| -i     Internal flash       -s   SPI flash              |\r\n"
 "| -e     Erase only           -r   Read from flash        |\r\n"
 "| -start flash start address  -end flash start address    |\r\n"
 "| Example:                                                |\r\n"
-"|   Input \"4 -dev 0 -start 0x0800c000 -end 0x0807ffff\":   |\r\n"
-"|         Update application in embedded flash            |\r\n"
+"|   Input \"4 -dev 0 -start 0x0800c000 -end 0x0807ffff\"    |\r\n"
+"|      or \"4 -i -start 0x0800c000 -end 0x0807ffff\"        |\r\n"
+"|      or \"1\"                                             |\r\n"
+"|   to update application in embedded flash               |\r\n"
 "+---------------------------------------------------------+\r\n";
 #endif
 

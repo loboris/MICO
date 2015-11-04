@@ -118,7 +118,9 @@ static int docall (lua_State *L, int narg, int clear) {
 
 static void print_version (void) {
   l_message(NULL,"\r\n");
-  l_message(NULL,"[ WiFiMCU Team, modified by LoBo @2015 ]\r\n");
+  char temp[128];
+  sprintf(temp,"[ %s WiFiMCU Team, modified by LoBo @2015 ]\r\n",PRT_VERSION);
+  l_message(NULL,temp);
 }
 
 
