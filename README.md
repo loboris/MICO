@@ -18,7 +18,8 @@ MICO
 	1. Install IAR workbench for ARM v7.4 or higher
 
 ###Links:
-* [MICO](http://translate.google.com/translate?depth=1&hl=en&rurl=translate.google.com&sl=auto&tl=en&u=http://mico.io/wiki/doku.php)
+* [MICO 2.3.0.2 API](http://loboris.eu/micoapi)
+* [MICO (Google Translate)](http://translate.google.com/translate?depth=1&hl=en&rurl=translate.google.com&sl=auto&tl=en&u=http://mico.io/wiki/doku.php)
 
 # **WiFiMCU** #
 WiFiMCU is developed based on EMW3165 module produced by [MXCHIP.INC](http://en.mxchip.com/). A Lua interpreter is builded inside with hardware support. A light weight file system and socket protocols can help to realize IoT development easily and quickly. Basically, you can load Lua scripts on your device and then run it on board with nothing more than a terminal connection. <br/>
