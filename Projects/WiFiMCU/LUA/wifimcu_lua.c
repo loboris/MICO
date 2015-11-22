@@ -22,6 +22,7 @@ static void _watchdog_reload_timer_handler( void* arg )
 #define lua_printf      cli_printf
 #define INBUF_SIZE      256
 #define OUTBUF_SIZE     1024
+
 static uint8_t *lua_rx_data;
 static ring_buffer_t lua_rx_buffer;
 static const mico_uart_config_t lua_uart_config =
@@ -38,7 +39,7 @@ static const mico_uart_config_t lua_uart_config =
 //==========================
 int lua_getchar(char *inbuf)
 {
-  if (MicoUartRecv(LUA_UART, inbuf, 1, 50) == 0)
+  if (MicoUartRecv(LUA_UART, inbuf, 1, 10) == 0)
     return 1;
   else
     return 0;
@@ -56,12 +57,12 @@ start:
     memset(buffer, 0, buffer_size);
     while (1)
     {
-       while (lua_getchar(&ch) == 1)// while (rt_device_read(dev4lua.device, 0, &ch, 1) == 1)
+       while (lua_getchar(&ch) == 1)
         {
             if (ch == '\r')/* handle CR key */
             {
                 char next;
-                if (lua_getchar(&next)== 1)//if (rt_device_read(dev4lua.device, 0, &next, 1) == 1)
+                if (lua_getchar(&next)== 1)
                   ch = next;
             }
             else if (ch == 0x7f || ch == 0x08)/* backspace key */
@@ -160,8 +161,9 @@ int application_start( void )
   lua_rx_data = (uint8_t*)malloc(INBUF_SIZE);
   ring_buffer_init( (ring_buffer_t*)&lua_rx_buffer, (uint8_t*)lua_rx_data, INBUF_SIZE );
   MicoUartInitialize( LUA_UART, &lua_uart_config, (ring_buffer_t*)&lua_rx_buffer );
-  mico_rtos_create_thread(NULL, MICO_DEFAULT_WORKER_PRIORITY, "lua_main_thread", lua_main_thread, 20*1024, 0);
-  //while(1) {;}
+  
+  mico_rtos_create_thread(NULL, MICO_DEFAULT_WORKER_PRIORITY, "lua_main_thread", lua_main_thread, 15*1024, 0);
+
   mico_rtos_delete_thread(NULL);
   lua_printf("application_start exit\r\n");
   return 0;

@@ -1,1 +1,6 @@
-include\MicoDrivers\MicoDriverFlash.h		added MICO_PARTITION_LUA
+
+include\MicoDrivers\MicoDriverFlash.h
+	added MICO_PARTITION_LUA
+
+Platform\MCU\STM32F4xx\peripherals\platform_nano_second.c
+	bug fixed

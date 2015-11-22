@@ -1305,6 +1305,12 @@
         <name>$PROJ_DIR$\..\lua\exlibs\net.c</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\lua\exlibs\oleddisp.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\lua\exlibs\oledfont.h</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\lua\exlibs\pwm.c</name>
       </file>
       <file>
@@ -1663,24 +1669,6 @@
             </file>
             <file>
               <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\key\keys.h</name>
-            </file>
-          </group>
-          <group>
-            <name>lcd</name>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\lcd\AsciiLib.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\lcd\AsciiLib.h</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\lcd\oled.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\lcd\oled.h</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\lcd\oledfont.h</name>
             </file>
           </group>
           <group>

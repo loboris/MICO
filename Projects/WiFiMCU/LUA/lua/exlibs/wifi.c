@@ -209,7 +209,7 @@ static int lwifi_startap( lua_State* L )
   signed retry_interval=0;
   lua_getfield(L, 1, "retry_interval");
   if (!lua_isnil(L, -1)){  /* found? */
-      retry_interval= luaL_checknumber( L, -1 );
+      retry_interval= luaL_checkinteger( L, -1 );
       if(retry_interval<=0)
         return luaL_error( L, "retry_interval:>0ms" );
   }
@@ -391,7 +391,7 @@ static int lwifi_startsta( lua_State* L )
   signed retry_interval=0;
   lua_getfield(L, 1, "retry_interval");
   if (!lua_isnil(L, -1)){  /* found? */
-      retry_interval= luaL_checknumber( L, -1 );
+      retry_interval= luaL_checkinteger( L, -1 );
       if(retry_interval<=0)
         return luaL_error( L, "retry_interval:>0ms" );
   }

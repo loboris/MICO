@@ -176,9 +176,8 @@ void NTPClient_thread(void *arg)
       trans_sec = inpacket.trans_ts_sec;
       trans_sec = ntohl(trans_sec);
       current = trans_sec - UNIX_OFFSET + (ntp_time_zone*3600);
-      ntp_log("Time Synchronised, %s, tz=%d, from %s\n\r",asctime(gmtime(&current)),ntp_time_zone, NTP_Server);
+      //ntp_log("Time Synchronised, %s, tz=%d, from %s\n\r",asctime(gmtime(&current)),ntp_time_zone, NTP_Server);
 
-      //currentTime = localtime(&current);
       currentTime = gmtime(&current);
       time.sec = currentTime->tm_sec;
       time.min = currentTime->tm_min ;

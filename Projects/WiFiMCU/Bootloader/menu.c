@@ -1,7 +1,7 @@
 /**
 ******************************************************************************
 * @file    menu.c 
-* @author  William Xu
+* @author  William Xu, modified by LoBo
 * @version V2.0.0
 * @date    05-Oct-2014
 * @brief   his file provides the software which contains the main menu routine.
@@ -284,6 +284,13 @@ void Main_Menu(void)
       err = MicoFlashDisableSecurity( MICO_PARTITION_PARAMETER_1, 0x0, partition->partition_length );
       require_noerr( err, exit);
       SerialDownload( partition->partition_owner, partition->partition_start_addr, partition->partition_length );                        
+    }
+    
+    /***************** Command "8" or "ELUAFLASH": : Erase Lua SPI FLASH FS  *********************/
+    else if(strcmp(cmdname, "ELUAFLASH") == 0 || strcmp(cmdname, "8") == 0) {
+      partition = MicoFlashGetInfo( MICO_PARTITION_LUA );
+      printf ("\n\rErasing Lua SPI FLASH FS content...\n\r");
+      MicoFlashErase( MICO_PARTITION_LUA, 0x0, partition->partition_length );
     }
     
     /***************** Command "4" or "FLASHUPDATE": : Update the Flash  *************************/

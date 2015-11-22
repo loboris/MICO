@@ -35,6 +35,8 @@
 *                    Constants
 ******************************************************/
 
+const uint32_t NR_NS_PER_SECOND     = 1*1000*1000*1000;
+
 /******************************************************
 *                   Enumerations
 ******************************************************/
@@ -68,9 +70,10 @@
 *               Variables Definitions
 ******************************************************/
 
-uint32_t nsclock_nsec =0;
-uint32_t nsclock_sec =0;
-uint32_t prev_cycles = 0;
+static uint32_t nsclock_nsec =0;
+static uint32_t nsclock_sec =0;
+static uint32_t prev_cycles = 0;
+static uint32_t ns_divisor = 0;
 
 /******************************************************
 *               Function Declarations
@@ -87,22 +90,33 @@ uint64_t platform_get_nanosecond_clock_value(void)
     uint32_t diff;
     cycles = DWT->CYCCNT;
 
-    /* add values to the ns part of the time which can be divided by 3 */
-    /* every time such value is added we will increment our clock by 25ns = 1/40 000000( cycle counter is running on the CPU frequency ),  */
-    /* values will be 3, 6, 9, etc */
-    diff = absolute_value((int)(cycles - prev_cycles));
-    nsclock_nsec += ( diff / 3 ) * 25;
+    /* add values to the ns part of the time which can be divided by ns_divisor */
+    /* every time such value is added we will increment our clock by 1 / (MCU_CLOCK_HZ / ns_divisor).
+     * For example, for MCU_CLOCK_HZ of 120MHz, ns_divisor of 3, the granularity is 25ns = 1 / (120MHz/3) or 1 / (40MHz).
+     * Note that the cycle counter is running on the CPU frequency.
+     */
+    /* Values will be a multiple of ns_divisor (e.g. 1*ns_divisor, 2*ns_divisor, 3*ns_divisor, ...).
+     * Roll-over taken care of by subtraction
+     */
+    diff = cycles - prev_cycles;
+    {
+        const uint32_t ns_per_unit = NR_NS_PER_SECOND / (MCU_CLOCK_HZ / ns_divisor);
+        nsclock_nsec += ( (uint64_t)( diff / ns_divisor ) * ns_per_unit);
+    }
 
     /* when ns counter rolls over, add one second */
-    if( nsclock_nsec >= 1000000000 )
+    if( nsclock_nsec >= NR_NS_PER_SECOND )
     {
-        nsclock_sec++;
-        nsclock_nsec = nsclock_nsec - 1000000000;
+        /* Accumulate seconds portion of nanoseconds. */
+        nsclock_sec += (uint32_t)(nsclock_nsec / NR_NS_PER_SECOND);
+        /* Store remaining nanoseconds. */
+        nsclock_nsec = nsclock_nsec - (nsclock_nsec / NR_NS_PER_SECOND) * NR_NS_PER_SECOND;
     }
-    prev_cycles = cycles - (diff % 3);
+    /* Subtract off unaccounted for cycles, so that they are accounted next time. */
+    prev_cycles = cycles - (diff % ns_divisor);
 
     nanos = nsclock_sec;
-    nanos *= 1000000000;
+    nanos *= NR_NS_PER_SECOND;
     nanos += nsclock_nsec;
     return nanos;
 }
@@ -125,6 +139,13 @@ void platform_init_nanosecond_clock(void)
     CYCLE_COUNTING_INIT();
     nsclock_nsec = 0;
     nsclock_sec = 0;
+    ns_divisor = 0;
+    /* Calculate a divisor that will produce an
+     * integer nanosecond value for the CPU
+     * clock frequency.
+     */
+    while (NR_NS_PER_SECOND % (MCU_CLOCK_HZ / ++ns_divisor) != 0);
+
 }
 
 

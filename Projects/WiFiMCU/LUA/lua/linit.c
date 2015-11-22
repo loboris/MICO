@@ -184,7 +184,9 @@ extern const luaR_entry sensor_map[];
 #ifdef USE_RTC_MODULE
 extern const luaR_entry rtc_map[];
 #endif
-
+#ifdef USE_OLED_MODULE
+extern const luaR_entry oled_map[];
+#endif
 
 
 const luaR_table lua_rotable[] = 
@@ -234,6 +236,9 @@ const luaR_table lua_rotable[] =
 #endif    
 #ifdef USE_RTC_MODULE
     {LUA_RTCLIBNAME, rtc_map},
+#endif    
+#ifdef USE_OLED_MODULE
+    {LUA_OLEDLIBNAME, oled_map},
 #endif    
     
     

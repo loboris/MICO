@@ -52,11 +52,40 @@ static int adc_read( lua_State* L )
   return 1;
 }
 
+static int adc_read_mv( lua_State* L )
+{
+  uint32_t adcmv;
+  
+  unsigned pin = luaL_checkinteger( L, 1);
+  MOD_CHECK_ID( adcpin, pin);
+  int adcPinID = wifimcu_adc_map[wifimcu_gpio_map[pin]];  
+  
+  uint16_t data=0;
+  // init ADC
+  if(kNoErr != MicoAdcInitialize((mico_adc_t)adcPinID, 3)){
+    lua_pushnil(L);
+    return 1;
+  }
+  // get ADC data
+  if(kNoErr == MicoAdcTakeSample((mico_adc_t)adcPinID, &data))
+  {
+      adcmv = (uint32_t)data * (3300000 / 4096);
+      data = adcmv / 1000;
+      lua_pushinteger(L,data);
+  }
+  else
+  {// get data error
+    lua_pushnil(L);
+  }  
+  return 1;
+}
+
 #define MIN_OPT_LEVEL  2
 #include "lrodefs.h"
 const LUA_REG_TYPE adc_map[] =
 {
   { LSTRKEY( "read" ), LFUNCVAL( adc_read )},
+  { LSTRKEY( "readmv" ), LFUNCVAL( adc_read_mv )},
 #if LUA_OPTIMIZE_MEMORY > 0
 #endif    
   {LNILKEY, LNILVAL}

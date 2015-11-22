@@ -1,0 +1,27 @@
+** Uncoment in luaconf.h to compile integer version
+//#define LUA_NUMBER_INTEGRAL
+
+===============================
+
+Add in exlibs/user_config.h
+---------------------------
+#define USE_MYMODULE_MODULE
+
+Add in lualib.h
+---------------
+#ifdef USE_MYMODULE_MODULE
+#define LUA_MYMODULELIBNAME	"mymodule"
+LUALIB_API int (luaopen_mymodule) (lua_State *L);
+#endif
+
+Add in linit.c
+--------------
+#ifdef USE_MYMODULE_MODULE
+extern const luaR_entry mymodule_map[];
+#endif
+
+  to luaR_table lua_rotable[] add:
+
+  #ifdef USE_MYMODULE_MODULE
+      {LUA_MYMODULELIBNAME, mymodule_map},
+  #endif    

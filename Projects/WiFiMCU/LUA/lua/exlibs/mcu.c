@@ -44,10 +44,10 @@ static int mcu_reboot( lua_State* L )
 
 static int mcu_memory( lua_State* L )
 {
-   lua_pushinteger(L,MicoGetMemoryInfo()->free_memory);/**< total free space*/
-   lua_pushinteger(L,MicoGetMemoryInfo()->allocted_memory);/**< total allocated space*/
-   lua_pushinteger(L,MicoGetMemoryInfo()->total_memory);/**< maximum total allocated space*/
-   lua_pushinteger(L,MicoGetMemoryInfo()->num_of_chunks); /**< number of free chunks*/
+   lua_pushinteger(L,MicoGetMemoryInfo()->free_memory);     // total free space
+   lua_pushinteger(L,MicoGetMemoryInfo()->allocted_memory); // total allocated space
+   lua_pushinteger(L,MicoGetMemoryInfo()->total_memory);    // maximum total allocated space
+   lua_pushinteger(L,MicoGetMemoryInfo()->num_of_chunks);   // number of free chunks
    return 4;
 }
 static int mcu_chipid( lua_State* L )
