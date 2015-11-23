@@ -103,8 +103,11 @@ start:
             buffer[line_position] = ch;
             ch = 0;
             line_position++;
-            if (line_position >= buffer_size)/* it's a large line, discard it */
-                line_position = 0;
+            if (line_position >= buffer_size) {
+              /* it's a large line, discard it */
+              //line_position = 0;
+              goto start;
+            }
        }
     }    
 }
@@ -151,7 +154,7 @@ int application_start( void )
    }  
   
 //watch dog 
-  MicoWdgInitialize( DEFAULT_WATCHDOG_TIMEOUT);
+  //MicoWdgInitialize( DEFAULT_WATCHDOG_TIMEOUT);
   mico_init_timer(&_watchdog_reload_timer,DEFAULT_WATCHDOG_TIMEOUT/2, _watchdog_reload_timer_handler, NULL);
   mico_start_timer(&_watchdog_reload_timer);
   
