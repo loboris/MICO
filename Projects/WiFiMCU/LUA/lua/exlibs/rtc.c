@@ -15,6 +15,8 @@
 #include "StringUtils.h"
 #include "time.h" 
 
+extern void luaWdgReload( void );
+
 #define TM_RTC_Int_Disable       0x00    /*!< Disable RTC wakeup interrupts */
 
 /* NVIC global Priority set */
@@ -363,7 +365,7 @@ static int rtc_standby( lua_State* L )
   // *** Back from stop ***
   TM_RTC_DisableAlarm(TM_RTC_Alarm_A);
   TM_RTC_DisableAlarm(TM_RTC_Alarm_B);
-  MicoWdgReload();
+  luaWdgReload();
 
   l_message(NULL,"Back from power save mode.");
   return 0;
@@ -446,7 +448,7 @@ static int rtc_standbyUntil( lua_State* L )
   // *** Back from stop ***
   TM_RTC_DisableAlarm(TM_RTC_Alarm_A);
   TM_RTC_DisableAlarm(TM_RTC_Alarm_B);
-  MicoWdgReload();
+  luaWdgReload();
 
   l_message(NULL,"Back from power save mode.");
   return 0;

@@ -55,6 +55,7 @@ extern "C"
   /************************************************************************
  * Uncomment to disable watchdog. For debugging only */
 //#define MICO_DISABLE_WATCHDOG
+#define LUA_SOFT_WATCHDOG
 
 /************************************************************************
  * Uncomment to disable standard IO, i.e. printf(), etc. */

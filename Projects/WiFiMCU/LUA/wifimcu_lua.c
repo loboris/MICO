@@ -2,6 +2,7 @@
 #include "mico_cli.h"
 #include "mico_system.h"
 #include "time.h" 
+#include "platform_config.h"
 
 #include "lua.h"
 
@@ -11,11 +12,35 @@
 
 static mico_timer_t _watchdog_reload_timer;
 
+#ifdef LUA_SOFT_WATCHDOG
+uint32_t soft_wdg = 0;
+static mico_timer_t _soft_watchdog_timer;
+
+//---------------------------------------------------
+static void _soft_watchdog_timer_handler( void* arg )
+{
+  (void)(arg);
+  soft_wdg += DEFAULT_WATCHDOG_TIMEOUT / 100;
+  if (soft_wdg > DEFAULT_WATCHDOG_TIMEOUT) {
+    MicoSystemReboot();
+  }
+}
+#endif
+
+//-------------------------
+void luaWdgReload( void ) {
+#ifndef LUA_SOFT_WATCHDOG
+  MicoWdgReload();
+#else
+  soft_wdg = 0;
+#endif
+}
+
 //-----------------------------------------------------
 static void _watchdog_reload_timer_handler( void* arg )
 {
   (void)(arg);
-  MicoWdgReload();
+  luaWdgReload();
 }
 
 #define LUA_UART        (MICO_UART_1)
@@ -153,8 +178,13 @@ int application_start( void )
      lua_printf("RTC function unsupported\r\n"); 
    }  
   
-//watch dog 
-  //MicoWdgInitialize( DEFAULT_WATCHDOG_TIMEOUT);
+//---watch dog----------
+#ifdef LUA_SOFT_WATCHDOG
+  mico_init_timer(&_soft_watchdog_timer,DEFAULT_WATCHDOG_TIMEOUT/100, _soft_watchdog_timer_handler, NULL);
+  mico_start_timer(&_soft_watchdog_timer);
+#else
+  MicoWdgInitialize( DEFAULT_WATCHDOG_TIMEOUT);
+#endif
   mico_init_timer(&_watchdog_reload_timer,DEFAULT_WATCHDOG_TIMEOUT/2, _watchdog_reload_timer_handler, NULL);
   mico_start_timer(&_watchdog_reload_timer);
   

@@ -14,6 +14,8 @@
 #include <spiffs.h>
 #include <spiffs_nucleus.h>
 
+extern void luaWdgReload( void );
+
 #define LOG_PAGE_SIZE       256
 static u8_t spiffs_work_buf[LOG_PAGE_SIZE*2];
 static u8_t spiffs_fds[32*4];
@@ -34,7 +36,7 @@ static s32_t lspiffs_write(u32_t addr, u32_t size, u8_t *src) {
 
 static s32_t lspiffs_erase(u32_t addr, u32_t size) {
     MicoFlashErase(MICO_PARTITION_LUA,addr,addr+size-1);
-    MicoWdgReload();//in case wathdog
+    luaWdgReload(); //in case wathdog
     return SPIFFS_OK;
   } 
 

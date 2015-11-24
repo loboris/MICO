@@ -15,7 +15,8 @@
 
 #define NUM_TMR 16
 
-extern void _watchdog_reload_timer_handler( void* arg );
+//extern void _watchdog_reload_timer_handler( void* arg );
+extern void luaWdgReload( void );
 
 static int platform_tmr_exists( unsigned pin )
 {
@@ -82,7 +83,7 @@ static int ltmr_delayus( lua_State* L )
 //tmr.wdclr()
 static int ltmr_wdclr( lua_State* L )
 {
-  MicoWdgReload();
+  luaWdgReload();
   return 0;
 }
 static void _tmr_handler( void* arg )

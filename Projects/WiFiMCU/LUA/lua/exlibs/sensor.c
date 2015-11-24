@@ -14,6 +14,7 @@
 #include "mico_wlan.h"
 #include "mico_system.h"
 
+extern void luaWdgReload( void );
 
 // we use cycle counter for precise timing
 #define CYCLE_COUNTING_INIT() \
@@ -1140,7 +1141,7 @@ static int lsensor_18b20_gettemp( lua_State* L )
   tmo = 0;
   n = 0;
   while (tmo < 1000) {
-    MicoWdgReload();
+    luaWdgReload();
     Delay_ms(1);
     if (TM_OneWire_ReadBit()) {
       n += 1;
