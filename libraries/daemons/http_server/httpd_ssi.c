@@ -29,15 +29,15 @@
 *  IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ******************************************************************************
 
-/*
- * Description
- *  SSI processor for simple web server
- *  syntax of a script is
- *   %! <func_name> [optional_arg]
- *   %! : <include html filename>
- *   <standard html>
- *
- */
+
+* Description
+*  SSI processor for simple web server
+*  syntax of a script is
+*   %! <func_name> [optional_arg]
+*   %! : <include html filename>
+*   <standard html>
+*
+*/
 
 
 #include <string.h>

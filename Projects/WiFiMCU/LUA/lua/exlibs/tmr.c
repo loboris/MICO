@@ -86,6 +86,8 @@ static int ltmr_wdclr( lua_State* L )
   luaWdgReload();
   return 0;
 }
+
+// == Timer interrupt handler =======
 static void _tmr_handler( void* arg )
 {
   unsigned id = (unsigned)arg;
@@ -95,6 +97,7 @@ static void _tmr_handler( void* arg )
   lua_call(gL, 0, 0);
   lua_gc(gL, LUA_GCCOLLECT, 0);
 }
+// ==================================
 
 //tmr.start(id,interval,function)
 //id:0~15

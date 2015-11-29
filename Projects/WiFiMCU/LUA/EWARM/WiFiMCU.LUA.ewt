@@ -1051,6 +1051,9 @@
   <group>
     <name>Application</name>
     <file>
+      <name>$PROJ_DIR$\..\mico_config.h</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\..\wifimcu_lua.c</name>
     </file>
   </group>
@@ -1578,37 +1581,10 @@
         <name>$PROJ_DIR$\..\..\..\..\MICO\system\mico_system_para_storage.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\mico_system_power_daemon.c</name>
-      </file>
-      <file>
         <name>$PROJ_DIR$\..\..\..\..\MICO\system\system.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\easylink\system_easylink.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\easylink\system_easylink_delegate.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\easylink\system_easylink_wac.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\system_factory_test.c</name>
-      </file>
-      <file>
         <name>$PROJ_DIR$\..\..\..\..\MICO\system\system_misc.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\tftp_ota\tftp.h</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\tftp_ota\tftp_ota.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\tftp_ota\tftp_ota.h</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\tftp_ota\tftpc.o</name>
       </file>
     </group>
   </group>
@@ -1625,177 +1601,6 @@
     </group>
     <group>
       <name>Drivers</name>
-      <group>
-        <name>MFiAuth</name>
-        <file>
-          <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MicoDriverMFiAuth\MicoDriverMFiAuth.a</name>
-        </file>
-      </group>
-      <group>
-        <name>MiCOKit-EXT</name>
-        <group>
-          <name>sensors</name>
-          <group>
-            <name>ambient_light_sensor</name>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\ambient_light_sensor\apds9930.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\ambient_light_sensor\apds9930.h</name>
-            </file>
-          </group>
-          <group>
-            <name>dc_motor</name>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\dc_motor\dc_motor.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\dc_motor\dc_motor.h</name>
-            </file>
-          </group>
-          <group>
-            <name>infrared_reflective</name>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\infrared_reflective\infrared_reflective.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\infrared_reflective\infrared_reflective.h</name>
-            </file>
-          </group>
-          <group>
-            <name>key</name>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\key\keys.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\key\keys.h</name>
-            </file>
-          </group>
-          <group>
-            <name>light</name>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\light\light_sensor.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\light\light_sensor.h</name>
-            </file>
-          </group>
-          <group>
-            <name>motion_sensor</name>
-            <group>
-              <name>BMA2x2</name>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\BMA2x2\bma2x2.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\BMA2x2\bma2x2.h</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\BMA2x2\bma2x2_user.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\BMA2x2\bma2x2_user.h</name>
-              </file>
-            </group>
-            <group>
-              <name>BMG160</name>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\BMG160\bmg160.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\BMG160\bmg160.h</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\BMG160\bmg160_user.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\BMG160\bmg160_user.h</name>
-              </file>
-            </group>
-            <group>
-              <name>BMM050</name>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\BMM050\bmm050.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\BMM050\bmm050.h</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\BMM050\bmm050_user.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\BMM050\bmm050_user.h</name>
-              </file>
-            </group>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\motion_sensor.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\motion_sensor\motion_sensor.h</name>
-            </file>
-          </group>
-          <group>
-            <name>rgb_led</name>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\rgb_led\hsb2rgb_led.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\rgb_led\hsb2rgb_led.h</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\rgb_led\rgb_led.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\rgb_led\rgb_led.h</name>
-            </file>
-          </group>
-          <group>
-            <name>temp_hum_sensor</name>
-            <group>
-              <name>BME280</name>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\temp_hum_sensor\BME280\bme280.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\temp_hum_sensor\BME280\bme280.h</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\temp_hum_sensor\BME280\bme280_user.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\temp_hum_sensor\BME280\bme280_user.h</name>
-              </file>
-            </group>
-            <group>
-              <name>DHT11</name>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\temp_hum_sensor\DHT11\DHT11.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\temp_hum_sensor\DHT11\DHT11.h</name>
-              </file>
-            </group>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\temp_hum_sensor\temp_hum_sensor.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\temp_hum_sensor\temp_hum_sensor.h</name>
-            </file>
-          </group>
-        </group>
-        <file>
-          <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\micokit_ext.c</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\micokit_ext.h</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\micokit_ext_def.h</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\..\..\..\Platform\Drivers\MiCOKit_EXT\micokit_ext_mfg.c</name>
-        </file>
-      </group>
       <group>
         <name>SPI Flash</name>
         <file>

@@ -74,6 +74,27 @@ static uint32_t Send_Byte (uint8_t c)
   return 0;
 }
 
+//------------------------------------------------------------------------
+static unsigned short crc16(const unsigned char *buf, unsigned long count)
+{
+  unsigned short crc = 0;
+  int i;
+
+  while(count--) {
+          crc = crc ^ *buf++ << 8;
+
+          for (i=0; i<8; i++) {
+                  if (crc & 0x8000) {
+                          crc = crc << 1 ^ 0x1021;
+                  } else {
+                          crc = crc << 1;
+                  }
+          }
+  }
+  return crc;
+}
+
+
 /**
   * @brief  Receive a packet from sender
   * @param  data
@@ -131,6 +152,9 @@ static int32_t Receive_Packet (uint8_t *data, int32_t *length, uint32_t timeout)
   }
   if (data[PACKET_SEQNO_INDEX] != ((data[PACKET_SEQNO_COMP_INDEX] ^ 0xff) & 0xff))
   {
+    return -1;
+  }
+  if (crc16(&data[PACKET_HEADER], packet_size + PACKET_TRAILER) != 0) {
     return -1;
   }
   *length = packet_size;

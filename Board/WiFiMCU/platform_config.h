@@ -36,6 +36,20 @@ extern "C"
 {
 #endif
 
+//-------------------------
+typedef struct {
+	unsigned char  ID;
+	unsigned char  soft_wdg;
+        unsigned long  wdg_tmo;
+        unsigned short stack_size;
+        unsigned short inbuf_size;
+        unsigned long  baud_rate;
+        unsigned char  parity;
+	char           init_file[16];
+        unsigned short crc;
+} lua_system_param_t;
+//-------------------------
+
 
 /******************************************************
 *                      Macros
@@ -55,7 +69,6 @@ extern "C"
   /************************************************************************
  * Uncomment to disable watchdog. For debugging only */
 //#define MICO_DISABLE_WATCHDOG
-#define LUA_SOFT_WATCHDOG
 
 /************************************************************************
  * Uncomment to disable standard IO, i.e. printf(), etc. */
@@ -71,7 +84,7 @@ extern "C"
 
 /************************************************************************
  * Restore default and start easylink after press down EasyLink button for 3 seconds. */
-#define RestoreDefault_TimeOut                      (3000)
+//#define RestoreDefault_TimeOut                      (3000)
 
 /************************************************************************
  * Restore default and start easylink after press down EasyLink button for 3 seconds. */

@@ -57,6 +57,7 @@ static void _gpio_irq_handler( void* arg )
   lua_rawgeti(gL, LUA_REGISTRYINDEX, gpio_cb_ref[pin]);
   lua_call(gL, 0, 0);
 }
+
 // gpio.mode(pin,mode)
 //gpio.mode(pin,gpio.INT,'rising',function)
 static int lgpio_mode( lua_State* L )

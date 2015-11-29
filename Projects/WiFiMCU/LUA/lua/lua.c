@@ -4,7 +4,6 @@
 ** See Copyright Notice in lua.h
 */
 
-
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,13 +17,17 @@
 #include "lualib.h"
 #include "legc.h"
 
-//doit
+// doit
 #include <spiffs.h>
 #include <spiffs_nucleus.h>
+// lobo
+#include "platform_config.h"
+
 extern spiffs fs;
 extern void lua_spiffs_mount();
-static lua_State *globalL = NULL;
+extern lua_system_param_t lua_system_param;
 
+static lua_State *globalL = NULL;
 static const char *progname = LUA_PROGNAME;
 
 
@@ -184,75 +187,106 @@ static int incomplete (lua_State *L, int status) {
   return 0;  /* else... */
 }
 
-
+// Get line from serial input
+//-------------------------------------------------
 static int pushline (lua_State *L, int firstline) {
   char buffer[LUA_MAXINPUT];
   char *b = buffer;
   size_t l;
+  
   const char *prmt = get_prompt(L, firstline);
-  if (lua_readline(L, b, prmt) == 0)
-    return 0;  /* no input */
+  // wait for input
+  if (lua_readline(L, b, prmt) == 0) return 0;  // no input
+  
   l = strlen(b);
-  if (l > 0 && b[l-1] == '\n')  /* line ends with newline? */
-    b[l-1] = '\0';  /* remove it */
-  if (firstline && b[0] == '=')  /* first line starts with `=' ? */
-    lua_pushfstring(L, "return %s", b+1);  /* change it to `return' */
+
+  if (l > 0 && b[l-1] == '\n')            // line ends with newline?
+    b[l-1] = '\0';                        // remove it
+  
+  if (firstline && b[0] == '=')           // first line starts with '=' ?
+    lua_pushfstring(L, "return %s", b+1); // change it to 'return'
   else
     lua_pushstring(L, b);
-  lua_freeline(L, b);
+
+  lua_freeline(L, b); // lobo: does nothing
   return 1;
 }
 
-
+//----------------------------------
 static int loadline (lua_State *L) {
   int status;
+  
   lua_settop(L, 0);
-  if (!pushline(L, 1))
-    return -1;  /* no input */
-  for (;;) {  /* repeat until gets a complete line */
+  
+  // wait for first line
+  if (!pushline(L, 1)) return -1;  // *** no input
+  
+  for (;;) {
+  // repeat until gets a complete line
+    while (lua_gettop(L) > 1) { // lobo
+      lua_remove(L, 1);
+    }
     status = luaL_loadbuffer(L, lua_tostring(L, 1), lua_strlen(L, 1), "=stdin");
-    if (!incomplete(L, status)) break;  /* cannot try to add lines? */
-    if (!pushline(L, 0))  /* no more input? */
-      return -1;
-    lua_pushliteral(L, "\n");  /* add a new line... */
-    lua_insert(L, -2);  /* ...between the two lines */
-    lua_concat(L, 3);  /* join them */
+    
+    if (!incomplete(L, status)) break;  // cannot try to add lines?
+    
+    if (!pushline(L, 0)) return -1; // *** no more input
+
+    lua_pushliteral(L, "\n");  // add a new line...
+    lua_insert(L, -2);         // ...between the two lines
+    lua_concat(L, 3);          // and join them
   }
-  lua_saveline(L, 1);
-  lua_remove(L, 1);  /* remove line */
+
+  lua_saveline(L, 1);  // does nothing
+  lua_remove(L, 1);    //
   return status;
 }
-//doit
+
+// doit/lobo
+//--------------------------------
 static void mydofile(lua_State *L)
 {
-  char *fn="init.lua";
+  char fn[64];
   int file_fd=-1;
+  char *p_f = &lua_system_param.init_file[0];
+
   lua_spiffs_mount();
   
+  if (strlen(lua_system_param.init_file) == 0) {
+    l_message(NULL,"Init file not defined.");
+    return;
+  }
+  sprintf(fn, p_f);
   file_fd = SPIFFS_open(&fs,fn,SPIFFS_RDONLY,0);
   if(file_fd<0)
   {
-    l_message(NULL,"init.lua not found");
+    sprintf(fn,"Init file \"%s\" not found",lua_system_param.init_file);
+    l_message(NULL,fn);
   }
   else
   {
      SPIFFS_close(&fs,file_fd);
-     l_message(NULL,"Executing init.lua...");
-     dofile(L,"init.lua");
+     sprintf(fn,"Executing init file \"%s\" ...",lua_system_param.init_file);
+     l_message(NULL,fn);
+     sprintf(fn, p_f);
+     dofile(L,fn);
   }    
 }
 
+//================================
 static void dotty (lua_State *L) {
   int status;
   const char *oldprogname = progname;
   
-  mydofile(L);//doit
+  mydofile(L); // execute init.lua if exists
     
   progname = NULL;
   while ((status = loadline(L)) != -1) {
     if (status == 0) status = docall(L, 0, 0);
     report(L, status);
-    if (status == 0 && lua_gettop(L) > 0) {  /* any result to print? */
+    
+    if (status == 0 && lua_gettop(L) > 0) {
+    // any result to print?
       lua_getglobal(L, "print");
       lua_insert(L, 1);
       if (lua_pcall(L, lua_gettop(L)-1, 0, 0) != 0)
@@ -260,13 +294,11 @@ static void dotty (lua_State *L) {
                                "error calling " LUA_QL("print") " (%s)",
                                lua_tostring(L, -1)));
     }
-    lua_gc(L, LUA_GCCOLLECT, 0);//doit
+    lua_gc(L, LUA_GCCOLLECT, 0); //doit
   }
   lua_settop(L, 0);  /* clear stack */
   
   luai_writeline();//doit
-  /*fputs("\n", stdout);
-  fflush(stdout);*/
   progname = oldprogname;
 }
 
@@ -381,14 +413,16 @@ struct Smain {
   int status;
 };
 
-
+//===============================
 static int pmain (lua_State *L) {
   struct Smain *s = (struct Smain *)lua_touserdata(L, 1);
   char **argv = s->argv;
   int script;
   int has_i = 0, has_v = 0, has_e = 0;
+  
   globalL = L;
   if (argv[0] && argv[0][0]) progname = argv[0];
+  
   lua_gc(L, LUA_GCSTOP, 0);  /* stop collector during initialization */
   luaL_openlibs(L);  /* open libraries */
   lua_gc(L, LUA_GCRESTART, 0);
@@ -425,6 +459,7 @@ int lua_main (int argc, char **argv) {
 #endif
   int status;
   struct Smain s;
+  
   lua_State *L = lua_open();  /* create state */
   if (L == NULL) {
     l_message(argv[0], "cannot create state: not enough memory");
@@ -433,7 +468,9 @@ int lua_main (int argc, char **argv) {
   legc_set_mode( L, EGC_ALWAYS, 0);// always run EGC before an allocation
   s.argc = argc;
   s.argv = argv;
+  
   status = lua_cpcall(L, &pmain, &s);
+  
   report(L, status);
   lua_close(L);
   return (status || s.status) ? EXIT_FAILURE : EXIT_SUCCESS;

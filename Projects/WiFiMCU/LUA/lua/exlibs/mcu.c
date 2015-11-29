@@ -14,7 +14,226 @@
 #include "mico.h"
 #include "system.h"
 #include "StringUtils.h"
+#include "CheckSumUtils.h"
 
+   
+extern lua_system_param_t lua_system_param;
+extern uint16_t _get_luaparamsCRC( void );
+
+
+//===================================
+static int get_params( lua_State* L )
+{
+  lua_newtable( L );
+  lua_pushinteger(L, lua_system_param.soft_wdg );
+  lua_setfield( L, -2, "soft_wdg" );
+  lua_pushinteger(L, lua_system_param.wdg_tmo );
+  lua_setfield( L, -2, "wdg_tmo" );
+  lua_pushinteger(L, lua_system_param.stack_size );
+  lua_setfield( L, -2, "stack_size" );
+  lua_pushinteger(L, lua_system_param.inbuf_size );
+  lua_setfield( L, -2, "inbuf_size" );
+  lua_pushstring(L, lua_system_param.init_file );
+  lua_setfield( L, -2, "init_file" );
+  lua_pushinteger(L, lua_system_param.baud_rate );
+  lua_setfield( L, -2, "baud_rate" );
+  if (lua_system_param.parity == NO_PARITY)
+    lua_pushstring(L, "NO_PARITY");
+  else if (lua_system_param.parity == ODD_PARITY)
+    lua_pushstring(L, "ODD_PARITY");
+  else if (lua_system_param.parity == EVEN_PARITY)
+    lua_pushstring(L, "EVEN_PARITY");
+  else
+    lua_pushstring(L, "?");
+  lua_setfield( L, -2, "parity" );
+
+  if (_get_luaparamsCRC() == lua_system_param.crc) lua_pushstring(L,"Ok");
+  else lua_pushstring(L,"Error");
+  lua_setfield( L, -2, "crc" );
+
+  return 1;
+}
+
+//====================================
+static int get_sparams( lua_State* L )
+{
+  char buff[LUAL_BUFFERSIZE];
+
+  sprintf(buff,"   soft_wdg = %d", lua_system_param.soft_wdg);
+  l_message(NULL,buff);
+  sprintf(buff,"    wdg_tmo = %d", lua_system_param.wdg_tmo);
+  l_message(NULL,buff);
+  sprintf(buff," stack_size = %d", lua_system_param.stack_size);
+  l_message(NULL,buff);
+  sprintf(buff," inbuf_size = %d", lua_system_param.inbuf_size);
+  l_message(NULL,buff);
+  sprintf(buff,"  init_file = \"%s\"", lua_system_param.init_file);
+  l_message(NULL,buff);
+  sprintf(buff,"  baud_rate = %d", lua_system_param.baud_rate);
+  l_message(NULL,buff);
+  if (lua_system_param.parity == NO_PARITY)
+    l_message(NULL,"     parity = 'n'");
+  else if (lua_system_param.parity == ODD_PARITY)
+    l_message(NULL,"     parity = 'o'");
+  else if (lua_system_param.parity == EVEN_PARITY)
+    l_message(NULL,"     parity = 'e'");
+
+  if (_get_luaparamsCRC() == lua_system_param.crc) l_message(NULL,"CRC ok.");
+  else l_message(NULL,"BAD crc");
+  
+  return 0;
+}
+
+//====================================
+static int set_sparams( lua_State* L )
+{
+  uint8_t change = 0;
+  const char* buf;
+  uint32_t lua_param_offset = 0x0;
+  uint8_t *p_id = &lua_system_param.ID;
+  char *p_f = &lua_system_param.init_file[0];
+  
+  if (!lua_istable(L, 1)) {
+    l_message( NULL, "table arg needed" );
+    return 0;
+  }
+
+  lua_getfield(L, 1, "soft_wdg");
+  if (!lua_isnil(L, -1)) {  // found?
+    if( lua_isstring(L, -1) )   // deal with the string
+    {
+      uint8_t wd = luaL_checkinteger( L, -1 );
+      if (wd == 0) lua_system_param.soft_wdg=0;
+      else lua_system_param.soft_wdg=1;
+      l_message( NULL, "updated: soft_wdg, RESET in 10 sec!" );
+      change++;
+    } else
+    {
+      l_message( NULL, "wrong arg type: soft_wdg" );
+    }
+  }
+
+  lua_getfield(L, 1, "wdg_tmo");
+  if (!lua_isnil(L, -1)) {  // found?
+    if( lua_isstring(L, -1) )   // deal with the string
+    {
+      uint32_t wdtmo = luaL_checkinteger( L, -1 );
+      if (wdtmo < 2000 || wdtmo > 3600000) wdtmo = 10000;
+      lua_system_param.wdg_tmo = wdtmo;
+      l_message( NULL, "updated: wdg_tmo" );
+      change++;
+    } else
+    {
+      l_message( NULL, "wrong arg type: wdg_tmo" );
+    }
+  }
+
+  lua_getfield(L, 1, "stack_size");
+  if (!lua_isnil(L, -1)) {  // found?
+    if( lua_isstring(L, -1) )   // deal with the string
+    {
+      uint16_t stksz = luaL_checkinteger( L, -1 );
+      if (stksz < 5000 || stksz > 31000) stksz = 20*1024;
+      lua_system_param.stack_size = stksz;
+      l_message( NULL, "updated: stack_size" );
+      change++;
+    } else
+    {
+      l_message( NULL, "wrong arg type: stack_size" );
+    }
+  }
+
+  lua_getfield(L, 1, "inbuf_size");
+  if (!lua_isnil(L, -1)) {  // found?
+    if( lua_isstring(L, -1) )   // deal with the string
+    {
+      uint16_t inbsz = luaL_checkinteger( L, -1 );
+      if (inbsz < 128 || inbsz > 1024) inbsz = 256;
+      lua_system_param.inbuf_size = inbsz;
+      l_message( NULL, "updated: inbuf_size" );
+      change++;
+    } else
+    {
+      l_message( NULL, "wrong arg type: inbuf_size" );
+    }
+  }
+
+  lua_getfield(L, 1, "baud_rate");
+  if (!lua_isnil(L, -1)) {  // found?
+    if( lua_isstring(L, -1) )   // deal with the string
+    {
+      uint32_t bdr = luaL_checkinteger( L, -1 );
+      lua_system_param.baud_rate = bdr;
+      l_message( NULL, "updated: baud_rate" );
+      change++;
+    } else
+    {
+      l_message( NULL, "wrong arg type: baud_rate" );
+    }
+  }
+
+  lua_getfield(L, 1, "parity");
+  if (!lua_isnil(L, -1)) {  // found?
+    if( lua_isstring(L, -1) )   // deal with the string
+    {
+      buf = luaL_checkstring( L, -1 );
+      if (strlen(buf) == 1) {
+        change++;
+        if(strcmp(buf, "n") == 0)
+          lua_system_param.parity = NO_PARITY;
+        else if(strcmp(buf, "o") == 0)
+          lua_system_param.parity = ODD_PARITY;
+        else if(strcmp(buf, "e") == 0)
+          lua_system_param.parity = EVEN_PARITY;
+        else {
+          l_message( NULL, "arg parity should be 'n' or 'o' or 'e' " );
+          change--;
+        }
+        l_message( NULL, "updated: parity" );
+      }
+      else {
+        l_message( NULL, "arg parity should be 'n' or 'o' or 'e' " );
+      }
+    } else
+    {
+      l_message( NULL, "wrong arg type: parity" );
+    }
+  }
+
+  lua_getfield(L, 1, "init_file");
+  if (!lua_isnil(L, -1)) {  // found?
+    if( lua_isstring(L, -1) )   // deal with the string
+    {
+      buf = luaL_checkstring( L, -1 );
+      if (strlen(buf) < 16) {
+        sprintf(p_f, buf);
+        change++;
+        l_message( NULL, "updated: init_file" );
+      }
+      else {
+        l_message( NULL, "file name too long" );
+      }
+    } else
+    {
+      l_message( NULL, "wrong arg type: init_file" );
+    }
+  }
+
+  if (change) {
+    lua_system_param.crc = _get_luaparamsCRC();
+    MicoFlashErase(MICO_PARTITION_PARAMETER_1, 0, sizeof(lua_system_param_t));
+    lua_param_offset = 0;
+    MicoFlashWrite(MICO_PARTITION_PARAMETER_1, &lua_param_offset, p_id, sizeof(lua_system_param_t));
+    l_message( NULL, "New params saved." );
+  }
+  else {
+    l_message( NULL, "Params to change: 'soft_wdog', 'baud_rate', 'init_file'" );
+  }
+  
+  return 0;
+}
+
+//====================================
 static int mcu_version( lua_State* L )
 {
   lua_pushstring(L,MCU_VERSION);
@@ -91,6 +310,9 @@ const LUA_REG_TYPE mcu_map[] =
   { LSTRKEY( "mem" ), LFUNCVAL( mcu_memory )},
   { LSTRKEY( "chipid" ), LFUNCVAL( mcu_chipid )},
   { LSTRKEY( "bootreason" ), LFUNCVAL(mcu_bootreason)},
+  { LSTRKEY( "getparams" ), LFUNCVAL(get_params)},
+  { LSTRKEY( "sgetparams" ), LFUNCVAL(get_sparams)},
+  { LSTRKEY( "setparams" ), LFUNCVAL(set_sparams)},
 #if LUA_OPTIMIZE_MEMORY > 0
 #endif      
   {LNILKEY, LNILVAL}

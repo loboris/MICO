@@ -350,7 +350,8 @@ static int db_errorfb (lua_State *L) {
   int firstpart = 1;  /* still before eventual `...' */
   int arg;
   lua_State *L1 = getthread(L, &arg);
-  lua_Debug ar;
+  //lua_Debug ar;
+  
   if (lua_isnumber(L, arg+2)) {
     level = (int)lua_tointeger(L, arg+2);
     lua_pop(L, 1);

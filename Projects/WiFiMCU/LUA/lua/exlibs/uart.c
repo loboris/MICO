@@ -7,6 +7,10 @@
 #include "lualib.h"
 #include "lrotable.h"
 #include "mico_platform.h"
+//#include "mico_cli.h"
+
+extern void luaWdgReload( void );
+int lua_putstr(const char *msg);
 
 static lua_State *gL = NULL;
 static int usr_uart_cb_ref = LUA_NOREF;
@@ -196,6 +200,52 @@ static int uart_send( lua_State* L )
   }
   return 0;
 }
+
+//uart.getchar(uart_id,timeout,timer_id)
+//=====================================
+static int uart_getchar( lua_State* L )
+{
+  char ch[2];
+  char buf[2];
+
+  //uint16_t id = luaL_checkinteger( L, 1 );
+  uint32_t tmo = luaL_checkinteger( L, 2 );
+  //MOD_CHECK_ID( uart, id );
+
+  uint32_t wt = 0;
+  buf[0] = '\0';
+  buf[1] = '\0';
+  while (wt < tmo) {
+    if (MicoUartRecv(MICO_UART_1, &ch, 1, 100) == 0) {
+      buf[0] = ch[0];
+      break;
+    }
+    wt += 100;
+    luaWdgReload();
+  }
+  
+  lua_pushstring(L, buf);
+  return 1;
+}
+  
+//uart.write(uart_id,c)
+//===================================
+static int uart_write( lua_State* L )
+{
+  const char* buf;
+  size_t len;
+
+  //uint16_t id = luaL_checkinteger( L, 1 );
+  //MOD_CHECK_ID( uart, id );
+
+  luaL_checktype( L, 2, LUA_TSTRING );
+  buf = lua_tolstring( L, 2, &len );
+  //MicoUartSend( MICO_UART_1, buf, 1);
+  if (len == 1) lua_putstr(buf);
+  return 0;
+}
+  
+
 #define MIN_OPT_LEVEL   2
 #include "lrodefs.h"
 const LUA_REG_TYPE uart_map[] =
@@ -203,6 +253,8 @@ const LUA_REG_TYPE uart_map[] =
   { LSTRKEY( "setup" ), LFUNCVAL( uart_setup )},
   { LSTRKEY( "on" ), LFUNCVAL( uart_on )},
   { LSTRKEY( "send" ), LFUNCVAL( uart_send )},
+  { LSTRKEY( "getchar" ), LFUNCVAL( uart_getchar )},
+  { LSTRKEY( "write" ), LFUNCVAL( uart_write )},
 #if LUA_OPTIMIZE_MEMORY > 0
 #endif      
   {LNILKEY, LNILVAL}

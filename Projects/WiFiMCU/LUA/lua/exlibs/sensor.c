@@ -883,7 +883,7 @@ uint8_t DHT_IN_Length(uint8_t hilo, uint32_t dly) {
   while (cycles < dly) {
     cycles = DWT->CYCCNT;
     if (hilo) {
-      // measure high state
+      // *** measure high state
       if (bitstart == 0) {
         // wait for high
         if ( MicoGpioInputGet((mico_gpio_t)PinID_DHT11) != 0 ) {
@@ -899,7 +899,7 @@ uint8_t DHT_IN_Length(uint8_t hilo, uint32_t dly) {
       }
     }
     else {
-      // measure low state
+      // *** measure low state
       if (bitstart == 0) {
         // wait for low
         if ( MicoGpioInputGet((mico_gpio_t)PinID_DHT11) == 0 ) {
@@ -942,9 +942,9 @@ void DHT_OUT_SetWait(uint8_t hilo, uint32_t dly) {
 //-------------------------
 static void DHT11_Rst(void)	   
 {
-  DHT_OUT_SetWait(0,1000);
-  Delay_ms(20); 
-  DHT_OUT_SetWait(1,4000);
+  DHT_OUT_SetWait(0,1000);  // data=0, wait 10 usec
+  Delay_ms(20);             // wait 20 msec
+  DHT_OUT_SetWait(1,4000);  // data=1, wait 40 usec
 }
 
 //------------------------------
@@ -952,13 +952,13 @@ static uint8_t DHT11_Check(void)
 {   
   uint8_t len = 0;
   
-  // DHT11 Pull down 40~80us
+  // measure DHT11 Pull down pulse (~80us)
   len = DHT_IN_Length(0, 10000);
   if ((len < 40) || (len >= 100)) return 1;
-  //DHT11 Pull up 40~80us
+  // measure DHT11 Pull up pulse (~80us)
   len = DHT_IN_Length(1, 10000);
   if ((len < 40) || (len >= 100)) return 1;
-  return 0;
+  return 0;  // OK
 }
 
 //-----------------------------
@@ -1032,6 +1032,8 @@ static int lsensor_dht11_init( lua_State* L )
   pin = luaL_checkinteger( L, 1 );
   MOD_CHECK_ID( gpio, pin );
   PinID_DHT11 = wifimcu_gpio_map[pin];
+  DHT_OUT_SetWait(1,4000);  // data=1, wait 40 usec
+  Delay_ms(50);             // wait 50 msec
   
   if(DHT11_Init()==0)
     lua_pushboolean(L, true);

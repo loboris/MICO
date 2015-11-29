@@ -94,14 +94,14 @@ extern const mico_logic_partition_t     mico_partitions[];
 OSStatus mico_platform_init( void )
 {
 #if defined(__CC_ARM)
-  platform_log("Platform initialised, build by RVMDK");
+//  platform_log("Platform initialised, build by RVMDK");
 #elif defined (__IAR_SYSTEMS_ICC__)
-  platform_log("Platform initialised, build by IAR");
+//  platform_log("Platform initialised, build by IAR");
 #endif
   
   if ( true == platform_watchdog_check_last_reset() )
   {
-    platform_log( "WARNING: Watchdog reset occured previously. Please see platform_watchdog.c for debugging instructions." );
+    platform_log( "WARNING: Watchdog reset occured previously." );
   }
 
 #ifdef USES_RESOURCE_FILESYSTEM

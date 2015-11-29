@@ -14,6 +14,8 @@
 
 #include "lua.h"
 
+extern void LUA_DisableInterrupts(void);
+extern unsigned char LUA_EnableInterrupts(void);
 
 typedef LUAI_UINT32 lu_int32;
 

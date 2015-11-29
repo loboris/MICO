@@ -16,6 +16,7 @@
 #include "time.h" 
 
 extern void luaWdgReload( void );
+extern lua_system_param_t lua_system_param;
 
 #define TM_RTC_Int_Disable       0x00    /*!< Disable RTC wakeup interrupts */
 
@@ -309,12 +310,16 @@ static int rtc_standby( lua_State* L )
     l_message( NULL, "mode has to be 0 or 1" );
     return 0;
   }
+  if (mode==1 && lua_system_param.soft_wdg==0) {
+    l_message(NULL,"IWDG active, cannot enter STOP mode."); 
+    return 0;
+  }
   int nsec = luaL_checkinteger( L, 2 );
   if ((nsec < 1) || (nsec > 84559)) {
     l_message(NULL,"wrong interval (1~84599)"); 
     return 0;
   }
-  
+
   TM_RTC_DisableAlarm(TM_RTC_Alarm_A);
   TM_RTC_DisableAlarm(TM_RTC_Alarm_B);
 
@@ -381,6 +386,10 @@ static int rtc_standbyUntil( lua_State* L )
   uint8_t mode = luaL_checkinteger( L, 1 );
   if (mode > 1) {
     l_message( NULL, "mode has to be 0 or 1" );
+    return 0;
+  }
+  if (mode==1 && lua_system_param.soft_wdg==0) {
+    l_message(NULL,"IWDG active, cannot enter STOP mode."); 
     return 0;
   }
   

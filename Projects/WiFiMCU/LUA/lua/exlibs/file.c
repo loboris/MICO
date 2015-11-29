@@ -10,11 +10,14 @@
 #include "platform.h"
 #include "mico_platform.h"
 #include "user_config.h"
+#include "CheckSumUtils.h"
+#include "StringUtils.h"
 
 #include <spiffs.h>
 #include <spiffs_nucleus.h>
 
 extern void luaWdgReload( void );
+
 
 #define LOG_PAGE_SIZE       256
 static u8_t spiffs_work_buf[LOG_PAGE_SIZE*2];
@@ -24,22 +27,54 @@ spiffs fs;
 #define FILE_NOT_OPENED 0
 static volatile int file_fd = FILE_NOT_OPENED;
 
+#define PACKET_SEQNO_INDEX      (1)
+#define PACKET_SEQNO_COMP_INDEX (2)
+
+#define PACKET_HEADER           (3)
+#define PACKET_TRAILER          (2)
+#define PACKET_OVERHEAD         (PACKET_HEADER + PACKET_TRAILER)
+#define PACKET_SIZE             (128)
+#define PACKET_1K_SIZE          (1024)
+
+#define FILE_SIZE_LENGTH        (16)
+
+#define SOH                     (0x01)  /* start of 128-byte data packet */
+#define STX                     (0x02)  /* start of 1024-byte data packet */
+#define EOT                     (0x04)  /* end of transmission */
+#define ACK                     (0x06)  /* acknowledge */
+#define NAK                     (0x15)  /* negative acknowledge */
+#define CA                      (0x18)  /* two of these in succession aborts transfer */
+#define CRC16                   (0x43)  /* 'C' == 0x43, request 16-bit CRC */
+
+#define ABORT1                  (0x41)  /* 'A' == 0x41, abort by user */
+#define ABORT2                  (0x61)  /* 'a' == 0x61, abort by user */
+
+#define NAK_TIMEOUT             (1000)
+#define MAX_ERRORS              (45)
+
+
+
+
+//------------------------------------------------------------
 static s32_t lspiffs_read(u32_t addr, u32_t size, u8_t *dst) {
     MicoFlashRead(MICO_PARTITION_LUA, &addr,dst,size);
     return SPIFFS_OK;
   }
 
+//-------------------------------------------------------------
 static s32_t lspiffs_write(u32_t addr, u32_t size, u8_t *src) {
     MicoFlashWrite(MICO_PARTITION_LUA,&addr,src,size);
     return SPIFFS_OK;
   }
 
+//--------------------------------------------------
 static s32_t lspiffs_erase(u32_t addr, u32_t size) {
     MicoFlashErase(MICO_PARTITION_LUA,addr,addr+size-1);
     luaWdgReload(); //in case wathdog
     return SPIFFS_OK;
   } 
 
+//-----------------------
 void lua_spiffs_mount() {
     mico_logic_partition_t* part;
     spiffs_config cfg;    
@@ -72,7 +107,8 @@ void lua_spiffs_mount() {
       0);
 }
 
-int mode2flag(char *mode){
+//--------------------------------
+static int mode2flag(char *mode) {
   if(strlen(mode)==1){
   	if(strcmp(mode,"w")==0)
   	  return SPIFFS_WRONLY|SPIFFS_CREAT|SPIFFS_TRUNC;
@@ -96,7 +132,748 @@ int mode2flag(char *mode){
   }
 }
 
+//-----------------------------------------------------------
+static uint16_t Cal_CRC16(const uint8_t* data, uint32_t size)
+{
+  CRC16_Context contex;
+  uint16_t ret;
+  
+  CRC16_Init( &contex );
+  CRC16_Update( &contex, data, size );
+  CRC16_Final( &contex, &ret );
+  return ret;
+}
+
+/*
+//------------------------------------------------------------
+static uint8_t CalChecksum(const uint8_t* data, uint32_t size)
+{
+  uint32_t sum = 0;
+  const uint8_t* dataEnd = data+size;
+
+  while(data < dataEnd )
+    sum += *data++;
+
+  return (sum & 0xffu);
+}
+*/
+
+//------------------------------------------------------------------------
+static unsigned short crc16(const unsigned char *buf, unsigned long count)
+{
+  unsigned short crc = 0;
+  int i;
+
+  while(count--) {
+          crc = crc ^ *buf++ << 8;
+
+          for (i=0; i<8; i++) {
+                  if (crc & 0x8000) {
+                          crc = crc << 1 ^ 0x1021;
+                  } else {
+                          crc = crc << 1;
+                  }
+          }
+  }
+  return crc;
+}
+
+
+//--------------------------------------------------------
+static int32_t Receive_Byte (uint8_t *c, uint32_t timeout)
+{
+  if (MicoUartRecv( MICO_UART_1, c, 1, timeout ) != kNoErr)
+    return -1; // Timeout
+  else
+    return 0;  // ok
+}
+
+//-----------------------------------
+static uint32_t Send_Byte (uint8_t c)
+{
+  MicoUartSend( MICO_UART_1, &c, 1 );
+  return 0;
+}
+
+//----------------------------
+static void send_CA ( void ) {
+  Send_Byte(CA);
+  Send_Byte(CA);
+  mico_thread_msleep(500);
+  luaWdgReload();
+}
+
+
+/**
+  * @brief  Receive a packet from sender
+  * @param  data
+  * @param  length
+  * @param  timeout
+  *     0: end of transmission
+  *    -1: abort by sender
+  *    >0: packet length
+  * @retval 0: normally return
+  *        -1: timeout or packet error
+  *        -2: crc error
+  *         1: abort by user
+  */
+//------------------------------------------------------------------------------
+static int32_t Receive_Packet (uint8_t *data, int32_t *length, uint32_t timeout)
+{
+  uint16_t i, packet_size;
+  uint8_t c;
+  //uint16_t tempCRC;
+  *length = 0;
+  
+  luaWdgReload();
+  if (Receive_Byte(&c, timeout) != 0)
+  {
+    luaWdgReload();
+    return -1;
+  }
+  luaWdgReload();
+  switch (c)
+  {
+    case SOH:
+      packet_size = PACKET_SIZE;
+      break;
+    case STX:
+      packet_size = PACKET_1K_SIZE;
+      break;
+    case EOT:
+      return 0;
+    case CA:
+      if ((Receive_Byte(&c, timeout) == 0) && (c == CA))
+      {
+        *length = -1;
+        luaWdgReload();
+        return 0;
+      }
+      else
+      {
+        luaWdgReload();
+        return -1;
+      }
+    case ABORT1:
+    case ABORT2:
+      luaWdgReload();
+      return 1;
+    default:
+      luaWdgReload();
+      return -1;
+  }
+  *data = c;
+  luaWdgReload();
+  for (i = 1; i < (packet_size + PACKET_OVERHEAD); i ++)
+  {
+    if (Receive_Byte(data + i, 10) != 0)
+    {
+      luaWdgReload();
+      return -1;
+    }
+  }
+  luaWdgReload();
+  if (data[PACKET_SEQNO_INDEX] != ((data[PACKET_SEQNO_COMP_INDEX] ^ 0xff) & 0xff))
+  {
+    return -1;
+  }
+  if (crc16(&data[PACKET_HEADER], packet_size + PACKET_TRAILER) != 0) {
+    return -1;
+  }
+  *length = packet_size;
+  return 0;
+}
+
+/**
+  * @brief  Receive a file using the ymodem protocol.
+  * @param  buf: Address of the first byte.
+  * @retval The size of the file.
+  */
+//---------------------------------------------------------------------------------
+static int32_t Ymodem_Receive ( char* FileName, uint32_t maxsize, uint8_t getname )
+{
+  uint8_t packet_data[PACKET_1K_SIZE + PACKET_OVERHEAD], file_size[FILE_SIZE_LENGTH], *file_ptr;
+  int32_t i, packet_length, file_len, write_len, session_done, file_done, packets_received, errors, session_begin, size = 0;
+  
+  for (session_done = 0, errors = 0, session_begin = 0; ;)
+  {
+    for (packets_received = 0, file_done = 0; ;)
+    {
+      switch (Receive_Packet(packet_data, &packet_length, NAK_TIMEOUT))
+      {
+        case 0:
+          switch (packet_length)
+          {
+            /* Abort by sender */
+            case -1:
+              Send_Byte(ACK);
+              return 0;
+            /* End of transmission */
+            case 0:
+              Send_Byte(ACK);
+              file_done = 1;
+              break;
+            /* Normal packet */
+            default:
+              if ((packet_data[PACKET_SEQNO_INDEX] & 0xff) != (packets_received & 0xff))
+              {
+                errors ++;
+                if (errors > MAX_ERRORS)
+                {
+                  send_CA();
+                  return 0;
+                }
+                Send_Byte(NAK);
+              }
+              else
+              {
+                errors = 0;
+                if (packets_received == 0)
+                {
+                  /* Filename packet */
+                  if (packet_data[PACKET_HEADER] != 0)
+                  {
+                    // Filename packet has valid data
+                    if (getname == 0) {
+                      for (i = 0, file_ptr = packet_data + PACKET_HEADER; (*file_ptr != 0) && (i < SPIFFS_OBJ_NAME_LEN);)
+                      {
+                        FileName[i++] = *file_ptr++;
+                      }
+                      FileName[i++] = '\0';
+                    }
+                    for (i = 0, file_ptr = packet_data + PACKET_HEADER; (*file_ptr != 0) && (i < packet_length);)
+                    {
+                      file_ptr++;
+                    }
+                    for (i = 0, file_ptr ++; (*file_ptr != ' ') && (i < FILE_SIZE_LENGTH);)
+                    {
+                      file_size[i++] = *file_ptr++;
+                    }
+                    file_size[i++] = '\0';
+                    Str2Int(file_size, &size);
+
+                    // Test the size of the file
+                    if (size < 1 || size > maxsize) {
+                      file_fd = FILE_NOT_OPENED;
+                      /* End session */
+                      send_CA();
+                      return -4;
+                    }
+
+                    /* *** Open the file *** */
+                    if (FILE_NOT_OPENED != file_fd) {
+                      SPIFFS_close(&fs,file_fd);
+                      file_fd = FILE_NOT_OPENED;
+                    }
+                    file_fd = SPIFFS_open(&fs, (char*)FileName, mode2flag("w"), 0);
+                    if (file_fd <= FILE_NOT_OPENED) {
+                      file_fd = FILE_NOT_OPENED;
+                      /* End session */
+                      send_CA();
+                      return -2;
+                    }
+                    file_len = 0;
+                    Send_Byte(ACK);
+                    Send_Byte(CRC16);
+                  }
+                  /* Filename packet is empty, end session */
+                  else
+                  {
+                    Send_Byte(ACK);
+                    file_done = 1;
+                    session_done = 1;
+                    break;
+                  }
+                }
+                /* Data packet */
+                else
+                {
+                  /* Write received data to file */
+                  if (file_len < size) {
+                    file_len = file_len + packet_length;
+                    if (file_len > size) {
+                      write_len = packet_length - (file_len - size);
+                    }
+                    else {
+                      write_len = packet_length;
+                    }
+                    if (file_fd <= FILE_NOT_OPENED) {
+                      file_fd = FILE_NOT_OPENED;
+                      // File not opened, End session
+                      send_CA();
+                      return -2;
+                    }
+                    if (SPIFFS_write(&fs,file_fd, (char*)(packet_data + PACKET_HEADER), write_len) < 0)
+                    { //failed
+                      SPIFFS_close(&fs,file_fd);
+                      file_fd = FILE_NOT_OPENED;
+                      /* End session */
+                      send_CA();
+                      return -1;
+                    }
+                  }
+                  //success
+                  Send_Byte(ACK);
+                }
+                packets_received ++;
+                session_begin = 1;
+              }
+          }
+          break;
+        case 1:
+          send_CA();
+          return -3;
+        default:
+          if (session_begin >= 0)
+          {
+            errors ++;
+          }
+          if (errors > MAX_ERRORS)
+          {
+            send_CA();
+            return 0;
+          }
+          Send_Byte(CRC16);
+          break;
+      }
+      if (file_done != 0)
+      {
+        break;
+      }
+    }
+    if (session_done != 0)
+    {
+      break;
+    }
+  }
+  return (int32_t)size;
+}
+
+//-----------------------------------------------------------
+static void Ymodem_SendPacket(uint8_t *data, uint16_t length)
+{
+  uint16_t tempCRC;
+  uint16_t i;
+
+  luaWdgReload();
+  tempCRC = Cal_CRC16(&data[PACKET_HEADER], length-PACKET_HEADER);
+  i = 0;
+  while (i < length)
+  {
+    Send_Byte(data[i]);
+    i++;
+  }
+  Send_Byte(tempCRC >> 8);
+  Send_Byte(tempCRC & 0xFF);
+}
+
+//----------------------------------------------------------------------------------------------
+static void Ymodem_PrepareIntialPacket(uint8_t *data, const uint8_t* fileName, uint32_t *length)
+{
+  uint16_t i, j;
+  uint8_t file_ptr[10];
+  
+  /* Make first three packet */
+  data[0] = SOH;
+  data[1] = 0x00;
+  data[2] = 0xff;
+  
+  /* Filename packet has valid data */
+  for (i = 0; (fileName[i] != '\0') && (i <SPIFFS_OBJ_NAME_LEN);i++)
+  {
+     data[i + PACKET_HEADER] = fileName[i];
+  }
+
+  data[i + PACKET_HEADER] = 0x00;
+  
+  Int2Str (file_ptr, *length);
+  for (j =0, i = i + PACKET_HEADER + 1; file_ptr[j] != '\0' ; )
+  {
+     data[i++] = file_ptr[j++];
+  }
+  
+  for (j = i; j < PACKET_SIZE + PACKET_HEADER; j++)
+  {
+    data[j] = 0;
+  }
+}
+
+//------------------------------------------------------------------------------
+static void Ymodem_PreparePacket(uint8_t *data, uint8_t pktNo, uint32_t sizeBlk)
+{
+  uint16_t i, size, packetSize;
+  
+  /* Make first three packet */
+  packetSize = sizeBlk >= PACKET_1K_SIZE ? PACKET_1K_SIZE : PACKET_SIZE;
+  size = sizeBlk < packetSize ? sizeBlk :packetSize;
+  if (packetSize == PACKET_1K_SIZE)
+  {
+     data[0] = STX;
+  }
+  else
+  {
+     data[0] = SOH;
+  }
+  data[1] = pktNo;
+  data[2] = (~pktNo);
+
+  // Read block from file
+  SPIFFS_read(&fs, (spiffs_file)file_fd, data + PACKET_HEADER, size);
+
+  if ( size  <= packetSize)
+  {
+    for (i = size + PACKET_HEADER; i < packetSize + PACKET_HEADER; i++)
+    {
+      data[i] = 0x1A; /* EOF (0x1A) or 0x00 */
+    }
+  }
+}
+
+
+/**
+  * @brief  Transmit a file using the ymodem protocol
+  * @param  buf: Address of the first byte
+  * @retval The size of the file
+  */
+//--------------------------------------------------------------------------
+static uint8_t Ymodem_Transmit (const char* sendFileName, uint32_t sizeFile)
+{
+  uint8_t packet_data[PACKET_1K_SIZE + PACKET_OVERHEAD];
+  uint8_t filename[SPIFFS_OBJ_NAME_LEN];
+  uint16_t blkNumber;
+  uint8_t receivedC[2], i;
+  uint32_t errors, ackReceived, size = 0, pktSize;
+
+  errors = 0;
+  ackReceived = 0;
+  for (i = 0; i < (SPIFFS_OBJ_NAME_LEN - 1); i++)
+  {
+    filename[i] = sendFileName[i];
+  }
+    
+  // Wait for response from receiver
+  errors = 0;
+  do {
+    luaWdgReload();
+    Send_Byte(CRC16);
+    errors++;
+  } while (Receive_Byte(&receivedC[0], 1000) < 0 && errors < 45);
+  if (errors >= 45 || receivedC[0] != CRC16) {
+    send_CA();
+    return 99;
+  }
+  
+  // === Prepare first block and send it ==========================
+  /* When the receiving program receives this block and successfully
+   * opened the output file, it shall acknowledge this block with an ACK
+   * character and then proceed with a normal XMODEM file transfer
+   * beginning with a "C" or NAK tranmsitted by the receiver.
+   */
+  Ymodem_PrepareIntialPacket(&packet_data[0], filename, &sizeFile);
+  do 
+  {
+    /* Send Packet */
+    Ymodem_SendPacket(packet_data, PACKET_SIZE + PACKET_HEADER);
+
+    // Wait for Ack and 'C'
+    if (Receive_Byte(&receivedC[0], 1000) == 0)  
+    {
+      if (receivedC[0] == ACK)
+      { 
+        ackReceived = 1; // Packet transferred correctly
+      }
+    }
+    else
+    {
+        errors++;
+    }
+  }while (!ackReceived && (errors < 30));
+  
+  if (errors >=  30)
+  {
+    return errors;
+  }
+  
+  // === Send file blocks ============================================
+  size = sizeFile;
+  blkNumber = 0x01;
+  // Here 1024 bytes package is used to send the packets
+  
+  Receive_Byte(&receivedC[0], 1000);
+  // Resend packet if NAK  for a count of 10 else end of communication
+  while (size)
+  {
+    /* Prepare next packet */
+    Ymodem_PreparePacket(&packet_data[0], blkNumber, size);
+    ackReceived = 0;
+    receivedC[0]= 0;
+    errors = 0;
+    do
+    {
+      /* Send next packet */
+      if (size >= PACKET_1K_SIZE)
+      {
+        pktSize = PACKET_1K_SIZE;
+      }
+      else
+      {
+        pktSize = PACKET_SIZE;
+      }
+      Ymodem_SendPacket(packet_data, pktSize + PACKET_HEADER);
+      
+      /* Wait for Ack */
+      if ((Receive_Byte(&receivedC[0], 1000) == 0)  && (receivedC[0] == ACK))
+      {
+        ackReceived = 1;  
+        if (size > pktSize)
+        {
+           size -= pktSize;
+           blkNumber++;
+        }
+        else
+        {
+          size = 0;
+        }
+      }
+      else
+      {
+        errors++;
+      }
+    }while(!ackReceived && (errors < 0x0A));
+    /* Resend packet if NAK  for a count of 10 else end of communication */
+    
+    if (errors >=  0x0A)
+    {
+      return errors;
+    }
+  }
+  
+  // === Send EOT ======================================================
+  ackReceived = 0;
+  receivedC[0] = 0;
+  errors = 0;
+  do 
+  {
+    Send_Byte(EOT); // Send (EOT)
+    // Wait for Ack
+    if ((Receive_Byte(&receivedC[0], 1000) == 0)  && receivedC[0] == ACK)
+    {
+      ackReceived = 1;  
+    }
+    else
+    {
+      errors++;
+    }
+  }while (!ackReceived && (errors < 0x0A));
+    
+  if (errors >=  0x0A)
+  {
+    return errors;
+  }
+
+  // === Send last packet preparation ==========================
+  ackReceived = 0;
+  receivedC[0] = 0x00;
+  errors = 0;
+  packet_data[0] = SOH;
+  packet_data[1] = 0;
+  packet_data [2] = 0xFF;
+
+  for (i = PACKET_HEADER; i < (PACKET_SIZE + PACKET_HEADER); i++)
+  {
+     packet_data [i] = 0x00;
+  }
+  do 
+  {
+    // Send Packet
+    Ymodem_SendPacket(packet_data, PACKET_SIZE + PACKET_HEADER);
+  
+    // Wait for Ack and 'C'
+    if (Receive_Byte(&receivedC[0], 1000) == 0)  
+    {
+      if (receivedC[0] == ACK)
+      { 
+        ackReceived = 1; // Packet transferred correctly
+      }
+    }
+    else
+    {
+        errors++;
+    }
+  }while (!ackReceived && (errors < 0x0A));
+
+  // Resend packet if NAK  for a count of 10  else end of communication
+  if (errors >=  0x0A)
+  {
+    return errors;
+  }  
+  
+  return 0; // file transmitted successfully
+}
+
+
+//==================================
+static int file_recv( lua_State* L )
+{
+  int32_t fsize = 0;
+  uint8_t c, gnm;
+  char fnm[SPIFFS_OBJ_NAME_LEN];
+  char buff[LUAL_BUFFERSIZE];
+  spiffs_DIR d;
+  struct spiffs_dirent e;
+  struct spiffs_dirent *pe = &e;
+  uint32_t total, used;
+
+  SPIFFS_info(&fs, &total, &used);
+  if(total>2000000 || used>2000000 || used > total)
+  {
+    return luaL_error(L, "file system error");;
+  }
+
+  gnm = 0;
+  if (lua_gettop(L) == 1 && lua_type( L, 1 ) == LUA_TSTRING) {
+    size_t len;
+    const char *fname = luaL_checklstring( L, 1, &len );
+    if (len > 0 && len < SPIFFS_OBJ_NAME_LEN) {
+      // use given file name
+      for (c=0; c<len; c++) {
+        fnm[c] = fname[c];
+      }
+      fnm[len] = '\0';
+      gnm = 1;
+    }
+  }
+
+  if (FILE_NOT_OPENED != file_fd) {
+    SPIFFS_close(&fs,file_fd);
+    file_fd = FILE_NOT_OPENED;
+  }
+
+  l_message(NULL,"Start Ymodem file transfer...");
+
+  while (MicoUartRecv( MICO_UART_1, &c, 1, 10 ) == kNoErr) {}
+  
+  fsize = Ymodem_Receive(fnm, total-used-10000, gnm);
+  
+  luaWdgReload();
+  mico_thread_msleep(500);
+  while (MicoUartRecv( MICO_UART_1, &c, 1, 10 ) == kNoErr) {}
+
+  if (FILE_NOT_OPENED != file_fd) {
+    SPIFFS_fflush(&fs,file_fd);
+    SPIFFS_close(&fs,file_fd);
+    file_fd = FILE_NOT_OPENED;
+  }
+
+  mico_thread_msleep(500);
+  if (fsize > 0)
+  {
+    sprintf(buff,"\r\nReceived successfully, %d\r\n",fsize);
+    l_message(NULL,buff);
+  }
+  else if (fsize == -1)
+  {
+    l_message(NULL,"\r\nFile write error!\r\n");
+  }
+  else if (fsize == -2)
+  {
+    l_message(NULL,"\r\nFile open error!\r\n");
+  }
+  else if (fsize == -3)
+  {
+    l_message(NULL,"\r\nAborted.\r\n");
+  }
+  else if (fsize == -4)
+  {
+    l_message(NULL,"\r\nFile size too big, aborted.\r\n");
+  }
+  else
+  {
+    l_message(NULL,"\r\nReceive failed!");
+  }
+  
+  if (fsize > 0) {
+    SPIFFS_opendir(&fs, "/", &d);
+    while ((pe = SPIFFS_readdir(&d, pe))) {
+      sprintf(buff," %-32s size: %i", pe->name, pe->size);
+      l_message(NULL,buff);
+    }
+    SPIFFS_closedir(&d);
+  }
+
+  return 0;
+}
+
+
+//==================================
+static int file_send( lua_State* L )
+{
+  int8_t res = 0;
+  int8_t newname = 0;
+  uint8_t c;
+  spiffs_stat s;
+  const char *fname;
+  const char *newfname;
+  size_t len;
+  char buff[LUAL_BUFFERSIZE];
+
+  fname = luaL_checklstring( L, 1, &len );
+  
+  if( len > SPIFFS_OBJ_NAME_LEN )
+    return luaL_error(L, "filename too long");
+  
+  if(FILE_NOT_OPENED!=file_fd){
+    SPIFFS_close(&fs,file_fd);
+    file_fd = FILE_NOT_OPENED;
+  }
+  
+  if (lua_gettop(L) == 2 && lua_type( L, 2 ) == LUA_TSTRING) {
+    size_t len;
+    newfname = luaL_checklstring( L, 2, &len );
+    newname = 1;
+  }
+
+  // Open the file
+  file_fd = SPIFFS_open(&fs,(char*)fname,mode2flag("r"),0);
+  if(file_fd < FILE_NOT_OPENED){
+    file_fd = FILE_NOT_OPENED;
+    l_message(NULL,"Error opening file.");
+    return 0;
+  }
+
+  // Get file size
+  SPIFFS_fstat(&fs, file_fd, &s);
+  if (newname == 1) {
+    sprintf(buff,"sending \"%s\" as \"%s\"\r\n", fname, newfname);
+    l_message(NULL,buff);
+    fname = newfname;
+  }
+  
+  l_message(NULL,"Start Ymodem file transfer...");
+
+  while (MicoUartRecv( MICO_UART_1, &c, 1, 10 ) == kNoErr) {}
+  res = Ymodem_Transmit(fname, s.size );
+  luaWdgReload();
+  mico_thread_msleep(500);
+  while (MicoUartRecv( MICO_UART_1, &c, 1, 10 ) == kNoErr) {}
+
+  if(FILE_NOT_OPENED!=file_fd){
+    SPIFFS_close(&fs,file_fd);
+    file_fd = FILE_NOT_OPENED;
+  }
+
+  if (res != 0) {
+    l_message(NULL,"\r\nError sending file.");
+  }
+  else {
+    l_message(NULL,"\r\nFile sent successfuly.");
+  }
+  return 0;
+}
+
+
 //table = file.list()
+//==================================
 static int file_list( lua_State* L )
 {
   spiffs_DIR d;
@@ -113,28 +890,34 @@ static int file_list( lua_State* L )
   SPIFFS_closedir(&d);
   return 1;
 }
-//table = file.list()
+
+//file.slist() print lile list
+//===================================
 static int file_slist( lua_State* L )
 {
   spiffs_DIR d;
   struct spiffs_dirent e;
   struct spiffs_dirent *pe = &e;
   char buff[LUAL_BUFFERSIZE];
+  
   SPIFFS_opendir(&fs, "/", &d);
   while ((pe = SPIFFS_readdir(&d, pe))) {
-    sprintf(buff," %s size:%i\r\n", pe->name, pe->size);
+    sprintf(buff," %s size: %i", pe->name, pe->size);
     l_message(NULL,buff);
   }
   SPIFFS_closedir(&d);
-  return 1;
+  return 0;
 }
+
 //file.format()
+//====================================
 static int file_format( lua_State* L )
 {
   if(SPIFFS_mounted(&fs)==false) lua_spiffs_mount();
    
   SPIFFS_unmount(&fs);
   
+  l_message(NULL,"formating, please wait...\r\n");
   int ret = SPIFFS_format(&fs);
   if(ret==SPIFFS_OK)
   {
@@ -147,10 +930,12 @@ static int file_format( lua_State* L )
 }
 
 // file.open(filename, mode)
+//==================================
 static int file_open( lua_State* L )
 {
   size_t len;
   const char *fname = luaL_checklstring( L, 1, &len );
+  
   if( len > SPIFFS_OBJ_NAME_LEN )
     return luaL_error(L, "filename too long");
   
@@ -158,6 +943,7 @@ static int file_open( lua_State* L )
     SPIFFS_close(&fs,file_fd);
     file_fd = FILE_NOT_OPENED;
   }
+  
   const char *mode = luaL_optstring(L, 2, "r");
   file_fd = SPIFFS_open(&fs,(char*)fname,mode2flag((char*)mode),0);
   if(file_fd < FILE_NOT_OPENED){
@@ -170,6 +956,7 @@ static int file_open( lua_State* L )
 }
 
 // file.close()
+//===================================
 static int file_close( lua_State* L )
 {
   if(FILE_NOT_OPENED!=file_fd){
@@ -180,12 +967,15 @@ static int file_close( lua_State* L )
 }
 
 // file.write("string")
+//===================================
 static int file_write( lua_State* L )
 {
   if(FILE_NOT_OPENED==file_fd)
     return luaL_error(L, "open a file first");
+  
   size_t len;
   const char *s = luaL_checklstring(L, 1, &len);
+  
   if(SPIFFS_write(&fs,file_fd, (char*)s, len)<0)
   {//failed
     SPIFFS_close(&fs,file_fd);
@@ -196,13 +986,17 @@ static int file_write( lua_State* L )
     lua_pushboolean(L, true);
   return 1;
 }
+
 // file.writeline("string")
+//=======================================
 static int file_writeline( lua_State* L )
 {
   if(FILE_NOT_OPENED==file_fd)
     return luaL_error(L, "open a file first");
+  
   size_t len;
   const char *s = luaL_checklstring(L, 1, &len);
+  
   if(SPIFFS_write(&fs,file_fd, (char*)s, len)<0)
   {//failed
     lua_pushnil(L);
@@ -223,6 +1017,7 @@ static int file_writeline( lua_State* L )
   return 1;
 }
 
+//-------------------------------------------------------------
 static int file_g_read( lua_State* L, int n, int16_t end_char )
 {
   if(n< 0 || n>LUAL_BUFFERSIZE) 
@@ -266,11 +1061,13 @@ static int file_g_read( lua_State* L, int n, int16_t end_char )
 // file.read() read all byte in file LUAL_BUFFERSIZE(512) max
 // file.read(10) will read 10 byte from file, or EOF is reached.
 // file.read('q') will read until 'q' or EOF is reached. 
+//==================================
 static int file_read( lua_State* L )
 {
   unsigned need_len = LUAL_BUFFERSIZE;
   int16_t end_char = EOF;
   size_t el;
+  
   if( lua_type( L, 1 ) == LUA_TNUMBER )
   {
     need_len = ( unsigned )luaL_checkinteger( L, 1 );
@@ -288,6 +1085,7 @@ static int file_read( lua_State* L )
   }
   return file_g_read(L, need_len, end_char);
 }
+
 // file.readline()
 static int file_readline( lua_State* L )
 {
@@ -295,12 +1093,15 @@ static int file_readline( lua_State* L )
 }
 
 //file.seek(whence, offset)
+//=================================
 static int file_seek (lua_State *L) 
 {
   static const int mode[] = {SPIFFS_SEEK_SET, SPIFFS_SEEK_CUR, SPIFFS_SEEK_END};
   static const char *const modenames[] = {"set", "cur", "end", NULL};
+  
   if(FILE_NOT_OPENED==file_fd)
     return luaL_error(L, "open a file first");
+  
   int op = luaL_checkoption(L, 1, "cur", modenames);
   long offset = luaL_optlong(L, 2, 0);
   op = SPIFFS_lseek(&fs,file_fd, offset, mode[op]);
@@ -316,6 +1117,7 @@ static int file_seek (lua_State *L)
 }
 
 // file.flush()
+//===================================
 static int file_flush( lua_State* L )
 {
   if(FILE_NOT_OPENED==file_fd)
@@ -326,7 +1128,9 @@ static int file_flush( lua_State* L )
     lua_pushnil(L);
   return 1;
 }
+
 // file.remove(filename)
+//====================================
 static int file_remove( lua_State* L )
 {
   size_t len;
@@ -339,6 +1143,7 @@ static int file_remove( lua_State* L )
 }
 
 // file.rename("oldname", "newname")
+//====================================
 static int file_rename( lua_State* L )
 {
   size_t len;
@@ -363,12 +1168,14 @@ static int file_rename( lua_State* L )
   }
   return 1;
 }
+
 //file.info()
+//==================================
 static int file_info( lua_State* L )
 {
   uint32_t total, used;
   SPIFFS_info(&fs, &total, &used);
-  if(total>0x7FFFFFFF || used>0x7FFFFFFF || used > total)
+  if(total>2000000 || used>2000000 || used > total)
   {
     return luaL_error(L, "file system error");;
   }
@@ -377,7 +1184,9 @@ static int file_info( lua_State* L )
   lua_pushinteger(L, total);
   return 3;
 }
+
 //file.state()
+//===================================
 static int file_state( lua_State* L )
 {
   if(FILE_NOT_OPENED==file_fd)
@@ -411,6 +1220,7 @@ static int writer(lua_State* L, const void* p, size_t size, void* u)
   //MCU_DBG("write fd:%d,size:%d\n", file_fd, size);
   return 0;
 }
+
 //rewrite lauxlib.c:luaL_loadfile
 #define toproto(L,i) (clvalue(L->top+(i))->l.p)
 static int file_compile( lua_State* L )
@@ -483,6 +1293,8 @@ const LUA_REG_TYPE file_map[] =
   { LSTRKEY( "info" ), LFUNCVAL( file_info ) },
   { LSTRKEY( "state" ), LFUNCVAL( file_state ) },
   { LSTRKEY( "compile" ), LFUNCVAL( file_compile ) },
+  { LSTRKEY( "recv" ), LFUNCVAL( file_recv ) },
+  { LSTRKEY( "send" ), LFUNCVAL( file_send ) },
 #if LUA_OPTIMIZE_MEMORY > 0
 #endif  
   {LNILKEY, LNILVAL}
