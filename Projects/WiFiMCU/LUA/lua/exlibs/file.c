@@ -452,19 +452,15 @@ static int32_t Ymodem_Receive ( char* FileName, uint32_t maxsize, uint8_t getnam
 //-----------------------------------------------------------
 static void Ymodem_SendPacket(uint8_t *data, uint16_t length)
 {
-  uint16_t tempCRC;
   uint16_t i;
 
   luaWdgReload();
-  tempCRC = Cal_CRC16(&data[PACKET_HEADER], length-PACKET_HEADER);
   i = 0;
   while (i < length)
   {
     Send_Byte(data[i]);
     i++;
   }
-  Send_Byte(tempCRC >> 8);
-  Send_Byte(tempCRC & 0xFF);
 }
 
 //----------------------------------------------------------------------------------------------
@@ -472,13 +468,14 @@ static void Ymodem_PrepareIntialPacket(uint8_t *data, const uint8_t* fileName, u
 {
   uint16_t i, j;
   uint8_t file_ptr[10];
+  uint16_t tempCRC;
   
-  /* Make first three packet */
+  // Make first three packet
   data[0] = SOH;
   data[1] = 0x00;
   data[2] = 0xff;
   
-  /* Filename packet has valid data */
+  // Filename packet has valid data
   for (i = 0; (fileName[i] != '\0') && (i <SPIFFS_OBJ_NAME_LEN);i++)
   {
      data[i + PACKET_HEADER] = fileName[i];
@@ -491,222 +488,206 @@ static void Ymodem_PrepareIntialPacket(uint8_t *data, const uint8_t* fileName, u
   {
      data[i++] = file_ptr[j++];
   }
+  data[i++] = 0x20;
   
   for (j = i; j < PACKET_SIZE + PACKET_HEADER; j++)
   {
     data[j] = 0;
   }
+  tempCRC = Cal_CRC16(&data[PACKET_HEADER], PACKET_SIZE);
+  data[PACKET_SIZE + PACKET_HEADER] = tempCRC >> 8;
+  data[PACKET_SIZE + PACKET_HEADER + 1] = tempCRC & 0xFF;
+}
+
+//-------------------------------------------------
+static void Ymodem_PrepareLastPacket(uint8_t *data)
+{
+  uint16_t i;
+  uint16_t tempCRC;
+  
+  data[0] = SOH;
+  data[1] = 0x00;
+  data[2] = 0xff;
+  for (i = PACKET_HEADER; i < (PACKET_SIZE + PACKET_HEADER); i++) {
+    data[i] = 0x00;
+  }
+  tempCRC = Cal_CRC16(&data[PACKET_HEADER], PACKET_SIZE);
+  data[PACKET_SIZE + PACKET_HEADER] = tempCRC >> 8;
+  data[PACKET_SIZE + PACKET_HEADER + 1] = tempCRC & 0xFF;
 }
 
 //------------------------------------------------------------------------------
 static void Ymodem_PreparePacket(uint8_t *data, uint8_t pktNo, uint32_t sizeBlk)
 {
-  uint16_t i, size, packetSize;
+  uint16_t i, size;
+  uint16_t tempCRC;
   
-  /* Make first three packet */
-  packetSize = sizeBlk >= PACKET_1K_SIZE ? PACKET_1K_SIZE : PACKET_SIZE;
-  size = sizeBlk < packetSize ? sizeBlk :packetSize;
-  if (packetSize == PACKET_1K_SIZE)
-  {
-     data[0] = STX;
-  }
-  else
-  {
-     data[0] = SOH;
-  }
+  data[0] = STX;
   data[1] = pktNo;
   data[2] = (~pktNo);
 
+  size = sizeBlk < PACKET_1K_SIZE ? sizeBlk :PACKET_1K_SIZE;
   // Read block from file
-  SPIFFS_read(&fs, (spiffs_file)file_fd, data + PACKET_HEADER, size);
+  if (size > 0) SPIFFS_read(&fs, (spiffs_file)file_fd, data + PACKET_HEADER, size);
 
-  if ( size  <= packetSize)
+  if ( size  <= PACKET_1K_SIZE)
   {
-    for (i = size + PACKET_HEADER; i < packetSize + PACKET_HEADER; i++)
+    for (i = size + PACKET_HEADER; i < PACKET_1K_SIZE + PACKET_HEADER; i++)
     {
-      data[i] = 0x1A; /* EOF (0x1A) or 0x00 */
+      data[i] = 0x1A; // EOF (0x1A) or 0x00
     }
   }
+  tempCRC = Cal_CRC16(&data[PACKET_HEADER], PACKET_1K_SIZE);
+  data[PACKET_1K_SIZE + PACKET_HEADER] = tempCRC >> 8;
+  data[PACKET_1K_SIZE + PACKET_HEADER + 1] = tempCRC & 0xFF;
+}
+
+//--------------------------------------------------------
+static uint8_t Ymodem_WaitACK(uint8_t ackchr, uint8_t tmo)
+{
+  uint8_t receivedC[2];
+  uint32_t errors = 0;
+
+  do {
+    if (Receive_Byte(&receivedC[0], NAK_TIMEOUT) == 0) {
+      if (receivedC[0] == ackchr) {
+        return 1;
+      }
+      else if (receivedC[0] == CA) {
+        send_CA();
+        return 2; // CA received, Sender abort
+      }
+      else if (receivedC[0] == NAK) {
+        return 3;
+      }
+      else {
+        return 4;
+      }
+    }
+    else {
+      errors++;
+    }
+    luaWdgReload();
+  }while (errors < tmo);
+  return 0;
 }
 
 
-/**
-  * @brief  Transmit a file using the ymodem protocol
-  * @param  buf: Address of the first byte
-  * @retval The size of the file
-  */
 //--------------------------------------------------------------------------
 static uint8_t Ymodem_Transmit (const char* sendFileName, uint32_t sizeFile)
 {
   uint8_t packet_data[PACKET_1K_SIZE + PACKET_OVERHEAD];
   uint8_t filename[SPIFFS_OBJ_NAME_LEN];
   uint16_t blkNumber;
-  uint8_t receivedC[2], i;
-  uint32_t errors, ackReceived, size = 0, pktSize;
+  uint8_t receivedC[1], i, err;
+  uint32_t size = 0;
 
-  errors = 0;
-  ackReceived = 0;
   for (i = 0; i < (SPIFFS_OBJ_NAME_LEN - 1); i++)
   {
     filename[i] = sendFileName[i];
   }
     
+  while (MicoUartRecv( MICO_UART_1, &receivedC[0], 1, 10 ) == kNoErr) {};
+
   // Wait for response from receiver
-  errors = 0;
+  err = 0;
   do {
     luaWdgReload();
     Send_Byte(CRC16);
-    errors++;
-  } while (Receive_Byte(&receivedC[0], 1000) < 0 && errors < 45);
-  if (errors >= 45 || receivedC[0] != CRC16) {
+  } while (Receive_Byte(&receivedC[0], NAK_TIMEOUT) < 0 && err++ < 45);
+  if (err >= 45 || receivedC[0] != CRC16) {
     send_CA();
     return 99;
   }
   
-  // === Prepare first block and send it ==========================
+  // === Prepare first block and send it =======================================
   /* When the receiving program receives this block and successfully
    * opened the output file, it shall acknowledge this block with an ACK
-   * character and then proceed with a normal XMODEM file transfer
+   * character and then proceed with a normal YMODEM file transfer
    * beginning with a "C" or NAK tranmsitted by the receiver.
    */
   Ymodem_PrepareIntialPacket(&packet_data[0], filename, &sizeFile);
   do 
   {
-    /* Send Packet */
-    Ymodem_SendPacket(packet_data, PACKET_SIZE + PACKET_HEADER);
+    // Send Packet
+    Ymodem_SendPacket(packet_data, PACKET_SIZE + PACKET_OVERHEAD);
+    // Wait for Ack
+    err = Ymodem_WaitACK(ACK, 10);
+    if (err == 0 || err == 4) {
+      send_CA();
+      return 90;                  // timeout or wrong response
+    }
+    else if (err == 2) return 98; // abort
+  }while (err != 1);
 
-    // Wait for Ack and 'C'
-    if (Receive_Byte(&receivedC[0], 1000) == 0)  
-    {
-      if (receivedC[0] == ACK)
-      { 
-        ackReceived = 1; // Packet transferred correctly
-      }
-    }
-    else
-    {
-        errors++;
-    }
-  }while (!ackReceived && (errors < 30));
-  
-  if (errors >=  30)
-  {
-    return errors;
+  // After initial block the receiver sends 'C' after ACK
+  if (Ymodem_WaitACK(CRC16, 10) != 1) {
+    send_CA();
+    return 90;
   }
   
-  // === Send file blocks ============================================
+  // === Send file blocks ======================================================
   size = sizeFile;
   blkNumber = 0x01;
-  // Here 1024 bytes package is used to send the packets
   
-  Receive_Byte(&receivedC[0], 1000);
   // Resend packet if NAK  for a count of 10 else end of communication
   while (size)
   {
-    /* Prepare next packet */
+    // Prepare and send next packet
     Ymodem_PreparePacket(&packet_data[0], blkNumber, size);
-    ackReceived = 0;
-    receivedC[0]= 0;
-    errors = 0;
     do
     {
-      /* Send next packet */
-      if (size >= PACKET_1K_SIZE)
-      {
-        pktSize = PACKET_1K_SIZE;
+      Ymodem_SendPacket(packet_data, PACKET_1K_SIZE + PACKET_OVERHEAD);
+      // Wait for Ack
+      err = Ymodem_WaitACK(ACK, 10);
+      if (err == 1) {
+        blkNumber++;
+        if (size > PACKET_1K_SIZE) size -= PACKET_1K_SIZE; // Next packet
+        else size = 0; // Last packet sent
       }
-      else
-      {
-        pktSize = PACKET_SIZE;
+      else if (err == 0 || err == 4) {
+        send_CA();
+        return 90;                  // timeout or wrong response
       }
-      Ymodem_SendPacket(packet_data, pktSize + PACKET_HEADER);
-      
-      /* Wait for Ack */
-      if ((Receive_Byte(&receivedC[0], 1000) == 0)  && (receivedC[0] == ACK))
-      {
-        ackReceived = 1;  
-        if (size > pktSize)
-        {
-           size -= pktSize;
-           blkNumber++;
-        }
-        else
-        {
-          size = 0;
-        }
-      }
-      else
-      {
-        errors++;
-      }
-    }while(!ackReceived && (errors < 0x0A));
-    /* Resend packet if NAK  for a count of 10 else end of communication */
-    
-    if (errors >=  0x0A)
-    {
-      return errors;
-    }
+      else if (err == 2) return 98; // abort
+    }while(err != 1);
   }
   
-  // === Send EOT ======================================================
-  ackReceived = 0;
-  receivedC[0] = 0;
-  errors = 0;
+  // === Send EOT ==============================================================
+  Send_Byte(EOT); // Send (EOT)
+  // Wait for Ack
   do 
   {
-    Send_Byte(EOT); // Send (EOT)
     // Wait for Ack
-    if ((Receive_Byte(&receivedC[0], 1000) == 0)  && receivedC[0] == ACK)
-    {
-      ackReceived = 1;  
+    err = Ymodem_WaitACK(ACK, 10);
+    if (err == 3) {   // NAK
+      Send_Byte(EOT); // Send (EOT)
     }
-    else
-    {
-      errors++;
+    else if (err == 0 || err == 4) {
+      send_CA();
+      return 90;                  // timeout or wrong response
     }
-  }while (!ackReceived && (errors < 0x0A));
-    
-  if (errors >=  0x0A)
-  {
-    return errors;
+    else if (err == 2) return 98; // abort
+  }while (err != 1);
+  
+  // === Receiver requests next file, prepare and send last packet =============
+  if (Ymodem_WaitACK(CRC16, 10) != 1) {
+    send_CA();
+    return 90;
   }
 
-  // === Send last packet preparation ==========================
-  ackReceived = 0;
-  receivedC[0] = 0x00;
-  errors = 0;
-  packet_data[0] = SOH;
-  packet_data[1] = 0;
-  packet_data [2] = 0xFF;
-
-  for (i = PACKET_HEADER; i < (PACKET_SIZE + PACKET_HEADER); i++)
-  {
-     packet_data [i] = 0x00;
-  }
+  Ymodem_PrepareLastPacket(&packet_data[0]);
   do 
   {
-    // Send Packet
-    Ymodem_SendPacket(packet_data, PACKET_SIZE + PACKET_HEADER);
-  
-    // Wait for Ack and 'C'
-    if (Receive_Byte(&receivedC[0], 1000) == 0)  
-    {
-      if (receivedC[0] == ACK)
-      { 
-        ackReceived = 1; // Packet transferred correctly
-      }
+    Ymodem_SendPacket(packet_data, PACKET_SIZE + PACKET_OVERHEAD); // Send Packet
+    // Wait for Ack
+    err = Ymodem_WaitACK(ACK, 10);
+    if (err == 0 || err == 4) {
+      send_CA();
+      return 90;                  // timeout or wrong response
     }
-    else
-    {
-        errors++;
-    }
-  }while (!ackReceived && (errors < 0x0A));
-
-  // Resend packet if NAK  for a count of 10  else end of communication
-  if (errors >=  0x0A)
-  {
-    return errors;
-  }  
+    else if (err == 2) return 98; // abort
+  }while (err != 1);
   
   return 0; // file transmitted successfully
 }
@@ -852,7 +833,9 @@ static int file_send( lua_State* L )
   l_message(NULL,"Start Ymodem file transfer...");
 
   while (MicoUartRecv( MICO_UART_1, &c, 1, 10 ) == kNoErr) {}
-  res = Ymodem_Transmit(fname, s.size );
+  
+  res = Ymodem_Transmit(fname, s.size);
+  
   luaWdgReload();
   mico_thread_msleep(500);
   while (MicoUartRecv( MICO_UART_1, &c, 1, 10 ) == kNoErr) {}
@@ -862,11 +845,17 @@ static int file_send( lua_State* L )
     file_fd = FILE_NOT_OPENED;
   }
 
-  if (res != 0) {
-    l_message(NULL,"\r\nError sending file.");
+  if (res == 0) {
+    l_message(NULL,"\r\nFile sent successfuly.");
+  }
+  else if (res == 99) {
+    l_message(NULL,"\r\nNo response.");
+  }
+  else if (res == 98) {
+    l_message(NULL,"\r\nAborted.");
   }
   else {
-    l_message(NULL,"\r\nFile sent successfuly.");
+    l_message(NULL,"\r\nError sending file.");
   }
   return 0;
 }
@@ -898,7 +887,7 @@ static int file_slist( lua_State* L )
   spiffs_DIR d;
   struct spiffs_dirent e;
   struct spiffs_dirent *pe = &e;
-  char buff[LUAL_BUFFERSIZE];
+  static char buff[LUAL_BUFFERSIZE];
   
   SPIFFS_opendir(&fs, "/", &d);
   while ((pe = SPIFFS_readdir(&d, pe))) {

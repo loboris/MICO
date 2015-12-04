@@ -260,5 +260,64 @@ LUALIB_API void luaL_openlibs (lua_State *L) {
       lua_pushstring(L, lib->name);
       lua_call(L, 1, 0);
     }
+#ifdef USE_ADC_MODULE
+  luaopen_adc(L);
+#endif
+
+#ifdef USE_GPIO_MODULE
+  luaopen_gpio(L);
+#endif
+
+#ifdef USE_MCU_MODULE
+  luaopen_mcu(L);
+#endif
+
+#ifdef USE_WIFI_MODULE
+  luaopen_wifi(L);
+#endif
+
+#ifdef USE_FILE_MODULE
+  luaopen_file(L);
+#endif
+
+#ifdef USE_I2C_MODULE
+  luaopen_i2c(L);
+#endif
+
+#ifdef USE_NET_MODULE
+  luaopen_net(L);
+#endif
+
+#ifdef USE_PWM_MODULE
+  luaopen_pwm(L);
+#endif
+
+#ifdef USE_SPI_MODULE
+  luaopen_spi(L);
+#endif
+
+#ifdef USE_TMR_MODULE
+  luaopen_tmr(L);
+#endif
+
+#ifdef USE_UART_MODULE
+  luaopen_uart(L);
+#endif
+
+#ifdef USE_BIT_MODULE
+  luaopen_bit(L);
+#endif
+  
+#ifdef USE_SENSOR_MODULE
+  luaopen_sensor(L);
+#endif
+
+#ifdef USE_RTC_MODULE
+  luaopen_rtc(L);
+#endif
+
+#ifdef USE_OLED_MODULE
+  luaopen_oled(L);
+#endif
 }
 

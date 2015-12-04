@@ -19,6 +19,12 @@ static int wifi_scan_succeed = LUA_NOREF;
 static int wifi_status_changed_AP = LUA_NOREF;
 static int wifi_status_changed_STA = LUA_NOREF;
 
+extern mico_queue_t os_queue;
+
+char gWiFiSSID[33],gWiFiPSW[65];
+
+extern mico_queue_t os_queue;
+
 static int is_valid_ip(const char *ip) 
 {
   int n[4];
@@ -43,35 +49,33 @@ static int is_valid_ip(const char *ip)
 void _micoNotify_WifiStatusHandler(WiFiEvent event, mico_Context_t * const inContext)
 {
   (void)inContext;
-  if(wifi_status_changed_AP == LUA_NOREF&&
-     wifi_status_changed_STA == LUA_NOREF)
-    return;
   
-  if(wifi_status_changed_AP != LUA_NOREF)
-    lua_rawgeti(gL, LUA_REGISTRYINDEX, wifi_status_changed_AP);
-  else if(wifi_status_changed_STA != LUA_NOREF)
-    lua_rawgeti(gL, LUA_REGISTRYINDEX, wifi_status_changed_STA);
-   switch (event) {
+  queue_msg_t msg;
+  msg.L = gL;
+  msg.source = WIFI;
+switch (event) {
   case NOTIFY_STATION_UP:
-    lua_pushstring(gL, "STATION_UP");
-    //MicoRfLed(true);
+    msg.para1 = 0;
+    msg.para2 = wifi_status_changed_STA;
     break;
   case NOTIFY_STATION_DOWN:
-    lua_pushstring(gL, "STATION_DOWN");
-    //MicoRfLed(false);
+    msg.para1 = 1;
+    msg.para2 = wifi_status_changed_STA;
     break;
   case NOTIFY_AP_UP:
-    lua_pushstring(gL, "AP_UP");
-    //MicoRfLed(true);
+    msg.para1 = 2;
+    msg.para2 = wifi_status_changed_AP;
     break;
   case NOTIFY_AP_DOWN:
-    lua_pushstring(gL, "AP_DOWN");
-    //MicoRfLed(false);
+    msg.para1 = 3;
+    msg.para2 = wifi_status_changed_AP;
     break;
-  default:lua_pushstring(gL,"ERROR");
+  default:
+    msg.para1 = 4;
+    msg.para2 = wifi_status_changed_AP;
     break;
   }
-  lua_call(gL, 1, 0);
+    mico_rtos_push_to_queue( &os_queue, &msg,0);
 }
 /*cfg={}
 cfg.ssid=""
@@ -209,7 +213,7 @@ static int lwifi_startap( lua_State* L )
   signed retry_interval=0;
   lua_getfield(L, 1, "retry_interval");
   if (!lua_isnil(L, -1)){  /* found? */
-      retry_interval= luaL_checkinteger( L, -1 );
+      retry_interval= luaL_checknumber( L, -1 );
       if(retry_interval<=0)
         return luaL_error( L, "retry_interval:>0ms" );
   }
@@ -391,7 +395,7 @@ static int lwifi_startsta( lua_State* L )
   signed retry_interval=0;
   lua_getfield(L, 1, "retry_interval");
   if (!lua_isnil(L, -1)){  /* found? */
-      retry_interval= luaL_checkinteger( L, -1 );
+      retry_interval= luaL_checknumber( L, -1 );
       if(retry_interval<=0)
         return luaL_error( L, "retry_interval:>0ms" );
   }
@@ -431,11 +435,11 @@ static int lwifi_startsta( lua_State* L )
   return 0;  
 }
 
-int _micoNotify_WiFi_Scan_OK (ScanResult_adv *pApList, mico_Context_t * const inContext)
+void _micoNotify_WiFi_Scan_OK (ScanResult_adv *pApList, mico_Context_t * const inContext)
 {
   (void)inContext;
   if(wifi_scan_succeed == LUA_NOREF)
-    return 0;
+    return;
   lua_rawgeti(gL, LUA_REGISTRYINDEX, wifi_scan_succeed);
    
   if(pApList->ApNum==0) 
@@ -494,7 +498,7 @@ int _micoNotify_WiFi_Scan_OK (ScanResult_adv *pApList, mico_Context_t * const in
   //free(pApList);
   
   lua_call(gL, 1, 0);
-  return 0;
+  return;
 }
 //function listap(t) if t then for k,v in pairs(t) do print(k.."\t"..v);end else print('no ap') end end wifi.scan(listap)
 static int lwifi_scan( lua_State* L )

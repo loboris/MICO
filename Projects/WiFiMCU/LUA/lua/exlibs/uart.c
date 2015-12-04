@@ -59,14 +59,13 @@ static void lua_usr_usart_thread(void *data)
 doUartData:
     if(index>=USR_UART_LENGTH || mico_get_time() - lastTick>=100)
     {
-      index = 0;
       if(usr_uart_cb_ref == LUA_NOREF) continue;
       lua_rawgeti(gL, LUA_REGISTRYINDEX, usr_uart_cb_ref);
       lua_pushstring(gL,(char const*)pinbuf);
       lua_call(gL, 1, 0);
+      index = 0;
     }
   }  
-  //mico_rtos_delete_thread(NULL);
 }
 
 //uart.setup(1,9600,'n','8','1')

@@ -11,11 +11,9 @@
 #include <limits.h>
 #include <stddef.h>
 
-
+#include "mico_system.h"
 #include "lua.h"
 
-extern void LUA_DisableInterrupts(void);
-extern unsigned char LUA_EnableInterrupts(void);
 
 typedef LUAI_UINT32 lu_int32;
 
@@ -108,9 +106,12 @@ typedef lu_int32 Instruction;
 #endif
 
 
+extern mico_mutex_t  lua_queue_mut;
 #ifndef lua_lock
 #define lua_lock(L)     ((void) 0) 
 #define lua_unlock(L)   ((void) 0)
+//#define lua_lock(L)     { mico_rtos_lock_mutex(&lua_queue_mut); } 
+//#define lua_unlock(L)   { mico_rtos_unlock_mutex(&lua_queue_mut); } 
 #endif
 
 #ifndef luai_threadyield

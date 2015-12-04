@@ -371,6 +371,20 @@ struct lua_Debug {
 //doit
 extern int readline4lua(const char *prompt, char *buffer, int length);
 
+enum{
+  TMR=0,
+  GPIO,
+  WIFI,
+};
+
+typedef struct _msg
+{
+  char  source;  //which module
+  lua_State* L;
+  int   para1;   //which type
+  int   para2;   //parameters
+} queue_msg_t;
+
 /* }====================================================================== */
 void l_message (const char *pname, const char *msg);//doit
 int lua_main( int argc, char **argv );

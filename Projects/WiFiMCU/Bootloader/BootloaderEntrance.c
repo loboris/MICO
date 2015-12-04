@@ -72,7 +72,7 @@ char menu[] =
 "| 8:ELUAFLASH                     | Erase Lua SPIFlash FS |\r\n"
 "+---------------------------------+-----------------------+\r\n"
 "|    (C) COPYRIGHT 2015 MXCHIP Corporation  By William Xu |\r\n"
-"|    Modified by LoBo 11/2015                             |\r\n"
+"|    Modified by LoBo 12/2015                             |\r\n"
 "+---------------------------------------------------------+\r\n"
 "| Notes: (use ymodem protocol for file upload/download)   |\r\n"
 "| -dev   flash device number  (0=internal, 1=spi)         |\r\n"

@@ -335,6 +335,7 @@ void Ymodem_PrepareIntialPacket(uint8_t *data, const uint8_t* fileName, uint32_t
   {
      data[i++] = file_ptr[j++];
   }
+  data[i++] = 0x20;
   
   for (j = i; j < PACKET_SIZE + PACKET_HEADER; j++)
   {

@@ -5,14 +5,16 @@
 #include "platform_config.h"
 #include "CheckSumUtils.h"
 #include "lua.h"
+#include "lauxlib.h"
 
 extern platform_uart_driver_t platform_uart_drivers[];
 extern const platform_uart_t  platform_uart_peripherals[];
+extern unsigned char boot_reason;
 
 #define DEFAULT_WATCHDOG_TIMEOUT        10*1000  // 10 seconds
 #define main_log(M, ...) custom_log("main", M, ##__VA_ARGS__)
 
-#define LUA_PARAMS_ID  0xA7
+#define LUA_PARAMS_ID   0xA7
 #define LUA_UART        (MICO_UART_1)
 #define INBUF_SIZE      256
 #define OUTBUF_SIZE     1024
@@ -30,35 +32,12 @@ lua_system_param_t lua_system_param =
   .crc = 0
 };
 
+static mico_thread_t lua_queue_thread = NULL;
+// Used to synchronize the queue thread
+mico_mutex_t  lua_queue_mut;
+
 static uint32_t soft_wdg = 0;
 static mico_timer_t _soft_watchdog_timer;
-//static uint16_t InterruptDisabledCount = 0;
-
-
-/*
-//--------------------------------
-void LUA_DisableInterrupts(void) {
-  // Disable interrupts
-  __disable_irq();
-  // Increase number of disable interrupt function calls
-  InterruptDisabledCount++;
-}
-
-//----------------------------------
-uint8_t LUA_EnableInterrupts(void) {
-  // Decrease number of disable interrupt function calls
-  if (InterruptDisabledCount) {
-          InterruptDisabledCount--;
-  }
-  // Check if we are ready to enable interrupts
-  if (!InterruptDisabledCount) {
-          // Enable interrupts
-          __enable_irq();
-  }
-  // Return interrupt enabled status
-  return !InterruptDisabledCount;
-}
-*/
 
 //----------------------------------
 uint16_t _get_luaparamsCRC( void ) {
@@ -139,74 +118,142 @@ int lua_getchar(char *inbuf)
     return 0;  //err
 }
 
+extern char gWiFiSSID[];
+extern char gWiFiPSW[];
+//=========================================
+static void do_queue_task(queue_msg_t* msg)
+{
+  if(msg->source == TMR || msg->source == GPIO)
+  { // === execute timer or gpio interrupt function ===
+    if(msg->para2 == LUA_NOREF) return;
+    lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
+    lua_call(msg->L, 0, 0);
+    lua_gc(msg->L, LUA_GCCOLLECT, 0);
+  }
+  else if(msg->source == WIFI)
+  { // === execute wifi function ===
+    if(msg->para2 == LUA_NOREF || msg->para1 > 5) return;
+      lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
+    switch(msg->para1)
+    {
+      case 0:lua_pushstring(msg->L, "STATION_UP");lua_call(msg->L, 1, 0);break;
+      case 1:lua_pushstring(msg->L, "STATION_DOWN");lua_call(msg->L, 1, 0);break;
+      case 2:lua_pushstring(msg->L, "AP_UP");lua_call(msg->L, 1, 0);break;
+      case 3:lua_pushstring(msg->L, "AP_DOWN");lua_call(msg->L, 1, 0);break;
+      case 4:lua_pushstring(msg->L, "ERROR");lua_call(msg->L, 1, 0);break;
+      case 5:
+            if(gWiFiSSID[0]==0x00){
+                lua_pushnil(msg->L);lua_pushnil(msg->L);
+              }
+              else{
+                lua_pushstring(msg->L,gWiFiSSID);lua_pushstring(msg->L,gWiFiPSW);
+              }
+              lua_call(msg->L, 2, 0);
+            break;
+    default:lua_pushstring(msg->L, "ERROR");lua_call(msg->L, 1, 0);break;
+    }
+    lua_gc(msg->L, LUA_GCCOLLECT, 0);
+  }
+}
+
+mico_queue_t os_queue;
+//================================
+static void queue_thread(void*arg)
+{
+  UNUSED_PARAMETER( arg );
+  OSStatus err;
+  queue_msg_t queue_msg={0,NULL,0,0};
+  
+  while(1)
+  {
+    //Wait until queue has data
+    err = mico_rtos_pop_from_queue( &os_queue, &queue_msg, MICO_WAIT_FOREVER);
+    require_noerr( err, exit );
+    mico_rtos_lock_mutex(&lua_queue_mut);
+    do_queue_task(&queue_msg);
+    mico_rtos_unlock_mutex(&lua_queue_mut);
+  }
+exit:
+  lua_printf("queue_thread error\r\n");
+  mico_rtos_delete_thread( NULL );  
+}
+
 //=================================================================
 int readline4lua(const char *prompt, char *buffer, int buffer_size)
 {
-    char ch;
-    int line_position;
-    //lua_printf("\r"); //doit
+  char ch;
+  int line_position;
     
+  mico_rtos_unlock_mutex(&lua_queue_mut);
+  
 start:
-    lua_printf(prompt); // show prompt
-    line_position = 0;
-    memset(buffer, 0, buffer_size);
-    while (1)
-    {
-      while (lua_getchar(&ch) == 1) {
-        if (ch == '\r') {
-        // CR key
-          char next;
-          if (lua_getchar(&next)== 1) ch = next;
+  lua_printf(prompt); // show prompt
+  line_position = 0;
+  memset(buffer, 0, buffer_size);
+  while (1)
+  {
+    luaWdgReload();
+    while (lua_getchar(&ch) == 1) {
+      if (ch == '\r') {
+      // CR key
+        char next;
+        if (lua_getchar(&next)== 1) ch = next;
+      }
+      else if (ch == 0x7f || ch == 0x08) {
+      // backspace key
+        if (line_position > 0) {
+          lua_printf("%c %c", ch, ch);
+          line_position--;
         }
-        else if (ch == 0x7f || ch == 0x08) {
-        // backspace key
-          if (line_position > 0) {
-            lua_printf("%c %c", ch, ch);
-            line_position--;
-          }
-          buffer[line_position] = 0;
-          continue;
+        buffer[line_position] = 0;
+        continue;
+      }
+      else if (ch == 0x04) {
+      // EOF(ctrl+d)
+        if (line_position == 0) {
+          mico_rtos_lock_mutex(&lua_queue_mut);
+          return 0; // No input which makes lua interpreter close
         }
-        else if (ch == 0x04) {
-        // EOF(ctrl+d)
-          if (line_position == 0) return 0; // No input which makes lua interpreter close
-          else continue;
-        }            
-        if (ch == '\r' || ch == '\n') {
-        // end of line
-          buffer[line_position] = 0;
-          lua_printf("\r\n"); //doit
-          if (line_position == 0) goto start; // Get a empty line, then go to get a new line
-          else {
-            buffer[line_position+1] = 0;
-            //lua_printf("[%s][%d]\r\n", buffer, line_position);
-            return line_position;
-          }
+        else continue;
+      }            
+      if (ch == '\r' || ch == '\n') {
+      // end of line
+        buffer[line_position] = 0;
+        lua_printf("\r\n"); //doit
+        if (line_position == 0) goto start; // Get a empty line, then go to get a new line
+        else {
+          buffer[line_position+1] = 0;
+          luaWdgReload();
+          mico_rtos_lock_mutex(&lua_queue_mut);
+          return line_position;
         }
-        if (ch < 0x20 || ch >= 0x80) continue; // other control character or not an acsii character
+      }
+      if (ch < 0x20 || ch >= 0x80) continue; // other control character or not an acsii character
 
-        lua_printf("%c", ch);       // character echo
-        buffer[line_position] = ch; // put received character in buffer
-        ch = 0;
-        line_position++;
-        if (line_position >= buffer_size) {
-          // it's a large line, discard it
-          goto start;
-        }
-     }
-     // nothing is received
-     luaWdgReload();
-    }    
+      lua_printf("%c", ch);       // character echo
+      buffer[line_position] = ch; // put received character in buffer
+      ch = 0;
+      line_position++;
+      if (line_position >= buffer_size) {
+        // it's a large line, discard it
+        goto start;
+      }
+   }
+   // nothing is received
+  }
 }
 
+//*** Main Lua thread *****************
 //=====================================
 static void lua_main_thread(void *data)
 {
   //lua setup  
   char *argv[] = {"lua", NULL};
+  
+  // === Execute the main Lua loop ===
   lua_main(1, argv);
   
-  //if error happened  
+  // === Error happened  =============
   lua_printf("lua exited, reboot\r\n");
   
   if (lua_system_param.soft_wdg != 0) {
@@ -269,12 +316,29 @@ int application_start( void )
   //MicoUartInitialize( STDIO_UART, &lua_uart_config, (ring_buffer_t*)&lua_rx_buffer );
   platform_uart_init( &platform_uart_drivers[LUA_UART], &platform_uart_peripherals[LUA_UART], &lua_uart_config, (ring_buffer_t*)&lua_rx_buffer );
 
-  lua_printf( "\r\n\r\nWiFiMCU Lua starting...(Free memory %d bytes)\r\n",MicoGetMemoryInfo()->free_memory);
-  if (prmstat) lua_printf( "Lua params OK\r\n");
-  else lua_printf( "BAD Lua params, initialized\r\n");
-  if (lua_system_param.soft_wdg==0) lua_printf( "Watchdog: hardware (IWDT).\r\n");
-  else lua_printf( "Watchdog: software (timer).\r\n");
+  lua_printf( "\r\nWiFiMCU Lua starting...(Free memory %d/%d)\r\n",MicoGetMemoryInfo()->free_memory,MicoGetMemoryInfo()->total_memory);
+  lua_printf("  Lua params: ");
+  if (prmstat) lua_printf( "OK\r\n");
+  else lua_printf( "BAD, initialized\r\n");
+  lua_printf("    Watchdog: ");
+  if (lua_system_param.soft_wdg==0) lua_printf("hardware (IWDT).\r\n");
+  else lua_printf( "software (timer).\r\n");
   
+  lua_printf(" Boot reason: ");
+  switch(boot_reason)
+  {
+    case BOOT_REASON_NONE:       lua_printf("NONE"); break;
+    case BOOT_REASON_SOFT_RST:   lua_printf("SOFT_RST"); break;
+    case BOOT_REASON_PWRON_RST:  lua_printf("PWRON_RST"); break;
+    case BOOT_REASON_EXPIN_RST:  lua_printf("EXPIN_RST"); break;
+    case BOOT_REASON_WDG_RST:    lua_printf("WDG_RST"); break;
+    case BOOT_REASON_WWDG_RST:   lua_printf("WWDG_RST"); break;
+    case BOOT_REASON_LOWPWR_RST: lua_printf("LOWPWR_RST"); break;
+    case BOOT_REASON_BOR_RST:    lua_printf("BOR_RST"); break;
+    default: lua_printf("?"); break;
+  }
+  lua_printf( "\r\n");
+
   if( MicoRtcGetTime(&ttime) == kNoErr ){
     currentTime.tm_sec = ttime.sec;
     currentTime.tm_min = ttime.min;
@@ -283,14 +347,12 @@ int application_start( void )
     currentTime.tm_wday = ttime.weekday;
     currentTime.tm_mon = ttime.month - 1;
     currentTime.tm_year = ttime.year + 100; 
-    //lua_printf( "Current Time: %d:%d:%d\r\n",ttime.hr,ttime.min,ttime.sec);
     lua_printf("Current Time: %s",asctime(&currentTime)); 
-  }else {
-    lua_printf("RTC function unsupported\r\n"); 
-  }  
+  }
   
   //---watch dog----------
   if (lua_system_param.soft_wdg == 0) {
+    // hw wdog, IWDG
     MicoWdgInitialize( lua_system_param.wdg_tmo);
   }
   else {
@@ -298,10 +360,18 @@ int application_start( void )
     mico_init_timer(&_soft_watchdog_timer,lua_system_param.wdg_tmo/100, _soft_watchdog_timer_handler, NULL);
     mico_start_timer(&_soft_watchdog_timer);
   }
-  
-  mico_rtos_create_thread(NULL, MICO_DEFAULT_WORKER_PRIORITY, "lua_main_thread", lua_main_thread, lua_system_param.stack_size, 0);
+
+  // Create queue for interrupt servicing  
+  mico_rtos_init_mutex(&lua_queue_mut);
+  mico_rtos_init_queue( &os_queue, "queue", sizeof(queue_msg_t), 5 );
+  // Create and start queue thread
+  if (mico_rtos_create_thread(&lua_queue_thread, MICO_APPLICATION_PRIORITY, "queue", queue_thread, lua_system_param.stack_size / 5 * 2, NULL ) != kNoErr) {
+    lua_printf("error creating queue thread\r\n");
+  }
+
+  // Create and start main Lua thread
+  mico_rtos_create_thread(NULL, MICO_DEFAULT_WORKER_PRIORITY, "lua_main_thread", lua_main_thread, lua_system_param.stack_size / 5 * 3, 0);
 
   mico_rtos_delete_thread(NULL);
-  lua_printf("application_start exit\r\n");
   return 0;
  }

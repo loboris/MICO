@@ -36,7 +36,7 @@
 extern "C" {
 #endif
 
-#define Bootloader_REVISION "v2.2"
+#define Bootloader_REVISION "v2.3"
   
 void bootloader_start_app( uint32_t app_addr );
 

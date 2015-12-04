@@ -346,18 +346,21 @@ static int db_debug (lua_State *L) {
 #define LEVELS2	10	/* size of the second part of the stack */
 
 static int db_errorfb (lua_State *L) {
-  int level;
-  int firstpart = 1;  /* still before eventual `...' */
+  //int level;
+  //int firstpart = 1;  /* still before eventual `...' */
   int arg;
   lua_State *L1 = getthread(L, &arg);
   //lua_Debug ar;
   
+#if 0  
+//doit  
   if (lua_isnumber(L, arg+2)) {
     level = (int)lua_tointeger(L, arg+2);
     lua_pop(L, 1);
   }
   else
     level = (L == L1) ? 1 : 0;  /* level 0 may be this own function */
+#endif
   if (lua_gettop(L) == arg)
     lua_pushliteral(L, "");
   else if (!lua_isstring(L, arg+1)) return 1;  /* message is not a string */

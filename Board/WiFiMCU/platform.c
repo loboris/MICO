@@ -799,34 +799,35 @@ unsigned char boot_reason=BOOT_REASON_NONE;
 
 void platform_check_bootreason( void )
 {
-    boot_reason=0;
-    if(RCC_GetFlagStatus(RCC_FLAG_SFTRST))
-    {//Software Reset
-      boot_reason=BOOT_REASON_SOFT_RST;
-    }
-    else if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST))
-    {
-      boot_reason=BOOT_REASON_WDG_RST;
-    }
-    else if(RCC_GetFlagStatus(RCC_FLAG_WWDGRST))
-    {
-      boot_reason=BOOT_REASON_WWDG_RST;
-    }
-    else if(RCC_GetFlagStatus(RCC_FLAG_LPWRRST))
-    {
-      boot_reason=BOOT_REASON_LOWPWR_RST;
-    }
-    else if(RCC_GetFlagStatus(RCC_FLAG_BORRST))
-    {
-      boot_reason=BOOT_REASON_BOR_RST;
-    }
-    else if(RCC_GetFlagStatus(RCC_FLAG_PORRST))
-    {//Power-On-Reset
-      boot_reason=BOOT_REASON_PWRON_RST;
-    }
-    else if(RCC_GetFlagStatus(RCC_FLAG_PINRST))
-    {//Always set, test other cases first
-      boot_reason=BOOT_REASON_EXPIN_RST;
-    }
+  boot_reason=0;
+  if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST))
+  {
+    boot_reason=BOOT_REASON_WDG_RST;
+  }
+  else if(RCC_GetFlagStatus(RCC_FLAG_WWDGRST))
+  {
+    boot_reason=BOOT_REASON_WWDG_RST;
+  }
+  else if(RCC_GetFlagStatus(RCC_FLAG_LPWRRST))
+  {
+    boot_reason=BOOT_REASON_LOWPWR_RST;
+  }
+  else if(RCC_GetFlagStatus(RCC_FLAG_BORRST))
+  {
+    boot_reason=BOOT_REASON_BOR_RST;
+  }
+  else if(RCC_GetFlagStatus(RCC_FLAG_PORRST))
+  {//Power-On-Reset
+    boot_reason=BOOT_REASON_PWRON_RST;
+  }
+  else if(RCC_GetFlagStatus(RCC_FLAG_SFTRST))
+  {//Software Reset
+    boot_reason=BOOT_REASON_SOFT_RST;
+  }
+  else if(RCC_GetFlagStatus(RCC_FLAG_PINRST))
+  {//Always set, test other cases first
+    boot_reason=BOOT_REASON_EXPIN_RST;
+  }
+  RCC_ClearFlag();
 }
 

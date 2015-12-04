@@ -23,6 +23,7 @@
 // lobo
 #include "platform_config.h"
 
+extern mico_mutex_t  lua_queue_mut;
 extern spiffs fs;
 extern void lua_spiffs_mount();
 extern lua_system_param_t lua_system_param;
@@ -122,7 +123,7 @@ static int docall (lua_State *L, int narg, int clear) {
 static void print_version (void) {
   l_message(NULL,"\r\n");
   char temp[128];
-  sprintf(temp,"[ %s WiFiMCU Team, modified by LoBo @2015 ]\r\n",PRT_VERSION);
+  sprintf(temp,"[ %s WiFiMCU Team     ]\r\n[ %s modified by LoBo ]\r\n",PRT_VERSION,BUILD_DATE);
   l_message(NULL,temp);
 }
 
@@ -223,9 +224,6 @@ static int loadline (lua_State *L) {
   
   for (;;) {
   // repeat until gets a complete line
-    while (lua_gettop(L) > 1) { // lobo
-      lua_remove(L, 1);
-    }
     status = luaL_loadbuffer(L, lua_tostring(L, 1), lua_strlen(L, 1), "=stdin");
     
     if (!incomplete(L, status)) break;  // cannot try to add lines?

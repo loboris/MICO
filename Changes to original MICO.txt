@@ -4,3 +4,7 @@ include\MicoDrivers\MicoDriverFlash.h
 
 Platform\MCU\STM32F4xx\peripherals\platform_nano_second.c
 	bug fixed
+
+libraries\utilities\StringUtils.c
+	Int2Str fixed
+
