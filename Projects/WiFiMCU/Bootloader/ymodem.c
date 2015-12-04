@@ -564,15 +564,48 @@ uint8_t Ymodem_Transmit (mico_flash_t flash, uint32_t flashdestination, const ui
     }
     
   }
+  // Send EOT
+  ackReceived = 0;
+  receivedC[0] = 0x00;
+  errors = 0;
+  Send_Byte(EOT); // Send (EOT);
+  do 
+  {
+    /* Wait for Ack */
+    if (Receive_Byte(&receivedC[0], 1000) == 0)
+    {
+      if (receivedC[0] == ACK)
+      {
+        ackReceived = 1;  
+      }
+      if (receivedC[0] == NAK)
+      {
+        Send_Byte(EOT); // Send (EOT);
+      }
+      else
+      {
+        errors++;
+      }
+    }
+    else
+    {
+      errors++;
+    }
+  }while (!ackReceived && (errors < 0x0A));
+    
+  if (errors >=  0x0A)
+  {
+    return errors;
+  }
+  
+  // Wait for 'C'
   ackReceived = 0;
   receivedC[0] = 0x00;
   errors = 0;
   do 
   {
-    Send_Byte(EOT);
-    /* Send (EOT); */
     /* Wait for Ack */
-    if ((Receive_Byte(&receivedC[0], 1000) == 0)  && receivedC[0] == ACK)
+    if ((Receive_Byte(&receivedC[0], 1000) == 0)  && (receivedC[0] == CRC16))
     {
       ackReceived = 1;  
     }
@@ -631,26 +664,6 @@ uint8_t Ymodem_Transmit (mico_flash_t flash, uint32_t flashdestination, const ui
   {
     return errors;
   }  
-  
-  do 
-  {
-    Send_Byte(EOT);
-    /* Send (EOT); */
-    /* Wait for Ack */
-    if ((Receive_Byte(&receivedC[0], 10) == 0)  && receivedC[0] == ACK)
-    {
-      ackReceived = 1;  
-    }
-    else
-    {
-      errors++;
-    }
-  }while (!ackReceived && (errors < 0x0A));
-
-  if (errors >=  0x0A)
-  {
-    return errors;
-  }
   
   return 0; /* file transmitted successfully */
 }
