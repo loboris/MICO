@@ -188,6 +188,10 @@ extern const luaR_entry rtc_map[];
 extern const luaR_entry oled_map[];
 #endif
 
+#ifdef USE_LCD_MODULE
+extern const luaR_entry lcd_map[];
+#endif
+
 
 const luaR_table lua_rotable[] = 
 {
@@ -239,6 +243,9 @@ const luaR_table lua_rotable[] =
 #endif    
 #ifdef USE_OLED_MODULE
     {LUA_OLEDLIBNAME, oled_map},
+#endif    
+#ifdef USE_LCD_MODULE
+    {LUA_LCDLIBNAME, lcd_map},
 #endif    
     
     

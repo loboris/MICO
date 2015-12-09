@@ -20,6 +20,7 @@
 #define USE_BIT_MODULE
 #define USE_SENSOR_MODULE
 #define USE_OLED_MODULE
+#define USE_LCD_MODULE
 #define USE_RTC_MODULE
 #define USE_OLED_MODULE
 

@@ -1226,6 +1226,9 @@
         <name>$PROJ_DIR$\..\lua\exlibs\bit.c</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\lua\exlibs\DefaultFonts.c</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\lua\exlibs\file.c</name>
       </file>
       <file>
@@ -1233,6 +1236,9 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\lua\exlibs\i2c.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\lua\exlibs\lcd.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\lua\exlibs\mcu.c</name>

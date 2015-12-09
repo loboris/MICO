@@ -107,7 +107,8 @@ uint8_t ow_alarm_device [MAX_ONEWIRE_SENSORS][8];
 
 //**************************************************
 
-uint8_t PinID_DHT11=1;
+uint8_t PinID_DHT11=255;
+uint8_t DHT11_22 = 0;
 
 #define Delay_ms(ms)           mico_thread_msleep(ms)
 
@@ -125,8 +126,8 @@ static int platform_gpio_exists( unsigned pin )
 // ONEWIRE FUNCTIONS
 //******************
 
-//-------------------------------------------------------------------
-uint8_t OW_OUT_SetWait(uint8_t hilo, uint8_t testbit, uint32_t dly) {
+//--------------------------------------------------------------------------
+static uint8_t OW_OUT_SetWait(uint8_t hilo, uint8_t testbit, uint32_t dly) {
   uint32_t cycles = 0;
   uint8_t bitval = 1;
   
@@ -155,22 +156,20 @@ uint8_t OW_OUT_SetWait(uint8_t hilo, uint8_t testbit, uint32_t dly) {
   return bitval;
 }
 
-//--------------------------
-uint8_t TM_OneWire_Reset() {
+//---------------------------------
+static uint8_t TM_OneWire_Reset() {
   uint8_t i;
 
-  //mico_rtos_suspend_all_thread();
-  /* Line low, and wait 480us minimum */
+  // Line low, and wait 480us minimum
   OW_OUT_SetWait(0, 0, 48000);
   /* Release line and wait for 480us minimum*/
   i = OW_OUT_SetWait(1, 1, 48000);
-  //mico_rtos_resume_all_thread();
-  /* Return value of presence pulse, 0 = OK, 1 = ERROR */
+  // Return value of presence pulse, 0 = OK, 1 = ERROR
   return i;
 }
 
-//-------------------------------------
-void TM_OneWire_WriteBit(uint8_t bit) {
+//--------------------------------------------
+static void TM_OneWire_WriteBit(uint8_t bit) {
   if (bit) {
     /* Set line low */
     OW_OUT_SetWait(0, 0, 800);
@@ -186,8 +185,8 @@ void TM_OneWire_WriteBit(uint8_t bit) {
   }
 }
 
-//----------------------------
-uint8_t TM_OneWire_ReadBit() {
+//-----------------------------------
+static uint8_t TM_OneWire_ReadBit() {
   uint8_t bit = 0;
 
   /* Line low */
@@ -198,19 +197,19 @@ uint8_t TM_OneWire_ReadBit() {
   return bit;
 }
 
-//---------------------------------------
-void TM_OneWire_WriteByte(uint8_t byte) {
+//----------------------------------------------
+static void TM_OneWire_WriteByte(uint8_t byte) {
   uint8_t i = 8;
-  /* Write 8 bits */
+  // Write 8 bits
   while (i--) {
-    /* LSB bit is first */
+    // LSB bit is first
     TM_OneWire_WriteBit(byte & 0x01);
     byte >>= 1;
   }
 }
 
-//-----------------------------
-uint8_t TM_OneWire_ReadByte() {
+//------------------------------------
+static uint8_t TM_OneWire_ReadByte() {
   uint8_t i = 8, byte = 0;
   while (i--) {
     byte >>= 1;
@@ -219,16 +218,16 @@ uint8_t TM_OneWire_ReadByte() {
   return byte;
 }
 
-//-----------------------------
-void TM_OneWire_ResetSearch() {
-  /* Reset the search state */
+//------------------------------------
+static void TM_OneWire_ResetSearch() {
+  // Reset the search state
   OW_DEVICE.LastDiscrepancy = 0;
   OW_DEVICE.LastDeviceFlag = 0;
   OW_DEVICE.LastFamilyDiscrepancy = 0;
 }
 
-//------------------------------------------
-uint8_t TM_OneWire_Search(uint8_t command) {
+//-------------------------------------------------
+static uint8_t TM_OneWire_Search(uint8_t command) {
   uint8_t id_bit_number;
   uint8_t last_zero, rom_byte_number, search_result;
   uint8_t id_bit, cmp_id_bit;
@@ -327,22 +326,23 @@ uint8_t TM_OneWire_Search(uint8_t command) {
   return search_result;
 }
 
-//--------------------------
-uint8_t TM_OneWire_First() {
-  /* Reset search values */
+//----------------------------------
+static uint8_t TM_OneWire_First() {
+  // Reset search values
   TM_OneWire_ResetSearch();
-  /* Start with searching */
+  // Start with searching
   return TM_OneWire_Search(ONEWIRE_CMD_SEARCHROM);
 }
 
-//-------------------------
-uint8_t TM_OneWire_Next() {
-  /* Leave the search state alone */
+//--------------------------------
+static uint8_t TM_OneWire_Next() {
+  // Leave the search state alone
   return TM_OneWire_Search(ONEWIRE_CMD_SEARCHROM);
 }
 
-//-----------------------
-int TM_OneWire_Verify() {
+/*
+//------------------------------
+static int TM_OneWire_Verify() {
   unsigned char rom_backup[8];
   int i,rslt,ld_backup,ldf_backup,lfd_backup;
   
@@ -380,8 +380,8 @@ int TM_OneWire_Verify() {
   return rslt;
 }
 
-//------------------------------------------------
-void TM_OneWire_TargetSetup(uint8_t family_code) {
+//-------------------------------------------------------
+static void TM_OneWire_TargetSetup(uint8_t family_code) {
   uint8_t i;
 
   // set the search state to find SearchFamily type devices
@@ -394,8 +394,8 @@ void TM_OneWire_TargetSetup(uint8_t family_code) {
   OW_DEVICE.LastDeviceFlag = 0;
 }
 
-//---------------------------------
-void TM_OneWire_FamilySkipSetup() {
+//----------------------------------------
+static void TM_OneWire_FamilySkipSetup() {
   // set the Last discrepancy to last family discrepancy
   OW_DEVICE.LastDiscrepancy = OW_DEVICE.LastFamilyDiscrepancy;
   OW_DEVICE.LastFamilyDiscrepancy = 0;
@@ -405,22 +405,23 @@ void TM_OneWire_FamilySkipSetup() {
   }
 }
 
-//----------------------------------------
-uint8_t TM_OneWire_GetROM(uint8_t index) {
+//-----------------------------------------------
+static uint8_t TM_OneWire_GetROM(uint8_t index) {
   return OW_DEVICE.ROM_NO[index];
 }
 
-//-------------------------------------
-void TM_OneWire_Select(uint8_t* addr) {
+//--------------------------------------------
+static void TM_OneWire_Select(uint8_t* addr) {
   uint8_t i;
   TM_OneWire_WriteByte(ONEWIRE_CMD_MATCHROM);
   for (i = 0; i < 8; i++) {
     TM_OneWire_WriteByte(*(addr + i));
   }
 }
+*/
 
-//-----------------------------------------------
-void TM_OneWire_SelectWithPointer(uint8_t *ROM) {
+//------------------------------------------------------
+static void TM_OneWire_SelectWithPointer(uint8_t *ROM) {
   uint8_t i;
   TM_OneWire_WriteByte(ONEWIRE_CMD_MATCHROM);
   for (i = 0; i < 8; i++) {
@@ -428,16 +429,16 @@ void TM_OneWire_SelectWithPointer(uint8_t *ROM) {
   }	
 }
 
-//-----------------------------------------------
-void TM_OneWire_GetFullROM(uint8_t *firstIndex) {
+//------------------------------------------------------
+static void TM_OneWire_GetFullROM(uint8_t *firstIndex) {
   uint8_t i;
   for (i = 0; i < 8; i++) {
     *(firstIndex + i) = OW_DEVICE.ROM_NO[i];
   }
 }
 
-//---------------------------------------------------
-uint8_t TM_OneWire_CRC8(uint8_t *addr, uint8_t len) {
+//----------------------------------------------------------
+static uint8_t TM_OneWire_CRC8(uint8_t *addr, uint8_t len) {
   uint8_t crc = 0, inbyte, i, mix;
 	
   while (len--) {
@@ -460,8 +461,8 @@ uint8_t TM_OneWire_CRC8(uint8_t *addr, uint8_t len) {
 // TM_DS18B20_Functions
 //*********************
 
-//-----------------------------------
-uint8_t TM_DS18B20_Is(uint8_t *ROM) {
+//------------------------------------------
+static uint8_t TM_DS18B20_Is(uint8_t *ROM) {
   /* Checks if first byte is equal to DS18B20's family code */
   if (*ROM == DS18B20_FAMILY_CODE) {
     return 1;
@@ -469,25 +470,27 @@ uint8_t TM_DS18B20_Is(uint8_t *ROM) {
   return 0;
 }
 
-//----------------------------------------
-owState_t TM_DS18B20_Start(uint8_t *ROM) {
-  /* Check if device is DS18B20 */
+/*
+//-----------------------------------------------
+static owState_t TM_DS18B20_Start(uint8_t *ROM) {
+  // Check if device is DS18B20
   if (!TM_DS18B20_Is(ROM)) {
     return owError_Not18b20;
   }
-  /* Reset line */
+  // Reset line
   if (TM_OneWire_Reset() != 0) {
     return owError_NoDevice;
   }
-  /* Select ROM number */
+  // Select ROM number
   TM_OneWire_SelectWithPointer(ROM);
-  /* Start temperature conversion */
+  // Start temperature conversion
   TM_OneWire_WriteByte(DS18B20_CMD_CONVERTTEMP);
   return owOK;
 }
+*/
 
-//--------------------------
-void TM_DS18B20_StartAll() {
+//---------------------------------
+static void TM_DS18B20_StartAll() {
   /* Reset pulse */
   if (TM_OneWire_Reset() != 0) return;
   /* Skip rom */
@@ -496,8 +499,8 @@ void TM_DS18B20_StartAll() {
   TM_OneWire_WriteByte(DS18B20_CMD_CONVERTTEMP);
 }
 
-//-----------------------------------------------------------
-owState_t TM_DS18B20_Read(uint8_t *ROM, float *destination) {
+//------------------------------------------------------------------
+static owState_t TM_DS18B20_Read(uint8_t *ROM, float *destination) {
   uint16_t temperature;
   uint8_t resolution;
   int8_t digit, minus = 0;
@@ -589,8 +592,8 @@ owState_t TM_DS18B20_Read(uint8_t *ROM, float *destination) {
   return owOK;
 }
 
-//----------------------------------------------
-uint8_t TM_DS18B20_GetResolution(uint8_t *ROM) {
+//-----------------------------------------------------
+static uint8_t TM_DS18B20_GetResolution(uint8_t *ROM) {
   uint8_t conf;
 
   if (!TM_DS18B20_Is(ROM)) {
@@ -619,8 +622,8 @@ uint8_t TM_DS18B20_GetResolution(uint8_t *ROM) {
   return ((conf & 0x60) >> 5) + 9;
 }
 
-//------------------------------------------------------------------------------------
-owState_t TM_DS18B20_SetResolution(uint8_t *ROM, TM_DS18B20_Resolution_t resolution) {
+//-------------------------------------------------------------------------------------------
+static owState_t TM_DS18B20_SetResolution(uint8_t *ROM, TM_DS18B20_Resolution_t resolution) {
   uint8_t th, tl, conf;
   if (!TM_DS18B20_Is(ROM)) {
     return owError_Not18b20;
@@ -687,8 +690,8 @@ owState_t TM_DS18B20_SetResolution(uint8_t *ROM, TM_DS18B20_Resolution_t resolut
 /* DS18B20 Alarm functions */
 /***************************/
 #ifdef DS18B20ALARMFUNC
-//--------------------------------------------------------------------
-uint8_t TM_DS18B20_SetAlarmLowTemperature(uint8_t *ROM, int8_t temp) {
+//---------------------------------------------------------------------------
+static uint8_t TM_DS18B20_SetAlarmLowTemperature(uint8_t *ROM, int8_t temp) {
   uint8_t tl, th, conf;
   if (!TM_DS18B20_Is(ROM)) {
     return owError_Not18b20;
@@ -744,8 +747,8 @@ uint8_t TM_DS18B20_SetAlarmLowTemperature(uint8_t *ROM, int8_t temp) {
   return owOK;
 }
 
-//---------------------------------------------------------------------
-owState_t TM_DS18B20_SetAlarmHighTemperature(uint8_t *ROM, int8_t temp) {
+//------------------------------------------------------------------------------
+static owState_t TM_DS18B20_SetAlarmHighTemperature(uint8_t *ROM, int8_t temp) {
   uint8_t tl, th, conf;
   if (!TM_DS18B20_Is(ROM)) {
     return owError_Not18b20;
@@ -801,8 +804,8 @@ owState_t TM_DS18B20_SetAlarmHighTemperature(uint8_t *ROM, int8_t temp) {
   return owOK;
 }
 
-//----------------------------------------------------------
-owState_t TM_DS18B20_DisableAlarmTemperature(uint8_t *ROM) {
+//-----------------------------------------------------------------
+static owState_t TM_DS18B20_DisableAlarmTemperature(uint8_t *ROM) {
   uint8_t tl, th, conf;
   if (!TM_DS18B20_Is(ROM)) {
     return owError_Not18b20;
@@ -853,79 +856,77 @@ owState_t TM_DS18B20_DisableAlarmTemperature(uint8_t *ROM) {
   return owOK;
 }
 
-//--------------------------------
-uint8_t TM_DS18B20_AlarmSearch() {
+//---------------------------------------
+static uint8_t TM_DS18B20_AlarmSearch() {
   /* Start alarm search */
   return TM_OneWire_Search(DS18B20_CMD_ALARMSEARCH);
 }
 #endif
 
-//----------------------------
-uint8_t TM_DS18B20_AllDone() {
-  /* If read bit is low, then device is not finished yet with calculation temperature */
+/*
+//-----------------------------------
+static uint8_t TM_DS18B20_AllDone() {
+  // If read bit is low, then device is not finished yet with calculation temperature
   return TM_OneWire_ReadBit();
 }
-
+*/
 
 
 //****************
 // dht11 functions
 //****************
 
-//-------------------------------------------------
-uint8_t DHT_IN_Length(uint8_t hilo, uint32_t dly) {
-  uint32_t cycles = 0;
-  uint32_t bitstart = 0;
-  uint32_t bitend = 0;
+//--------------------------------------------------------
+static uint8_t DHT_IN_Length(uint8_t hilo, uint32_t dly) {
+  uint32_t bitlen = 0;
   
   CYCLE_COUNTING_INIT();
   
-  while (cycles < dly) {
-    cycles = DWT->CYCCNT;
-    if (hilo) {
-      // *** measure high state
-      if (bitstart == 0) {
-        // wait for high
+  bitlen = 0;
+  if (hilo) { // === measure high state length ===
+    while (DWT->CYCCNT <= dly) {
+      if (bitlen == 0) { // wait for high pulse start
         if ( MicoGpioInputGet((mico_gpio_t)PinID_DHT11) != 0 ) {
-          bitstart = cycles;
+          bitlen = 1;
+          CYCLE_COUNTING_INIT();
         }
       }
-      else {
-        // wait for low
+      else { // wait for low (high pulse end)
         if ( MicoGpioInputGet((mico_gpio_t)PinID_DHT11) == 0 ) {
-          bitend = cycles;
-          break;
-        }
-      }
-    }
-    else {
-      // *** measure low state
-      if (bitstart == 0) {
-        // wait for low
-        if ( MicoGpioInputGet((mico_gpio_t)PinID_DHT11) == 0 ) {
-          bitstart = cycles;
-        }
-      }
-      else {
-        // wait for high
-        if ( MicoGpioInputGet((mico_gpio_t)PinID_DHT11) != 0 ) {
-          bitend = cycles;
+          bitlen = DWT->CYCCNT;
           break;
         }
       }
     }
   }
-  if ((bitstart == 0) || (bitend == 0)) return 0;
+  else { // === measure low state length ===
+    while (DWT->CYCCNT <= dly) {
+      if (bitlen == 0) { // wait for low pulse start
+        if ( MicoGpioInputGet((mico_gpio_t)PinID_DHT11) == 0 ) {
+          bitlen = 1;
+          CYCLE_COUNTING_INIT();
+        }
+      }
+      else {
+        // wait for high (low pulse end)
+        if ( MicoGpioInputGet((mico_gpio_t)PinID_DHT11) != 0 ) {
+          bitlen = DWT->CYCCNT;
+          break;
+        }
+      }
+    }
+  }
+  if (bitlen == 1) return 0;
   
-  return (bitend - bitstart) / 100;
+  return (uint8_t)(bitlen / 100); // return pulse length in usec
 }
 
-//------------------------------------------------
-void DHT_OUT_SetWait(uint8_t hilo, uint32_t dly) {
+//-------------------------------------------------------
+static void DHT_OUT_SetWait(uint8_t hilo, uint32_t dly) {
   uint32_t cycles = 0;
   
   CYCLE_COUNTING_INIT();
-  /* set line low or high, and wait dly us */
+  // === set line low or high, and wait dly us ===
   MicoGpioOutputLow((mico_gpio_t)PinID_DHT11);
   if (hilo==0) {
     MicoGpioInitialize((mico_gpio_t)PinID_DHT11, (mico_gpio_config_t)OUTPUT_PUSH_PULL);
@@ -939,90 +940,25 @@ void DHT_OUT_SetWait(uint8_t hilo, uint32_t dly) {
   }
 }
 
-//-------------------------
-static void DHT11_Rst(void)	   
-{
-  DHT_OUT_SetWait(0,1000);  // data=0, wait 10 usec
-  Delay_ms(20);             // wait 20 msec
-  DHT_OUT_SetWait(1,4000);  // data=1, wait 40 usec
-}
-
 //------------------------------
 static uint8_t DHT11_Check(void) 
 {   
   uint8_t len = 0;
-  
-  // measure DHT11 Pull down pulse (~80us)
+
+  // send reset pulse  
+  DHT_OUT_SetWait(0,1000);  // data=0, wait 10 usec
+  Delay_ms(20);             // wait 20 msec
+  DHT_OUT_SetWait(1,100);   // data=1, wait 1 usec
+  // data line is now input
+
+  // 20~40us HIGH -> ~80us LOW -> ~80 us HIGH)
+  // measure DHT11 Pull down pulse
   len = DHT_IN_Length(0, 10000);
   if ((len < 40) || (len >= 100)) return 1;
   // measure DHT11 Pull up pulse (~80us)
   len = DHT_IN_Length(1, 10000);
   if ((len < 40) || (len >= 100)) return 1;
   return 0;  // OK
-}
-
-//-----------------------------
-static uint8_t DHT11_Init(void)
-{
-  DHT11_Rst();  
-  return DHT11_Check();
-}
-
-//---------------------------------
-static uint8_t DHT11_Read_Bit(void) 			 
-{
-  uint8_t len = 0;
-
-  // wait for DHT11 start bit
-  len = DHT_IN_Length(0, 10000);
-  if ((len < 40) || (len >= 100)) return 0;
-  // measure data bit
-  len = DHT_IN_Length(0, 10000);
-  if (len > 40 ) {
-    return 1;
-  }
-  else {
-    return 0;
-  }  
-}
-
-//---------------------------------
-static uint8_t DHT11_Read_Byte(void)    
-{
-  uint8_t i,dat;
-  
-  dat=0;
-  for (i=0;i<8;i++) 
-  {
-    dat<<=1; 
-    dat |= DHT11_Read_Bit();
-  }						    
-  return dat;
-}
-
-//--------------------------------------------------------------------
-static uint8_t DHT11_Read_Data(uint8_t *temperature,uint8_t *humidity)    
-{        
-  uint8_t buf[5];
-  uint8_t i;
-  
-  DHT11_Rst();
-  if(DHT11_Check()==0)
-  {
-    for(i=0;i<5;i++)
-    {
-      buf[i]=DHT11_Read_Byte();
-    }
-    if ((buf[0]+buf[1]+buf[2]+buf[3])==buf[4])
-    {
-      *humidity=buf[0];
-      *temperature=buf[2];
-    }
-  }
-  else {
-    return 1;
-  }  
-  return 0;	    
 }
 
 //===========================================
@@ -1032,10 +968,17 @@ static int lsensor_dht11_init( lua_State* L )
   pin = luaL_checkinteger( L, 1 );
   MOD_CHECK_ID( gpio, pin );
   PinID_DHT11 = wifimcu_gpio_map[pin];
+  DHT11_22 = 0;
+  
+  if (lua_gettop(L) > 1) {
+    DHT11_22 = luaL_checkinteger( L, 2 );
+  }
+  
+  // set data high (pull up input)
   DHT_OUT_SetWait(1,4000);  // data=1, wait 40 usec
   Delay_ms(50);             // wait 50 msec
   
-  if(DHT11_Init()==0)
+  if(DHT11_Check()==0)
     lua_pushboolean(L, true);
   else
      lua_pushnil(L);
@@ -1045,18 +988,71 @@ static int lsensor_dht11_init( lua_State* L )
 //==========================================
 static int lsensor_dht11_get( lua_State* L )
 {
-  uint8_t t=0,h=0;
-  if(DHT11_Read_Data(&t,&h)==0)
-  {
-    lua_pushinteger(L,t);
-    lua_pushinteger(L,h);
+  if (PinID_DHT11 == 255) {
+    l_message( NULL, "init DHT11 first" );
+    lua_pushinteger(L, 0);
+    lua_pushinteger(L, 0);
+    lua_pushinteger(L, 4);
+    return 3;
   }
-  else
+  
+  uint8_t i,j,dat,len,stat;
+  uint8_t buf[5];
+  uint16_t csum;
+  int t, h;
+  
+  t = 0;
+  h = 0;
+  stat = 0;
+  if(DHT11_Check()==0)
   {
-     lua_pushnil(L);
-     lua_pushnil(L);
+    // Read bytes
+    for (j=0;j<5;j++) {
+      dat=0;
+      for (i=0;i<8;i++) 
+      {
+        dat<<=1; // next bit
+        // read bit:
+        // bit=0:  50 us LOW -> 26~28 us HIGH
+        // bit=1:  50 us LOW ->    70 us HIGH
+        
+        // wait & measure data bit length 
+        len = DHT_IN_Length(1, 15000);
+        if ((len < 10) || (len >= 90)) {
+          stat = 1;
+          break;
+        }
+        if (len > 40 ) dat |= 1;
+      }
+      if (stat) break;
+      buf[j] = dat;  // save byte
+    }
+    
+    if (stat == 0) {
+      csum = (buf[0]+buf[1]+buf[2]+buf[3]) & 0xFF;
+      if ( csum != buf[4]) stat = 2;
+    }
   }
-  return 2;
+  else {
+    stat = 3;
+  }
+
+  if (stat == 0) {
+    if (DHT11_22) { // DHT22
+      h = (buf[0]<<8) | buf[1];
+      if (buf[2] & 0x80) t = (((buf[2]&0x7f)<<8) | buf[3]) * -1;
+      else t = (buf[2]<<8) | buf[3];
+    }
+    else { // DHT11
+      h = buf[0];
+      if (buf[2] & 0x80) t = (buf[2]&0x7f) * -1;
+      else t = buf[2];
+    }
+  }
+  lua_pushinteger(L, t);
+  lua_pushinteger(L, h);
+  lua_pushinteger(L, stat);
+  return 3;
 }
 
 //----------------------------

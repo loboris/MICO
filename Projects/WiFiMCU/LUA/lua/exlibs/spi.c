@@ -8,6 +8,8 @@
 #include "lrotable.h"
 
 #include "mico_platform.h"
+//#include "platform_config.h"
+//#include "platform_peripheral.h"
 
 #define BITS_8          8
 #define BITS_16         16
@@ -75,7 +77,7 @@ static swspi_t SW_SPI =
   .pinMOSI  = 255, // unassigned
   .pinMISO  = 255, // unassigned
   .pinCS    = 255, // unassigned
-  .speed = 500     // 500kHz
+  .speed    = 500  // 500kHz
 };
 
 //-------------------------------------------------------------------------
@@ -103,6 +105,313 @@ void spi_delay(void) {
   }
 }
 
+//---------------------------
+void spi_delayx(uint32_t n) {
+  uint32_t cycles = 0;
+
+  CYCLE_COUNTING_INIT();
+  while (cycles < n) {
+    cycles = DWT->CYCCNT;
+  }
+}
+
+//==============================================================================
+// Modified MICO SPI transfer
+//==============================================================================
+extern const platform_spi_t             platform_spi_peripherals[];
+extern platform_spi_driver_t            platform_spi_drivers[];
+extern const platform_gpio_t            platform_gpio_pins[];
+
+//-----------------------------------------------------------------------
+static uint16_t _spi_transfer( const platform_spi_t* spi, uint16_t data )
+{
+  // Wait until the transmit buffer is empty
+  while ( SPI_I2S_GetFlagStatus( spi->port, SPI_I2S_FLAG_TXE ) == RESET )
+  {
+  }
+  // Send the byte
+  SPI_I2S_SendData( spi->port, data );
+  // Wait until a data is received
+  while ( SPI_I2S_GetFlagStatus( spi->port, SPI_I2S_FLAG_RXNE ) == RESET )
+  {
+  }
+  // Get the received data
+  return SPI_I2S_ReceiveData( spi->port );
+}
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+void _platform_spi_transfer( platform_spi_driver_t* driver, const platform_spi_config_t* config, const platform_spi_message_segment_t* segments, uint16_t rep )
+{
+  uint32_t count  = 0;
+  uint16_t n;
+  
+  platform_mcu_powersave_disable();
+  
+  // --- Activate chip select --------------------
+  platform_gpio_output_low( config->chip_select );
+  // ---------------------------------------------
+  
+  // transfering in interrupt-less mode
+  if ( config->bits == 8 )
+  {
+    uint16_t data = 0xFF;
+    const uint8_t* send_ptr = ( const uint8_t* )segments[0].tx_buffer;
+    uint8_t*       rcv_ptr  = ( uint8_t* )segments[0].rx_buffer;
+    
+    for (n=0; n < rep; n++) {
+      count = segments[0].length;
+      while ( count-- )
+      {
+        data = 0xFF;
+        if ( send_ptr != NULL ) data = *send_ptr++;
+        data = _spi_transfer( driver->peripheral, data );
+        if ( rcv_ptr != NULL ) {
+          if ( send_ptr == NULL ) *rcv_ptr++ = (uint8_t)data;
+          else *rcv_ptr = (uint8_t)data;
+        }
+        //platform_gpio_output_high( config->chip_select );
+        //spi_delayx(2);
+        //platform_gpio_output_low( config->chip_select );
+      }
+      send_ptr = ( const uint8_t* )segments[0].tx_buffer;
+      rcv_ptr  = ( uint8_t* )segments[0].rx_buffer;
+    }
+  }
+  else if ( config->bits == 16 )
+  {
+    const uint16_t* send_ptr = (const uint16_t *) segments[0].tx_buffer;
+    uint16_t*       rcv_ptr  = (uint16_t *) segments[0].rx_buffer;
+    
+    // Transmit/receive data stream, 16-bit at time
+    for (n=0; n < rep; n++) {
+      count = segments[0].length;
+      while ( count-- )
+      {
+        uint16_t data = 0xFFFF;
+        
+        if ( send_ptr != NULL ) data = *send_ptr++;
+        data = _spi_transfer( driver->peripheral, data );
+        if ( rcv_ptr != NULL ) {
+          if ( send_ptr == NULL ) *rcv_ptr++ = data;
+          else *rcv_ptr = data;
+        }
+      }
+      send_ptr = (const uint16_t *) segments[0].tx_buffer;
+      rcv_ptr  = (uint16_t *) segments[0].rx_buffer;
+    }
+  }
+  
+  // --- Deactivate chip select -------------------
+  platform_gpio_output_high( config->chip_select );
+  // ----------------------------------------------
+  platform_mcu_powersave_enable( );
+}
+
+//-------------------------------------------------------------------------------------------------------------
+void _MicoSpiTransfer( const mico_spi_device_t* spi, const mico_spi_message_segment_t* segments, uint16_t rep )
+{
+  platform_spi_config_t config;
+
+  config.chip_select = &platform_gpio_pins[spi->chip_select];
+  config.speed       = spi->speed;
+  config.mode        = spi->mode;
+  config.bits        = spi->bits;
+
+  mico_rtos_lock_mutex( &platform_spi_drivers[spi->port].spi_mutex );
+  _platform_spi_transfer( &platform_spi_drivers[spi->port], &config, segments, rep );
+  mico_rtos_unlock_mutex( &platform_spi_drivers[spi->port].spi_mutex );
+}
+
+//==============================================================================
+//==============================================================================
+
+//-------------------------------------------------
+void checkSPIbits( uint8_t id, uint8_t databits ) {
+  if (id == 2) {
+    if (HW_SPI5.bits != databits) {
+      HW_SPI5.bits = databits;
+      MicoSpiInitialize(&HW_SPI5);
+    }
+  }
+  else if (id == 1) {
+    if (HW_SPI1.bits != databits) {
+      HW_SPI1.bits = databits;
+      MicoSpiInitialize(&HW_SPI1);
+    }
+  }
+}
+
+// Writes a byte to the SPI
+//----------------------------------------------------------------------------------------------
+uint16_t hw_spi_write(uint8_t id, uint8_t databits, uint8_t* data, uint32_t count, uint16_t rep)
+{  
+  uint16_t rxdata=0x0000;
+  mico_spi_message_segment_t hwspi_msg = { data, NULL, (unsigned long)count };
+  
+  checkSPIbits(id, databits);
+  
+  if (spiRW[id]) hwspi_msg.rx_buffer = &rxdata;
+  if (id==2) _MicoSpiTransfer( &HW_SPI5, &hwspi_msg, rep );
+  else if (id==1) _MicoSpiTransfer( &HW_SPI1, &hwspi_msg, 1 );
+  
+  if (databits==BITS_8) rxdata= rxdata & 0x00FF;
+  return rxdata;
+} 
+
+/* SW_SPI.spiMode=0;       cpol 0 cpha 1: sck=0 rising  edge send/read data
+   SW_SPI.spiMode=1;       cpol 0 cpha 0: sck=0 falling edge send/read data
+   SW_SPI.spiMode=2;       cpol 1 cpha 1: sck=1 falling edge send/read data
+   SW_SPI.spiMode=3;       cpol 1 cpha 0: sck=1 rising  edge send/read data */
+//-------------------------------------------------------------------------------------------
+static uint16_t sw_spi_write(uint8_t databits,uint8_t* databuf, uint32_t count, uint16_t rep)
+{
+  uint8_t i=0;
+  uint16_t rxdata=0x0000;
+  uint16_t j, k;
+  uint16_t data;
+  const uint8_t* dataptr = ( const uint8_t* )databuf;
+  
+  // set clk inactive state
+  if (SW_SPI.spiMode > 1) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
+  else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
+
+  // activate CS
+  MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinCS );
+  spi_delay();
+
+  for(k=0;k<rep;k++)  
+  {
+    dataptr = ( const uint8_t* )databuf;
+    for(j=0;j<count;j++)  
+    {
+      if (databits <= 8) data = (uint16_t)((*dataptr++) & 0xFF);
+      else {
+        data = (uint16_t)((*dataptr++) & 0xFF);
+        data = data | (uint16_t)((*dataptr++) << 8);
+      }
+      rxdata = 0;
+      
+      for(i=0;i<databits;i++)  
+      {
+        // set clk state before write edge
+        if ((SW_SPI.spiMode == 0) || (SW_SPI.spiMode == 2)) MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
+        else MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
+        
+        // set data bit -> MOSI
+        if(databits==8)
+        {
+          if((data & 0x80)==0x80) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinMOSI );  
+          else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinMOSI );
+        }
+        else
+        {
+          if((data & 0x8000)==0x8000) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinMOSI );  
+          else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinMOSI );
+        }
+        spi_delay();
+
+        // set clk write edge
+        if ((SW_SPI.spiMode == 0) || (SW_SPI.spiMode == 2)) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
+        else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
+        spi_delay();
+
+        if ((spiRW[0]) && (SW_SPI.pinMISO != 255)) {
+          // get data bit <- MISO
+          rxdata=(rxdata<<1);
+          if(MicoGpioInputGet((mico_gpio_t)SW_SPI.pinMISO)) rxdata |= 1;
+        }
+
+        data=(data<<1);  // next bit
+      }
+    }
+  }
+  
+  // set clk inactive state
+  if (SW_SPI.spiMode > 1) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
+  else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
+  
+  // deactivate CS
+  MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinCS );
+
+  if (databits==BITS_8) rxdata= rxdata & 0x00FF;
+  return rxdata;
+}
+
+// Reads a byte/word from SPI
+//---------------------------------------------------------------------------
+void hw_spi_read(uint8_t id, uint8_t databits, uint8_t* data, uint16_t count)
+{  
+  mico_spi_message_segment_t hwspi_msg = { NULL, data, (unsigned long)count };
+
+  checkSPIbits(id, databits);
+
+  if (id==2) _MicoSpiTransfer( &HW_SPI5, &hwspi_msg, 1 );
+  else if (id==1) _MicoSpiTransfer( &HW_SPI1, &hwspi_msg, 1 );
+} 
+
+//------------------------------------------------------------------
+void sw_spi_read(uint8_t databits, uint8_t* databuf, uint16_t count)
+{
+  uint8_t i=0;
+  uint16_t j = 0;
+  uint16_t data;
+  uint8_t* dataptr = ( uint8_t* )databuf;
+  
+  // set clk inactive state
+  if (SW_SPI.spiMode > 1) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
+  else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
+
+  // activate CS
+  MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinCS );
+  spi_delay();
+
+  for(j=0;j<count;j++)  
+  {
+    data = 0;
+    for(i=0;i<databits;i++)  
+    {
+      // set clk state before read edge
+      if ((SW_SPI.spiMode == 0) || (SW_SPI.spiMode == 2)) MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
+      else MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
+      spi_delay();
+
+      // set clk read edge
+      if ((SW_SPI.spiMode == 0) || (SW_SPI.spiMode == 2)) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
+      else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
+      spi_delay();
+
+      // get data bit <- MISO
+      data=(data<<1);
+      if(MicoGpioInputGet((mico_gpio_t)SW_SPI.pinMISO)) data |= 1;
+    }
+    if (databits <= 8) *dataptr++ = (uint8_t)(data & 0xFF);
+    else {
+      *dataptr++ = (uint8_t)(data & 0xFF);
+      *dataptr++ = (uint8_t)((data >> 8) & 0xFF);
+    }
+  }
+  
+  // set clk inactive state
+  if (SW_SPI.spiMode > 1) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
+  else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
+  
+  // deactivate CS
+  MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinCS );
+}
+
+//-------------------------------------------------------------------------------------------
+uint16_t _spi_write(uint8_t id, uint8_t databits,uint8_t* data, uint16_t count, uint16_t rep)
+{
+  if (id == 0) return sw_spi_write(databits, data, count, rep);
+  else return hw_spi_write(id,databits,data,count, rep);
+}
+
+//------------------------------------------------------------------------
+void _spi_read(uint8_t id, uint8_t databits,uint8_t* data, uint16_t count)
+{
+  if (id == 0) sw_spi_read(databits,data,count);
+  else hw_spi_read(id,databits,data,count);
+}
 
 //id:     0 for software spi; 1 for hw spi1; 2 for hw spi5
 //cpnfig: lua table: {mode,sck,mosi,[miso],[rw],[speed]}
@@ -175,7 +484,7 @@ static int spi_setup( lua_State* L )
       }
       else {
         uint32_t sp = luaL_checkinteger( L, -1 );
-        if ((sp > 50000) || (SW_SPI.speed < 400)) {
+        if ((sp > 50000) || (sp < 400)) {
           l_message( NULL, "wrong arg value: 400kHz<=speed<=50000kHz" );
           lua_pushinteger( L, -5 );
           return 1;
@@ -192,7 +501,7 @@ static int spi_setup( lua_State* L )
     }
   }
   else {
-    if (id==0) SW_SPI.speed = 500;
+    if (id==0) SW_SPI.speed = 1000;
     else if (id==2) HW_SPI5.speed = 1000000;
     else HW_SPI1.speed = 1000000;
   }
@@ -316,12 +625,14 @@ static int spi_setup( lua_State* L )
     else SW_SPI.pinMISO = 255;
   }
   
+  // Initialize SPI
   if (id == 0) {
     if(SW_SPI.spiMode==2 || SW_SPI.spiMode==3) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
     else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
     MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinCS );  // CS=high
   }
   else if (id==2) {
+    HW_SPI5.bits = 8;
     err = MicoSpiInitialize(&HW_SPI5);
     if (err != kNoErr) {
       l_message( NULL, "error initializing hw SPI5" );
@@ -330,6 +641,7 @@ static int spi_setup( lua_State* L )
     }
   }
   else {
+    HW_SPI1.bits = 8;
     err = MicoSpiInitialize(&HW_SPI1);
     if (err != kNoErr) {
       l_message( NULL, "error initializing hw SPI1" );
@@ -341,168 +653,6 @@ static int spi_setup( lua_State* L )
   spiInit[id] = 1;
   lua_pushinteger( L, 0 );
   return 1;
-}
-
-// Writes a byte to the SPI
-//-------------------------------------------------------------------------------
-uint16_t hw_spi_write(uint8_t id, uint8_t databits, uint8_t data, uint16_t count)
-{  
-  uint16_t rxdata=0x0000;
-  mico_spi_message_segment_t hwspi_msg = { &data, NULL, (unsigned long)count };
-  
-  if (spiRW[id]) hwspi_msg.rx_buffer = &rxdata;
-  if (id==2) {
-    HW_SPI5.bits = databits;
-    MicoSpiTransfer( &HW_SPI5, &hwspi_msg, 1 );
-  }
-  else if (id==1) {
-    HW_SPI1.bits = databits;
-    MicoSpiTransfer( &HW_SPI1, &hwspi_msg, 1 );
-  }
-  
-  if (databits==BITS_8) rxdata= rxdata & 0x00FF;
-  return rxdata;
-} 
-
-/* SW_SPI.spiMode=0;       cpol 0 cpha 1: sck=0 rising  edge send/read data
-   SW_SPI.spiMode=1;       cpol 0 cpha 0: sck=0 falling edge send/read data
-   SW_SPI.spiMode=2;       cpol 1 cpha 1: sck=1 falling edge send/read data
-   SW_SPI.spiMode=3;       cpol 1 cpha 0: sck=1 rising  edge send/read data */
-//---------------------------------------------------------
-static uint16_t sw_spi_write(uint8_t databits,uint8_t data)
-{
-  uint8_t i=0;
-  uint16_t rxdata=0x0000;
-  
-  // set clk inactive state
-  if (SW_SPI.spiMode > 1) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
-  else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
-
-  // activate CS
-  MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinCS );
-  spi_delay();
-
-  for(i=0;i<databits;i++)  
-  {
-    // set clk state before write edge
-    if ((SW_SPI.spiMode == 0) || (SW_SPI.spiMode == 2)) MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
-    else MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
-    
-    // set data bit -> MOSI
-    if(databits==8)
-    {
-      if((data & 0x80)==0x80) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinMOSI );  
-      else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinMOSI );
-    }
-    else
-    {
-      if((data & 0x8000)==0x8000) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinMOSI );  
-      else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinMOSI );
-    }
-    spi_delay();
-
-    // set clk write edge
-    if ((SW_SPI.spiMode == 0) || (SW_SPI.spiMode == 2)) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
-    else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
-    spi_delay();
-
-    if ((spiRW[0]) && (SW_SPI.pinMISO != 255)) {
-      // get data bit <- MISO
-      data=(data<<1);
-      if(MicoGpioInputGet((mico_gpio_t)SW_SPI.pinMISO)) data |= 1;
-    }
-
-    data=(data<<1);  // next bit
-  }
-  
-  // set clk inactive state
-  if (SW_SPI.spiMode > 1) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
-  else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
-  
-  // deactivate CS
-  MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinCS );
-
-  if (databits==BITS_8) rxdata= rxdata & 0x00FF;
-  return rxdata;
-}
-
-// Reads a byte/word from SPI
-//-----------------------------------------------------------------------
-static uint16_t hw_spi_read(uint8_t id, uint8_t databits, uint16_t count)
-{  
-  OSStatus err = kNoErr;
-  uint16_t data = 0x0000;
-  
-  mico_spi_message_segment_t hwspi_msg = { NULL, &data, (unsigned long)count };
-
-  if (id==2) {
-    HW_SPI5.bits = databits;
-    err = MicoSpiTransfer( &HW_SPI5, &hwspi_msg, 1 );
-  }
-  else if (id==1) {
-    HW_SPI1.bits = databits;
-    err = MicoSpiTransfer( &HW_SPI1, &hwspi_msg, 1 );
-  }
-  if (err) data = 0;
-  if (databits==BITS_8) data=data & 0xFF;
-  return data;
-} 
-
-//---------------------------------------------
-static uint16_t sw_spi_read(uint8_t databits)
-{
-  uint16_t data=0x0000;
-  
-  uint8_t i=0;
-  
-  // set clk inactive state
-  if (SW_SPI.spiMode > 1) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
-  else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
-
-  // activate CS
-  MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinCS );
-  spi_delay();
-
-  for(i=0;i<databits;i++)  
-  {
-    // set clk state before read edge
-    if ((SW_SPI.spiMode == 0) || (SW_SPI.spiMode == 2)) MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
-    else MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
-    spi_delay();
-
-    // set clk read edge
-    if ((SW_SPI.spiMode == 0) || (SW_SPI.spiMode == 2)) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
-    else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
-    spi_delay();
-
-    // get data bit <- MISO
-    data=(data<<1);
-    if(MicoGpioInputGet((mico_gpio_t)SW_SPI.pinMISO)) data |= 1;
-  }
-  
-  // set clk inactive state
-  if (SW_SPI.spiMode > 1) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
-  else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
-  
-  // deactivate CS
-  MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinCS );
-
-  if (databits==BITS_8) data=data & 0x00FF;
-  return data;
-}
-
-//-------------------------------------------------------------------
-uint16_t _spi_write(uint8_t id, uint8_t databits,uint8_t data)
-{
-  if (id == 0) return sw_spi_write(databits, data);
-  else return hw_spi_write(id,databits,data,1);
-}
-
-//-----------------------------------------------------
-static uint16_t _spi_read(uint8_t id, uint8_t databits)
-{
-  if (id == 0) return sw_spi_read(databits);
-  else return hw_spi_read(id,databits,1);
 }
 
 //spi.write(id,databits,data1,[data2],...)
@@ -539,6 +689,7 @@ static int spi_write( lua_State* L )
   uint32_t wrote = 0;
   unsigned argn=0;
   uint16_t rxdata = 0;
+  uint8_t txdata[2] = {0};
   
   wrote = 0;
   for( argn = 3; argn <= lua_gettop( L ); argn++ )
@@ -550,7 +701,11 @@ static int spi_write( lua_State* L )
         return luaL_error( L, "wrong arg range" );
       if( databits==BITS_16 &&( numdata < 0 || numdata > 65535 ))
         return luaL_error( L, "wrong arg range" );      
-      rxdata = _spi_write(id, databits, numdata);
+
+      txdata[0] = numdata & 0xFF;
+      if ( databits==BITS_16) txdata[1] = (numdata >> 8) & 0xFF;
+      else txdata[1] = 0;
+      rxdata = _spi_write(id, databits, &txdata[0], 1, 1);
       wrote += 1;
     }
     else if( lua_istable( L, argn ) )
@@ -565,7 +720,11 @@ static int spi_write( lua_State* L )
           return luaL_error( L, "wrong arg range" );
         if( databits==BITS_16 &&( numdata < 0 || numdata > 65535 ))
           return luaL_error( L, "wrong arg range" );
-        _spi_write(id, databits, numdata);
+
+        txdata[0] = numdata & 0xFF;
+        if ( databits==BITS_16) txdata[1] = (numdata >> 8) & 0xFF;
+        else txdata[1] = 0;
+        rxdata = _spi_write(id, databits, &txdata[0], 1, 1);
         wrote += 1;
       }
       if( i < datalen ) return luaL_error( L, "table error" );
@@ -573,18 +732,8 @@ static int spi_write( lua_State* L )
     else
     { // write string
       const char *pdata = luaL_checklstring( L, argn, &datalen );
-      if (id==0) {
-        for( i = 0; i < datalen; i++ )
-        {
-          _spi_write(id, BITS_8, (uint8_t)pdata[i]);
-          wrote += 1;
-        }
-        if( i < datalen ) return luaL_error( L, "string error" );
-      }
-      else {
-        hw_spi_write(id, BITS_8, (uint8_t)pdata[i], datalen);
-        wrote += datalen;
-      }
+      rxdata = _spi_write(id, BITS_8, (uint8_t*)pdata, datalen, 1);
+      wrote += datalen;
     }
   }
   if (wrote > 0) wrote--;
@@ -623,7 +772,6 @@ static int spi_repeatwrite( lua_State* L )
     return 1;
   }
   
-  uint16_t i = 0;
   uint16_t wrote = 0;
 
   uint16_t data = luaL_checkinteger( L, 3 );
@@ -633,12 +781,9 @@ static int spi_repeatwrite( lua_State* L )
 
   uint8_t brw = spiRW[id];
   spiRW[id] = 0;
-  wrote = 0;
   
-  for (i=0; i<count; i++) {
-    _spi_write(id, databits, data);
-    wrote += 1;
-  }
+  _spi_write(id, databits, (uint8_t*)&data, 1, count);
+  wrote += count;
   spiRW[id] = brw;
 
   lua_pushinteger( L, wrote );
@@ -687,7 +832,7 @@ static int spi_read( lua_State* L )
   uint16_t data = 0;
 
   if (size == 1) {
-    data = _spi_read(id, databits);
+    _spi_read(id, databits, (uint8_t*)&data, 1);
     lua_pushinteger( L, data );
   }
   else {
@@ -695,7 +840,7 @@ static int spi_read( lua_State* L )
     if (id == 0) {
       for( i = 0; i < size; i ++ )
       {
-        data = _spi_read(id, databits);
+        _spi_read(id, databits, (uint8_t*)&data, 1);
         lua_pushinteger( L, data );
         lua_rawseti(L,-2,i + 1);
       }
@@ -739,30 +884,14 @@ static int spi_readbytes( lua_State* L )
   }
   
   int i=0;
-  uint8_t data;
-
+  uint8_t rxbuffer[512];
   lua_newtable(L);
-  if (id == 0) {
-    for( i = 0; i < size; i ++ )
-    {
-      data = _spi_read(id, BITS_8);
-      lua_pushinteger( L, data );
-      lua_rawseti(L,-2,i + 1);
-    }
-  }
-  else {
-    uint8_t rxbuffer[512];
 
-    mico_spi_message_segment_t hwspi_msg = { NULL, &rxbuffer, (unsigned long)size };
-    if (id==2) data = MicoSpiTransfer( &HW_SPI5, &hwspi_msg, 1 );
-    else data = MicoSpiTransfer( &HW_SPI1, &hwspi_msg, 1 );
-    if (data == kNoErr) {
-      for( i = 0; i < size; i ++ )
-      {
-        lua_pushinteger( L, rxbuffer[i] );
-        lua_rawseti(L,-2,i + 1);
-      }
-    }
+  _spi_read(id, BITS_8, &rxbuffer[0], size);
+  for( i = 0; i < size; i ++ )
+  {
+    lua_pushinteger( L, rxbuffer[i] );
+    lua_rawseti(L,-2,i + 1);
   }
 
   return 1;

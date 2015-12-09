@@ -114,6 +114,11 @@ LUALIB_API int (luaopen_rtc) (lua_State *L);
 LUALIB_API int (luaopen_oled) (lua_State *L);
 #endif
 
+#ifdef USE_LCD_MODULE
+#define LUA_LCDLIBNAME	"lcd"
+LUALIB_API int (luaopen_lcd) (lua_State *L);
+#endif
+
 /* open all previous libraries */
 LUALIB_API void (luaL_openlibs) (lua_State *L); 
 

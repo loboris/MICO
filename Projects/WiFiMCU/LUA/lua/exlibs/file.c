@@ -25,7 +25,7 @@ static u8_t spiffs_fds[32*4];
 static u8_t spiffs_cache_buf[(LOG_PAGE_SIZE+32)*4];
 spiffs fs;
 #define FILE_NOT_OPENED 0
-static volatile int file_fd = FILE_NOT_OPENED;
+volatile int file_fd = FILE_NOT_OPENED;
 
 #define PACKET_SEQNO_INDEX      (1)
 #define PACKET_SEQNO_COMP_INDEX (2)
@@ -107,8 +107,8 @@ void lua_spiffs_mount() {
       0);
 }
 
-//--------------------------------
-static int mode2flag(char *mode) {
+//-------------------------
+int mode2flag(char *mode) {
   if(strlen(mode)==1){
   	if(strcmp(mode,"w")==0)
   	  return SPIFFS_WRONLY|SPIFFS_CREAT|SPIFFS_TRUNC;
