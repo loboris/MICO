@@ -1181,14 +1181,26 @@ static int lcd_init( lua_State* L )
   else if (typ == 1) ST7735_initR(INITR_BLACKTAB);
   else ST7735_initR(INITR_GREENTAB);
   
-  TFT_fillScreen(TFT_BLACK);
   if (lua_gettop(L) > 3) {
     typ = luaL_checkinteger( L, 4 );
     TFT_setRotation(typ);
   }
+  TFT_fillScreen(TFT_BLACK);
   
   lua_pushinteger( L, 0 );
   return 1;
+}
+
+//======================================
+static int lcd_setorient( lua_State* L )
+{
+  if (TFT_SPI_ID > 2) return 0;
+  
+  orientation = luaL_checkinteger( L, 1 );
+  TFT_setRotation(orientation);
+  TFT_fillScreen(_bg);
+  
+  return 0;
 }
 
 //================================
@@ -1309,6 +1321,22 @@ static int lcd_setcolor( lua_State* L )
   
   _fg = getColor( L, 1 );
   if (lua_gettop(L) > 1) _bg = getColor( L, 2 );
+  return 0;
+}
+
+//=====================================
+static int lcd_putpixel( lua_State* L )
+{
+  if (checkParam(2, L)) return 0;
+  
+  uint8_t x = luaL_checkinteger( L, 1 );
+  uint8_t y = luaL_checkinteger( L, 2 );
+  uint16_t color = _fg;
+  
+  if (lua_gettop(L) > 2) color = getColor( L, 3 );
+  
+  TFT_drawPixel(x,y,color);
+  
   return 0;
 }
 
@@ -1494,9 +1522,11 @@ const LUA_REG_TYPE lcd_map[] =
   { LSTRKEY( "setfont" ), LFUNCVAL( lcd_setfont )},
   { LSTRKEY( "getfontsize" ), LFUNCVAL( lcd_getfontsize )},
   { LSTRKEY( "setrot" ), LFUNCVAL( lcd_setrot )},
+  { LSTRKEY( "setorient" ), LFUNCVAL( lcd_setorient )},
   { LSTRKEY( "setcolor" ), LFUNCVAL( lcd_setcolor )},
   { LSTRKEY( "settransp" ), LFUNCVAL( lcd_settransp )},
   { LSTRKEY( "invert" ), LFUNCVAL( lcd_invert )},
+  { LSTRKEY( "putpixel" ), LFUNCVAL( lcd_putpixel )},
   { LSTRKEY( "line" ), LFUNCVAL( lcd_line )},
   { LSTRKEY( "rect" ), LFUNCVAL( lcd_rect )},
   { LSTRKEY( "circle" ), LFUNCVAL( lcd_circle )},
