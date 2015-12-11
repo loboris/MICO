@@ -134,8 +134,8 @@ extern spiffs fs;
 extern volatile int file_fd;
 int mode2flag(char *mode);
 
-uint8_t TFT_SPI_ID = 255;
-uint8_t TFT_pinDC  = 255;
+static uint8_t TFT_SPI_ID = 255;
+static uint8_t TFT_pinDC  = 255;
 
 static int platform_gpio_exists( unsigned pin )
 {
@@ -173,9 +173,12 @@ typedef struct _font {
 
 static Font cfont;
 static uint8_t _transparent = 0;
+static uint8_t _wrap = 0;
 static uint16_t _fg = TFT_GREEN;
 static uint16_t _bg = TFT_BLACK;
 static uint8_t ccbuf[32];
+static int TFT_X  = 0;
+static int TFT_Y  = 0;
 
 #define swap(a, b) { int16_t t = a; a = b; b = t; }
 
@@ -939,6 +942,8 @@ static void printChar(uint8_t c, int x, int y) {
 
   if (cfont.bitmap != 1) return;
   if ((x+cfont.x_size-1) >= _width) return;
+  if (c < cfont.offset) return;
+  if ((c-cfont.offset) > cfont.numchars) return;
   
   if( cfont.x_size < 8 ) 
     fz = cfont.x_size;
@@ -993,6 +998,8 @@ static void rotateChar(uint8_t c, int x, int y, int pos) {
   int zz;
 
   if (cfont.bitmap != 1) return;
+  if (c < cfont.offset) return;
+  if ((c-cfont.offset) > cfont.numchars) return;
 
   if( cfont.x_size < 8 ) fz = cfont.x_size;
   else fz = cfont.x_size/8;	
@@ -1019,12 +1026,17 @@ static void rotateChar(uint8_t c, int x, int y, int pos) {
     }
     temp+=(fz);
   }
+  // calculate x,y for the next char
+  j=0; zz=0; i=0;
+  TFT_X = (int)(x+(((i+(zz*8)+((pos+1)*cfont.x_size))*cos(radian))-((j)*sin(radian))));
+  TFT_Y = (int)(y+(((j)*cos(radian))+((i+(zz*8)+((pos+1)*cfont.x_size))*sin(radian))));
 }
 
 //---------------------------------------------
 static void TFT_print(char *st, int x, int y) {
   int stl, i, w, h;
-
+  uint8_t ch;
+  
   if (cfont.bitmap == 0) return;
   
   if (cfont.bitmap == 2) {
@@ -1040,24 +1052,55 @@ static void TFT_print(char *st, int x, int y) {
   
   stl = strlen(st);
   if (x==RIGHT) {
-    x=_width-(stl*cfont.x_size);
-    if (x < 0) x = 0;
+    if (cfont.bitmap == 1) x = _width-(stl*cfont.x_size);
+    else if (cfont.bitmap == 2) x = _width-(stl*w);
   }
   if (x==CENTER) {
-    x=(_width-(stl*cfont.x_size))/2;
-    if (x < 0) x = 0;
+    if (cfont.bitmap == 1) x = (_width-(stl*cfont.x_size))/2;
+    else if (cfont.bitmap == 2) x = (_width-(stl*w))/2;
   }
-  for (i=0; i<stl; i++)
-    if (cfont.bitmap == 1) {
-      if (rotation==0)
-        printChar(*st++, x + (i*(cfont.x_size)), y);
-      else
-        rotateChar(*st++, x, y, i);
+  if (x < 0) x = 0;
+
+  TFT_X = x;
+  TFT_Y = y;
+  for (i=0; i<stl; i++) {
+    ch = *st++;
+    if (ch == 0x0D) {
+      if (!_transparent) {
+        if ((cfont.bitmap == 1) && (rotation==0)) TFT_fillRect(TFT_X, TFT_Y,  _width-TFT_X, cfont.y_size, _bg);
+        else if (cfont.bitmap == 2) TFT_fillRect(TFT_X, TFT_Y,  _width-TFT_X, h, _bg);
+      }
     }
-    else if (cfont.bitmap == 2) {
-      if (x + (i*(w+2)) + w >= _width) break; // no space for the next character
-      TFT_draw7seg(x + (i*(w+2)), y, *st++, cfont.y_size, cfont.x_size, _fg);
+    else if (ch == 0x0A) {
+      if (cfont.bitmap == 1) {
+        if (TFT_Y+cfont.y_size-1 >= _height) break;
+        TFT_Y += cfont.y_size;
+        TFT_X = 0;
+      }
     }
+    else if ((ch >= cfont.offset) && ((ch-cfont.offset) <= cfont.numchars)) {
+      if (cfont.bitmap == 1) {
+        if (TFT_X + cfont.x_size -1 >= _width) {
+          if (!_wrap) break; // no space for the next character
+          if (TFT_Y+cfont.y_size-1 >= _height) break;
+          TFT_Y += cfont.y_size;
+          TFT_X = x;
+        }
+        if (rotation==0) {
+          printChar(ch, TFT_X, TFT_Y);
+          TFT_X += cfont.x_size;
+        }
+        else {
+          rotateChar(ch, x, y, i);
+        }
+      }
+      else if (cfont.bitmap == 2) {
+        if (TFT_X + w >= _width) break; // no space for the next character
+        TFT_draw7seg(TFT_X, TFT_Y, ch, cfont.y_size, cfont.x_size, _fg);
+        TFT_X += w + 2;
+      }
+    }
+  }
 }
 
 
@@ -1203,8 +1246,8 @@ static int lcd_setorient( lua_State* L )
   return 0;
 }
 
-//================================
-static int lcd_cls( lua_State* L )
+//==================================
+static int lcd_clear( lua_State* L )
 {
   if (TFT_SPI_ID > 2) return 0;
   
@@ -1212,6 +1255,7 @@ static int lcd_cls( lua_State* L )
   
   if (lua_gettop(L) > 0) color = getColor( L, 1 );
   TFT_fillScreen(color);
+  _bg = color;
   return 0;
 }
 
@@ -1222,6 +1266,15 @@ static int lcd_invert( lua_State* L )
   
   uint16_t inv = luaL_checkinteger( L, 1 );
   TFT_invertDisplay(inv);
+  return 0;
+}
+
+//====================================
+static int lcd_setwrap( lua_State* L )
+{
+  if (TFT_SPI_ID > 2) return 0;
+  
+  _wrap = luaL_checkinteger( L, 1 );
   return 0;
 }
 
@@ -1367,8 +1420,8 @@ static int lcd_rect( lua_State* L )
   uint8_t w = luaL_checkinteger( L, 3 );
   uint8_t h = luaL_checkinteger( L, 4 );
   uint16_t color = getColor( L, 5 );
-  if (fillcolor != _bg) TFT_fillRect(x,y,w,h,fillcolor);
-  TFT_drawRect(x,y,w,h,color);
+  if (lua_gettop(L) > 5) TFT_fillRect(x,y,w,h,fillcolor);
+  if (fillcolor != color) TFT_drawRect(x,y,w,h,color);
   return 0;
 }
 
@@ -1383,8 +1436,8 @@ static int lcd_circle( lua_State* L )
   uint8_t y = luaL_checkinteger( L, 2 );
   uint8_t r = luaL_checkinteger( L, 3 );
   uint16_t color = getColor( L, 4 );
-  if (fillcolor != _bg) TFT_fillCircle(x,y,r,fillcolor);
-  TFT_drawCircle(x,y,r,color);
+  if (lua_gettop(L) > 4) TFT_fillCircle(x,y,r,fillcolor);
+  if (fillcolor != color) TFT_drawCircle(x,y,r,color);
   return 0;
 }
 
@@ -1402,8 +1455,8 @@ static int lcd_triangle( lua_State* L )
   uint8_t x2 = luaL_checkinteger( L, 5 );
   uint8_t y2 = luaL_checkinteger( L, 6 );
   uint16_t color = getColor( L, 7 );
-  if (fillcolor != _bg) TFT_fillTriangle(x0,y0,x1,y1,x2,y2,fillcolor);
-  TFT_drawTriangle(x0,y0,x1,y1,x2,y2,color);
+  if (lua_gettop(L) > 7) TFT_fillTriangle(x0,y0,x1,y1,x2,y2,fillcolor);
+  if (fillcolor != color) TFT_drawTriangle(x0,y0,x1,y1,x2,y2,color);
   return 0;
 }
 
@@ -1430,6 +1483,8 @@ static int lcd_write( lua_State* L )
       len = lua_tointeger( L, argn );
       sprintf(tmps,"%d",len);
       TFT_print(&tmps[0], x, y);
+      x = TFT_X;
+      y = TFT_Y;
     }
     else if ( lua_type( L, argn ) == LUA_TTABLE ) {
       if (lua_objlen( L, argn ) == 2) {
@@ -1441,6 +1496,8 @@ static int lcd_write( lua_State* L )
         lua_pop( L, 1 );
         sprintf(tmps,"%.*f",numdec, fnum);
         TFT_print(&tmps[0], x, y);
+        x = TFT_X;
+        y = TFT_Y;
       }
     }
     else if ( lua_type( L, argn ) == LUA_TSTRING )
@@ -1448,6 +1505,8 @@ static int lcd_write( lua_State* L )
       luaL_checktype( L, argn, LUA_TSTRING );
       buf = lua_tolstring( L, argn, &len );
       TFT_print((char*)buf, x, y);
+      x = TFT_X;
+      y = TFT_Y;
     }
   }  
   return 0;
@@ -1516,7 +1575,7 @@ static int lcd_image( lua_State* L )
 const LUA_REG_TYPE lcd_map[] =
 {
   { LSTRKEY( "init" ), LFUNCVAL( lcd_init )},
-  { LSTRKEY( "clear" ), LFUNCVAL( lcd_cls )},
+  { LSTRKEY( "clear" ), LFUNCVAL( lcd_clear )},
   { LSTRKEY( "on" ), LFUNCVAL( lcd_on )},
   { LSTRKEY( "off" ), LFUNCVAL( lcd_off )},
   { LSTRKEY( "setfont" ), LFUNCVAL( lcd_setfont )},
@@ -1525,6 +1584,7 @@ const LUA_REG_TYPE lcd_map[] =
   { LSTRKEY( "setorient" ), LFUNCVAL( lcd_setorient )},
   { LSTRKEY( "setcolor" ), LFUNCVAL( lcd_setcolor )},
   { LSTRKEY( "settransp" ), LFUNCVAL( lcd_settransp )},
+  { LSTRKEY( "setwrap" ), LFUNCVAL( lcd_setwrap )},
   { LSTRKEY( "invert" ), LFUNCVAL( lcd_invert )},
   { LSTRKEY( "putpixel" ), LFUNCVAL( lcd_putpixel )},
   { LSTRKEY( "line" ), LFUNCVAL( lcd_line )},
