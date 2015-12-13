@@ -33,6 +33,9 @@
 #include "platform_config.h"
 #include "mico_platform.h"
 
+extern uint8_t _lua_redir;
+extern char * _lua_redir_buf;
+extern uint16_t _lua_redir_ptr;
 
 #ifdef BOOTLOADER
 int putchar(int ch)
@@ -49,8 +52,15 @@ size_t __write( int handle, const unsigned char * buffer, size_t size )
   {
     return 0;
   }
-
-  MicoUartSend( STDIO_UART, (const char*)buffer, size );
+  if ((_lua_redir==1) && (_lua_redir_buf != NULL)) {
+    if (size + _lua_redir_ptr <= 512) {
+      memcpy(_lua_redir_buf, (const char*)buffer, size);
+      *(_lua_redir_buf+size) = '\0';
+      _lua_redir_buf += size;
+      _lua_redir_ptr += size;
+    }
+  }
+  else MicoUartSend( STDIO_UART, (const char*)buffer, size );
   
   return size;
 }

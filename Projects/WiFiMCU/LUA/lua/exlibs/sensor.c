@@ -1176,6 +1176,58 @@ static int lsensor_18b20_gettemp( lua_State* L )
 }
 
 //=============================================
+static int lsensor_18b20_startm( lua_State* L )
+{
+  uint8_t dev = 0;
+  
+  dev = luaL_checkinteger( L, 1 );
+  if (check_dev(dev)) {
+    lua_pushinteger(L, 1);
+    return 1;
+  }
+
+  /* Start temperature conversion on all devices on one bus */
+  TM_DS18B20_StartAll();
+
+  lua_pushinteger(L, 0);
+  return 1;
+}
+
+//==========================================
+static int lsensor_18b20_get( lua_State* L )
+{
+  uint8_t dev = 0;
+  
+  dev = luaL_checkinteger( L, 1 );
+  if (check_dev(dev)) {
+    lua_pushinteger(L, -9999);
+    return 1;
+  }
+
+  owState_t stat;
+  float temper;
+
+  /* Wait until all are done on one onewire port */
+  if (TM_OneWire_ReadBit() == 0) {
+   lua_pushinteger(L, -9999);
+    return 1;
+  }
+  
+  /* Read temperature from selected device */
+  /* Read temperature from ROM address and store it to temps variable */
+  stat = TM_DS18B20_Read(ow_roms[dev-1], &temper);
+  if ( stat == owOK) {
+    lua_pushnumber(L, temper);
+  }
+  else {
+    /* Reading error */
+    lua_pushinteger(L, -9999);
+  }
+  
+  return 1;
+}
+
+//=============================================
 static int lsensor_18b20_search( lua_State* L )
 {
   uint8_t count = 0;
@@ -1285,6 +1337,8 @@ static const LUA_REG_TYPE ds18b20_map[] =
 {
   { LSTRKEY( "init" ),    LFUNCVAL(lsensor_ow_init ) },
   { LSTRKEY( "gettemp" ), LFUNCVAL(lsensor_18b20_gettemp ) },  
+  { LSTRKEY( "get" ),  LFUNCVAL(lsensor_18b20_get ) },  
+  { LSTRKEY( "startm" ),  LFUNCVAL(lsensor_18b20_startm ) },  
   { LSTRKEY( "search" ),  LFUNCVAL(lsensor_18b20_search ) },  
   { LSTRKEY( "getres" ),  LFUNCVAL(lsensor_18b20_getres ) },  
   { LSTRKEY( "setres" ),  LFUNCVAL(lsensor_18b20_setres ) },  

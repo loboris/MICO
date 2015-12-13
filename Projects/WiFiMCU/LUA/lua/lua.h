@@ -375,6 +375,8 @@ enum{
   TMR=0,
   GPIO,
   WIFI,
+  NETTMR,
+  USER,
 };
 
 typedef struct _msg

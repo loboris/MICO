@@ -345,6 +345,61 @@ static int luaB_dofile (lua_State *L) {
   return lua_gettop(L) - n;
 }
 
+extern uint8_t _lua_redir;
+extern char * _lua_redir_buf;
+extern uint16_t _lua_redir_ptr;
+extern int dostring (lua_State *L, const char *s, const char *name);
+
+//====================================
+static int luaB_dostring( lua_State* L )
+{
+  int n = lua_gettop(L);
+  uint8_t redir = 0;
+  
+  if (lua_gettop(L) > 1) {
+    redir = luaL_checkinteger( L, 2 );
+    if (redir != 1) redir = 0;
+  }
+  
+  if (lua_type(L, 1) == LUA_TSTRING)
+  {
+    const char* buf;
+    const char* ibuf = "dostring";
+    size_t len;
+    int status;
+    char rdrbuf[512] = { '\0' };
+    
+    luaL_checktype( L, 1, LUA_TSTRING );
+    buf = lua_tolstring( L, 1, &len );
+    
+    if (lua_type(L, 3) == LUA_TSTRING)
+    {
+      luaL_checktype( L, 3, LUA_TSTRING );
+      ibuf = lua_tolstring( L, 3, &len );
+    }
+    
+    if (redir == 1) {
+      _lua_redir = 1;
+      _lua_redir_buf = &rdrbuf[0];
+      _lua_redir_ptr = 0;
+    }
+    
+    status = dostring (L, buf, ibuf);
+
+    if (redir == 1) {
+      if (status == 0) {
+        lua_pushstring(L, rdrbuf);
+      }
+      else {
+        lua_pushfstring(L, "error [%s]", rdrbuf+1);
+      }
+      _lua_redir = 0;
+      _lua_redir_buf = NULL;
+    }
+  }
+  
+  return lua_gettop(L) - n;
+}
 
 static int luaB_assert (lua_State *L) {
   luaL_checkany(L, 1);
@@ -462,6 +517,7 @@ static int luaB_newproxy (lua_State *L) {
   {LSTRKEY("assert"), LFUNCVAL(luaB_assert)},\
   {LSTRKEY("collectgarbage"), LFUNCVAL(luaB_collectgarbage)},\
   {LSTRKEY("dofile"), LFUNCVAL(luaB_dofile)},\
+  {LSTRKEY("dostring"), LFUNCVAL(luaB_dostring)},\
   {LSTRKEY("error"), LFUNCVAL(luaB_error)},\
   {LSTRKEY("gcinfo"), LFUNCVAL(luaB_gcinfo)},\
   {LSTRKEY("getfenv"), LFUNCVAL(luaB_getfenv)},\

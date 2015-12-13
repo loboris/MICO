@@ -10,6 +10,7 @@
 extern platform_uart_driver_t platform_uart_drivers[];
 extern const platform_uart_t  platform_uart_peripherals[];
 extern unsigned char boot_reason;
+extern void _timer_net_handle( lua_State* gL );
 
 #define DEFAULT_WATCHDOG_TIMEOUT        10*1000  // 10 seconds
 #define main_log(M, ...) custom_log("main", M, ##__VA_ARGS__)
@@ -18,6 +19,11 @@ extern unsigned char boot_reason;
 #define LUA_UART        (MICO_UART_1)
 #define INBUF_SIZE      256
 #define OUTBUF_SIZE     1024
+
+uint8_t _lua_redir = 0;
+char * _lua_redir_buf = NULL;
+uint16_t _lua_redir_ptr = 0;
+
 
 lua_system_param_t lua_system_param =
 {
@@ -82,8 +88,15 @@ static mico_uart_config_t lua_uart_config =
 //-----------------------------
 int lua_putstr(const char *msg)
 {
-  if (msg[0] != 0)
-    MicoUartSend( LUA_UART, (const char*)msg, strlen(msg) );
+  if (msg[0] != 0) {
+    if (_lua_redir == 0) MicoUartSend( LUA_UART, (const char*)msg, strlen(msg) );
+    else if (_lua_redir == 1) {
+      MicoUartSend( LUA_UART, "[[", 2 );
+      MicoUartSend( LUA_UART, (const char*)msg, strlen(msg) );
+      MicoUartSend( LUA_UART, "]]", 2 );
+    }
+    else MicoUartSend( LUA_UART, (const char*)msg, strlen(msg) );
+  }
   return 0;
 }
 
@@ -128,6 +141,19 @@ static void do_queue_task(queue_msg_t* msg)
     if(msg->para2 == LUA_NOREF) return;
     lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
     lua_call(msg->L, 0, 0);
+    lua_gc(msg->L, LUA_GCCOLLECT, 0);
+  }
+  else if(msg->source == NETTMR)
+  { // === execute net timer interrupt function ===
+    _timer_net_handle(msg->L);
+  }
+  else if(msg->source == USER)
+  { // === execute user function ===
+    if(msg->para2 == LUA_NOREF) return;
+    lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
+    lua_pushstring(msg->L, "User function");
+    lua_call(msg->L, 1, 0);
+    luaL_unref(msg->L, LUA_REGISTRYINDEX, msg->para2);
     lua_gc(msg->L, LUA_GCCOLLECT, 0);
   }
   else if(msg->source == WIFI)
@@ -185,6 +211,7 @@ int readline4lua(const char *prompt, char *buffer, int buffer_size)
   int line_position;
     
   mico_rtos_unlock_mutex(&lua_queue_mut);
+  _lua_redir = 0;
   
 start:
   lua_printf(prompt); // show prompt

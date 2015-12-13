@@ -23,8 +23,6 @@ extern mico_queue_t os_queue;
 
 char gWiFiSSID[33],gWiFiPSW[65];
 
-extern mico_queue_t os_queue;
-
 static int is_valid_ip(const char *ip) 
 {
   int n[4];

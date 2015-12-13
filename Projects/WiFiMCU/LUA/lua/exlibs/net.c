@@ -25,6 +25,9 @@
 #define MAX_SVR_SOCKET 4
 #define MAX_SVRCLT_SOCKET 5
 #define MAX_CLT_SOCKET 4
+
+extern mico_queue_t os_queue;
+
 enum _req_actions{
   NO_ACTION=0,
   REQ_ACTION_GOTIP,
@@ -307,7 +310,7 @@ void _micoNotify_TCPClientConnectedHandler(int fd)
     2.3,udp server:recieve or disconnect
     2.4,tcp client/udp client: or recieve or disconnect
 */
-static void _timer_net_handle( void* arg )
+void _timer_net_handle( lua_State* gL )
 {
 //step 0
   static fd_set readset;
@@ -588,6 +591,18 @@ static void _timer_net_handle( void* arg )
     }
   }//for(k=0;..  
 }
+
+
+// == Timer interrupt handler =======
+static void _timer_handler( void* arg )
+{
+  queue_msg_t msg;
+  msg.L = gL;
+  msg.source = NETTMR;
+  mico_rtos_push_to_queue( &os_queue, &msg,0);
+}
+// ==================================
+
 static void startNetTimer(void)
 {
   static bool timer_net_is_started=false;
@@ -596,7 +611,7 @@ static void startNetTimer(void)
   {
     timer_net_is_started = true;
     mico_deinit_timer( &_timer_net);
-    mico_init_timer(&_timer_net, 50,_timer_net_handle ,NULL);
+    mico_init_timer(&_timer_net, 50, _timer_handler ,NULL);
     mico_start_timer(&_timer_net);
   }
 }

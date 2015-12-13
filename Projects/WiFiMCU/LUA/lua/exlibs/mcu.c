@@ -19,6 +19,34 @@
    
 extern lua_system_param_t lua_system_param;
 extern uint16_t _get_luaparamsCRC( void );
+extern mico_queue_t os_queue;
+
+static lua_State* gL = NULL;
+
+//===================================
+static int queue_push( lua_State* L )
+{
+  if (lua_type(L, 1) == LUA_TFUNCTION || lua_type(L, 1) == LUA_TLIGHTFUNCTION)
+  {
+    lua_pushvalue(L, 1);  // copy argument (func) to the top of stack
+    gL = L;
+    queue_msg_t msg;
+    msg.L = gL;
+    msg.source = USER;
+    
+    if (lua_type(L, 2) == LUA_TNUMBER) msg.para1 = luaL_checkinteger( L, 2 );
+    else msg.para1 = -9999;
+
+    msg.para2 = luaL_ref(L, LUA_REGISTRYINDEX);
+    mico_rtos_push_to_queue( &os_queue, &msg, 0);
+    l_message( NULL, "pushed");
+  }
+  else
+    return luaL_error( L, "callback function needed" );
+
+  
+  return 0;
+}
 
 
 //===================================
@@ -313,6 +341,7 @@ const LUA_REG_TYPE mcu_map[] =
   { LSTRKEY( "getparams" ), LFUNCVAL(get_params)},
   { LSTRKEY( "sgetparams" ), LFUNCVAL(get_sparams)},
   { LSTRKEY( "setparams" ), LFUNCVAL(set_sparams)},
+  { LSTRKEY( "queuepush" ), LFUNCVAL(queue_push)},
 #if LUA_OPTIMIZE_MEMORY > 0
 #endif      
   {LNILKEY, LNILVAL}
