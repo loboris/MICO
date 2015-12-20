@@ -95,18 +95,21 @@ static swspi_t SW_SPI =
     while(0)
 //-------------------------------------------------------------------------
 
-//--------------------
-void spi_delay(void) {
+//---------------------------
+static void spi_delay(void) {
   uint32_t cycles = 0;
 
+  if (SW_SPI.speed < 10) return;
+  
   CYCLE_COUNTING_INIT();
   while (cycles < SW_SPI.speed) {
     cycles = DWT->CYCCNT;
   }
 }
 
-//---------------------------
-void spi_delayx(uint32_t n) {
+/*
+//----------------------------------
+static void spi_delayx(uint32_t n) {
   uint32_t cycles = 0;
 
   CYCLE_COUNTING_INIT();
@@ -114,6 +117,7 @@ void spi_delayx(uint32_t n) {
     cycles = DWT->CYCCNT;
   }
 }
+*/
 
 //==============================================================================
 // Modified MICO SPI transfer
@@ -139,8 +143,8 @@ static uint16_t _spi_transfer( const platform_spi_t* spi, uint16_t data )
   return SPI_I2S_ReceiveData( spi->port );
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------------------------------------
-void _platform_spi_transfer( platform_spi_driver_t* driver, const platform_spi_config_t* config, const platform_spi_message_segment_t* segments, uint16_t rep )
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+static void _platform_spi_transfer( platform_spi_driver_t* driver, const platform_spi_config_t* config, const platform_spi_message_segment_t* segments, uint16_t rep )
 {
   uint32_t count  = 0;
   uint16_t n;
@@ -169,9 +173,6 @@ void _platform_spi_transfer( platform_spi_driver_t* driver, const platform_spi_c
           if ( send_ptr == NULL ) *rcv_ptr++ = (uint8_t)data;
           else *rcv_ptr = (uint8_t)data;
         }
-        //platform_gpio_output_high( config->chip_select );
-        //spi_delayx(2);
-        //platform_gpio_output_low( config->chip_select );
       }
       send_ptr = ( const uint8_t* )segments[0].tx_buffer;
       rcv_ptr  = ( uint8_t* )segments[0].rx_buffer;
@@ -207,8 +208,8 @@ void _platform_spi_transfer( platform_spi_driver_t* driver, const platform_spi_c
   platform_mcu_powersave_enable( );
 }
 
-//-------------------------------------------------------------------------------------------------------------
-void _MicoSpiTransfer( const mico_spi_device_t* spi, const mico_spi_message_segment_t* segments, uint16_t rep )
+//--------------------------------------------------------------------------------------------------------------------
+static void _MicoSpiTransfer( const mico_spi_device_t* spi, const mico_spi_message_segment_t* segments, uint16_t rep )
 {
   platform_spi_config_t config;
 
@@ -225,8 +226,8 @@ void _MicoSpiTransfer( const mico_spi_device_t* spi, const mico_spi_message_segm
 //==============================================================================
 //==============================================================================
 
-//-------------------------------------------------
-void checkSPIbits( uint8_t id, uint8_t databits ) {
+//--------------------------------------------------------
+static void checkSPIbits( uint8_t id, uint8_t databits ) {
   if (id == 2) {
     if (HW_SPI5.bits != databits) {
       HW_SPI5.bits = databits;
@@ -242,8 +243,8 @@ void checkSPIbits( uint8_t id, uint8_t databits ) {
 }
 
 // Writes a byte to the SPI
-//----------------------------------------------------------------------------------------------
-uint16_t hw_spi_write(uint8_t id, uint8_t databits, uint8_t* data, uint32_t count, uint16_t rep)
+//-----------------------------------------------------------------------------------------------------
+static uint16_t hw_spi_write(uint8_t id, uint8_t databits, uint8_t* data, uint32_t count, uint16_t rep)
 {  
   uint16_t rxdata=0x0000;
   mico_spi_message_segment_t hwspi_msg = { data, NULL, (unsigned long)count };
@@ -277,7 +278,7 @@ static uint16_t sw_spi_write(uint8_t databits,uint8_t* databuf, uint32_t count, 
 
   // activate CS
   MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinCS );
-  spi_delay();
+  if (SW_SPI.speed >= 10) spi_delay();
 
   for(k=0;k<rep;k++)  
   {
@@ -308,12 +309,12 @@ static uint16_t sw_spi_write(uint8_t databits,uint8_t* databuf, uint32_t count, 
           if((data & 0x8000)==0x8000) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinMOSI );  
           else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinMOSI );
         }
-        spi_delay();
+        if (SW_SPI.speed >= 10) spi_delay();
 
         // set clk write edge
         if ((SW_SPI.spiMode == 0) || (SW_SPI.spiMode == 2)) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
         else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
-        spi_delay();
+        if (SW_SPI.speed >= 10) spi_delay();
 
         if ((spiRW[0]) && (SW_SPI.pinMISO != 255)) {
           // get data bit <- MISO
@@ -338,8 +339,8 @@ static uint16_t sw_spi_write(uint8_t databits,uint8_t* databuf, uint32_t count, 
 }
 
 // Reads a byte/word from SPI
-//---------------------------------------------------------------------------
-void hw_spi_read(uint8_t id, uint8_t databits, uint8_t* data, uint16_t count)
+//----------------------------------------------------------------------------------
+static void hw_spi_read(uint8_t id, uint8_t databits, uint8_t* data, uint16_t count)
 {  
   mico_spi_message_segment_t hwspi_msg = { NULL, data, (unsigned long)count };
 
@@ -349,8 +350,8 @@ void hw_spi_read(uint8_t id, uint8_t databits, uint8_t* data, uint16_t count)
   else if (id==1) _MicoSpiTransfer( &HW_SPI1, &hwspi_msg, 1 );
 } 
 
-//------------------------------------------------------------------
-void sw_spi_read(uint8_t databits, uint8_t* databuf, uint16_t count)
+//-------------------------------------------------------------------------
+static void sw_spi_read(uint8_t databits, uint8_t* databuf, uint16_t count)
 {
   uint8_t i=0;
   uint16_t j = 0;
@@ -363,7 +364,7 @@ void sw_spi_read(uint8_t databits, uint8_t* databuf, uint16_t count)
 
   // activate CS
   MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinCS );
-  spi_delay();
+  if (SW_SPI.speed >= 10) spi_delay();
 
   for(j=0;j<count;j++)  
   {
@@ -373,12 +374,12 @@ void sw_spi_read(uint8_t databits, uint8_t* databuf, uint16_t count)
       // set clk state before read edge
       if ((SW_SPI.spiMode == 0) || (SW_SPI.spiMode == 2)) MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
       else MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
-      spi_delay();
+      if (SW_SPI.speed >= 10) spi_delay();
 
       // set clk read edge
       if ((SW_SPI.spiMode == 0) || (SW_SPI.spiMode == 2)) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
       else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
-      spi_delay();
+      if (SW_SPI.speed >= 10) spi_delay();
 
       // get data bit <- MISO
       data=(data<<1);
@@ -475,12 +476,13 @@ static int spi_setup( lua_State* L )
     {
       if (id==0) {
         SW_SPI.speed = luaL_checkinteger( L, -1 );
-        if ((SW_SPI.speed > 5000) || (SW_SPI.speed < 100)) {
-          l_message( NULL, "wrong arg value: 100kHz<=speed<=5000kHz" );
+        if (SW_SPI.speed < 100) {
+          l_message( NULL, "wrong arg value: 100kHz<=speed<=10000kHz" );
           lua_pushinteger( L, -5 );
           return 1;
         }
-        SW_SPI.speed = 50000 / SW_SPI.speed;
+        if (SW_SPI.speed <= 5000) SW_SPI.speed = 50000 / SW_SPI.speed;
+        else SW_SPI.speed = 1;
       }
       else {
         uint32_t sp = luaL_checkinteger( L, -1 );
@@ -501,7 +503,7 @@ static int spi_setup( lua_State* L )
     }
   }
   else {
-    if (id==0) SW_SPI.speed = 1000;
+    if (id==0) SW_SPI.speed = 50;
     else if (id==2) HW_SPI5.speed = 1000000;
     else HW_SPI1.speed = 1000000;
   }

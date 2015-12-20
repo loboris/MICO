@@ -39,7 +39,7 @@ extern "C"
 //-------------------------
 typedef struct {
 	unsigned char  ID;
-	unsigned char  soft_wdg;
+	unsigned char  use_wwdg;
         unsigned long  wdg_tmo;
         unsigned short stack_size;
         unsigned short inbuf_size;

@@ -11,6 +11,7 @@ extern platform_uart_driver_t platform_uart_drivers[];
 extern const platform_uart_t  platform_uart_peripherals[];
 extern unsigned char boot_reason;
 extern void _timer_net_handle( lua_State* gL );
+extern void _do_freeBuf(uint8_t id);
 
 #define DEFAULT_WATCHDOG_TIMEOUT        10*1000  // 10 seconds
 #define main_log(M, ...) custom_log("main", M, ##__VA_ARGS__)
@@ -24,11 +25,11 @@ uint8_t _lua_redir = 0;
 char * _lua_redir_buf = NULL;
 uint16_t _lua_redir_ptr = 0;
 
-
+//----------------------------------------
 lua_system_param_t lua_system_param =
 {
   .ID = LUA_PARAMS_ID,
-  .soft_wdg   = 0,
+  .use_wwdg   = 0,
   .wdg_tmo    = DEFAULT_WATCHDOG_TIMEOUT,
   .stack_size = 20*1024,
   .inbuf_size = INBUF_SIZE,
@@ -39,11 +40,10 @@ lua_system_param_t lua_system_param =
 };
 
 static mico_thread_t lua_queue_thread = NULL;
-// Used to synchronize the queue thread
-mico_mutex_t  lua_queue_mut;
+mico_mutex_t  lua_queue_mut; // Used to synchronize the queue thread
 
-static uint32_t soft_wdg = 0;
-static mico_timer_t _soft_watchdog_timer;
+static uint32_t wwdgCount = 0;
+
 
 //----------------------------------
 uint16_t _get_luaparamsCRC( void ) {
@@ -56,21 +56,13 @@ uint16_t _get_luaparamsCRC( void ) {
   CRC16_Final( &paramcrc, &crc );
   return crc;
 }
-//---------------------------------------------------
-static void _soft_watchdog_timer_handler( void* arg )
-{
-  (void)(arg);
-  soft_wdg += lua_system_param.wdg_tmo / 100; // +100 msec
-  if (soft_wdg > lua_system_param.wdg_tmo) {
-    MicoSystemReboot();
-  }
-}
 
-//-------------------------
+//----------------------------------------------------
 void luaWdgReload( void ) {
-  if (lua_system_param.soft_wdg == 0) MicoWdgReload();
-  else soft_wdg = 0;
+  if (lua_system_param.use_wwdg == 0) MicoWdgReload();
+  else wwdgCount = 0;
 }
+//----------------------------------------------------
 
 static uint8_t *lua_rx_data;
 static ring_buffer_t lua_rx_buffer;
@@ -136,16 +128,34 @@ extern char gWiFiPSW[];
 //=========================================
 static void do_queue_task(queue_msg_t* msg)
 {
-  if(msg->source == TMR || msg->source == GPIO)
+  if ((msg->source == TMR) || (msg->source == GPIO))
   { // === execute timer or gpio interrupt function ===
     if(msg->para2 == LUA_NOREF) return;
     lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
     lua_call(msg->L, 0, 0);
     lua_gc(msg->L, LUA_GCCOLLECT, 0);
   }
-  else if(msg->source == NETTMR)
+  else if (msg->source == NETTMR)
   { // === execute net timer interrupt function ===
     _timer_net_handle(msg->L);
+  }
+  else if ((msg->source == onUART1) || (msg->source == onUART2))
+  { // === execute UART ON function ===
+    if (msg->para2 == LUA_NOREF) return;
+    if (msg->para3 == NULL) return;
+    if (msg->L == NULL) {
+      if (msg->source == onUART1) _do_freeBuf(1);
+      else _do_freeBuf(2);
+      return;
+    }
+    
+    lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
+    lua_pushinteger(msg->L, msg->para1);
+    lua_pushlstring(msg->L, (const char*)(msg->para3), msg->para1);
+    if (msg->source == onUART1) _do_freeBuf(1);
+    else _do_freeBuf(2);
+    lua_call(msg->L, 2, 0);
+    lua_gc(msg->L, LUA_GCCOLLECT, 0);
   }
   else if(msg->source == USER)
   { // === execute user function ===
@@ -270,6 +280,7 @@ start:
   }
 }
 
+//=====================================
 //*** Main Lua thread *****************
 //=====================================
 static void lua_main_thread(void *data)
@@ -283,7 +294,7 @@ static void lua_main_thread(void *data)
   // === Error happened  =============
   lua_printf("lua exited, reboot\r\n");
   
-  if (lua_system_param.soft_wdg != 0) {
+  if (lua_system_param.use_wwdg != 0) {
     MicoWdgInitialize( lua_system_param.wdg_tmo);
   }
   mico_thread_msleep(500);
@@ -293,6 +304,64 @@ static void lua_main_thread(void *data)
 
   mico_rtos_delete_thread(NULL);
 }
+//=====================================
+
+
+//==================================================
+void TIM1_BRK_TIM9_IRQHandler(void)
+{
+  if (TIM_GetITStatus(TIM9, TIM_IT_Update) != RESET)
+  {
+    TIM_ClearITPendingBit(TIM9, TIM_IT_Update);
+    if (wwdgCount < lua_system_param.wdg_tmo) {
+      WWDG_SetCounter(0x7E);
+    }
+    wwdgCount += 20; // +20 msec
+  }
+}
+//==================================================
+
+
+// === TIM9 works as watchdog timer, resets WWDG every 20 msec ===
+//---------------------------
+static void wwdg_Config(void)
+{
+  NVIC_InitTypeDef NVIC_InitStructure;
+  TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure; // Time base structure
+
+  // Enable the TIM9 global Interrupt
+  NVIC_InitStructure.NVIC_IRQChannel = TIM1_BRK_TIM9_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+   
+  // TIM9 clock enable
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9, ENABLE);
+  // Time base configuration
+  TIM_TimeBaseStructure.TIM_Period = 40000 - 1; // 1 MHz down to 250 Hz (40 ms)
+  TIM_TimeBaseStructure.TIM_Prescaler = 50 - 1; // 50 MHz Clock down to 1 MHz
+  TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+  TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+  TIM_TimeBaseInit(TIM9, &TIM_TimeBaseStructure);
+  // TIM IT enable
+  TIM_ITConfig(TIM9, TIM_IT_Update, ENABLE);
+
+  // --- configure window watchdog (WWDG) ---
+  // Enable WWDG clock
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_WWDG, ENABLE);
+  // WWDG clock counter = (PCLK1 (50MHz)/4096)/8 = 1525 Hz (~655.36 us)
+  WWDG_SetPrescaler(WWDG_Prescaler_8);
+  // Set Window value to 127; WWDG counter should be refreshed only when the counter
+  // is below 127 (and greater than 64) otherwise a reset will be generated
+  WWDG_SetWindowValue(0x7F);
+  // Enable WWDG and set counter value to 127, WWDG timeout = ~656 us * 64 = 42 ms 
+  // In this case the refresh window is: ~655.36 * 64 = ~42ms
+
+  WWDG_Enable(0x7E);     // start WWDG reset timer
+  TIM_Cmd(TIM9, ENABLE); // and enable TIM9 counter
+}
+
 
 //===========================
 int application_start( void )
@@ -305,7 +374,7 @@ int application_start( void )
   char *p_f = &lua_system_param.init_file[0];
   mico_rtc_time_t ttime;
   uint8_t prmstat = 0;
-  
+    
   platform_check_bootreason();
   MicoInit();
 
@@ -316,7 +385,7 @@ int application_start( void )
 
   if (lua_system_param.ID != LUA_PARAMS_ID || crc != lua_system_param.crc)  {
     lua_system_param.ID = LUA_PARAMS_ID;
-    lua_system_param.soft_wdg = 0;
+    lua_system_param.use_wwdg = 0;
     lua_system_param.wdg_tmo    = DEFAULT_WATCHDOG_TIMEOUT;
     lua_system_param.stack_size = 20*1024;
     lua_system_param.inbuf_size = INBUF_SIZE;
@@ -345,13 +414,13 @@ int application_start( void )
 
   lua_printf( "\r\nWiFiMCU Lua starting...(Free memory %d/%d)\r\n",MicoGetMemoryInfo()->free_memory,MicoGetMemoryInfo()->total_memory);
   lua_printf("  Lua params: ");
-  if (prmstat) lua_printf( "OK\r\n");
-  else lua_printf( "BAD, initialized\r\n");
-  lua_printf("    Watchdog: ");
-  if (lua_system_param.soft_wdg==0) lua_printf("hardware (IWDT).\r\n");
-  else lua_printf( "software (timer).\r\n");
+  if (prmstat) lua_printf( "OK");
+  else lua_printf( "BAD, initialized");
+  lua_printf("\r\n    Watchdog: ");
+  if (lua_system_param.use_wwdg == 0) lua_printf("IWDT");
+  else lua_printf( "WWDG");
   
-  lua_printf(" Boot reason: ");
+  lua_printf("\r\n Boot reason: ");
   switch(boot_reason)
   {
     case BOOT_REASON_NONE:       lua_printf("NONE"); break;
@@ -377,15 +446,14 @@ int application_start( void )
     lua_printf("Current Time: %s",asctime(&currentTime)); 
   }
   
-  //---watch dog----------
-  if (lua_system_param.soft_wdg == 0) {
-    // hw wdog, IWDG
+  // === watch dog ==============================
+  if (lua_system_param.use_wwdg == 0) {
+    // === using IWDG ===
     MicoWdgInitialize( lua_system_param.wdg_tmo);
   }
   else {
-    // soft watchdog timer, 100 msec
-    mico_init_timer(&_soft_watchdog_timer,lua_system_param.wdg_tmo/100, _soft_watchdog_timer_handler, NULL);
-    mico_start_timer(&_soft_watchdog_timer);
+    // === using WWDG
+    wwdg_Config();
   }
 
   // Create queue for interrupt servicing  

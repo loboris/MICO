@@ -376,15 +376,18 @@ enum{
   GPIO,
   WIFI,
   NETTMR,
+  onUART1,
+  onUART2,
   USER,
 };
 
 typedef struct _msg
 {
-  char  source;  //which module
-  lua_State* L;
-  int   para1;   //which type
-  int   para2;   //parameters
+  char           source;  // which module
+  lua_State*     L;
+  int            para1;   // which type
+  int            para2;   // parameter
+  unsigned char* para3;   // pointer param
 } queue_msg_t;
 
 /* }====================================================================== */

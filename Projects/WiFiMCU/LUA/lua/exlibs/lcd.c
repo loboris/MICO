@@ -850,7 +850,7 @@ static void barVert(int16_t x, int16_t y, int16_t w, int16_t l, uint16_t color) 
   TFT_fillTriangle(x+1, y+2*w, x+w, y+w+1, x+2*w-1, y+2*w, color);
   TFT_fillTriangle(x+1, y+2*w+l+1, x+w, y+3*w+l, x+2*w-1, y+2*w+l+1, color);
   TFT_fillRect(x, y+2*w+1, 2*w+1, l, color);
-  if (cfont.offset) {
+  if ((cfont.offset) && (color != _bg)) {
     TFT_drawTriangle(x+1, y+2*w, x+w, y+w+1, x+2*w-1, y+2*w, cfont.color);
     TFT_drawTriangle(x+1, y+2*w+l+1, x+w, y+3*w+l, x+2*w-1, y+2*w+l+1, cfont.color);
     TFT_drawRect(x, y+2*w+1, 2*w+1, l, cfont.color);
@@ -862,7 +862,7 @@ static void barHor(int16_t x, int16_t y, int16_t w, int16_t l, uint16_t color) {
   TFT_fillTriangle(x+2*w, y+2*w-1, x+w+1, y+w, x+2*w, y+1, color);
   TFT_fillTriangle(x+2*w+l+1, y+2*w-1, x+3*w+l, y+w, x+2*w+l+1, y+1, color);
   TFT_fillRect(x+2*w+1, y, l, 2*w+1, color);
-  if (cfont.offset) {
+  if ((cfont.offset) && (color != _bg)) {
     TFT_drawTriangle(x+2*w, y+2*w-1, x+w+1, y+w, x+2*w, y+1, cfont.color);
     TFT_drawTriangle(x+2*w+l+1, y+2*w-1, x+3*w+l, y+w, x+2*w+l+1, y+1, cfont.color);
     TFT_drawRect(x+2*w+1, y, l, 2*w+1, cfont.color);
@@ -877,17 +877,29 @@ static void TFT_draw7seg(int16_t x, int16_t y, int8_t num, int16_t w, int16_t l,
   int16_t c = font_bcd[num-0x2D];
   int16_t d = 2*w+l+1;
   
-  if (!_transparent) TFT_fillRect(x, y, (2 * (2 * w + 1)) + l, (3 * (2 * w + 1)) + (2 * l), _bg);
+  //if (!_transparent) TFT_fillRect(x, y, (2 * (2 * w + 1)) + l, (3 * (2 * w + 1)) + (2 * l), _bg);
+
+  if (!(c & 0x001)) barVert(x+d, y+d, w, l, _bg);
+  if (!(c & 0x002)) barVert(x,   y+d, w, l, _bg);
+  if (!(c & 0x004)) barVert(x+d, y, w, l, _bg);
+  if (!(c & 0x008)) barVert(x,   y, w, l, _bg);
+  if (!(c & 0x010)) barHor(x, y+2*d, w, l, _bg);
+  if (!(c & 0x020)) barHor(x, y+d, w, l, _bg);
+  if (!(c & 0x040)) barHor(x, y, w, l, _bg);
+
+  //if (!(c & 0x080)) TFT_fillRect(x+(d/2), y+2*d, 2*w+1, 2*w+1, _bg);
+  if (!(c & 0x100)) TFT_fillRect(x+(d/2), y+d+2*w+1, 2*w+1, l/2, _bg);
+  if (!(c & 0x800)) TFT_fillRect(x+(d/2), y+(2*w)+1+(l/2), 2*w+1, l/2, _bg);
+  //if (!(c & 0x200)) TFT_fillRect(x+2*w+1, y+d, l, 2*w+1, _bg);
 
   if (c & 0x001) barVert(x+d, y+d, w, l, color);               // down right
   if (c & 0x002) barVert(x,   y+d, w, l, color);               // down left
   if (c & 0x004) barVert(x+d, y, w, l, color);                 // up right
   if (c & 0x008) barVert(x,   y, w, l, color);                 // up left
-  
   if (c & 0x010) barHor(x, y+2*d, w, l, color);                // down
   if (c & 0x020) barHor(x, y+d, w, l, color);                  // middle
   if (c & 0x040) barHor(x, y, w, l, color);                    // up
-
+ 
   if (c & 0x080) {
     TFT_fillRect(x+(d/2), y+2*d, 2*w+1, 2*w+1, color);         // low point
     if (cfont.offset) TFT_drawRect(x+(d/2), y+2*d, 2*w+1, 2*w+1, cfont.color);

@@ -53,8 +53,8 @@ static int queue_push( lua_State* L )
 static int get_params( lua_State* L )
 {
   lua_newtable( L );
-  lua_pushinteger(L, lua_system_param.soft_wdg );
-  lua_setfield( L, -2, "soft_wdg" );
+  lua_pushinteger(L, lua_system_param.use_wwdg );
+  lua_setfield( L, -2, "use_wwdg" );
   lua_pushinteger(L, lua_system_param.wdg_tmo );
   lua_setfield( L, -2, "wdg_tmo" );
   lua_pushinteger(L, lua_system_param.stack_size );
@@ -87,7 +87,7 @@ static int get_sparams( lua_State* L )
 {
   char buff[LUAL_BUFFERSIZE];
 
-  sprintf(buff,"   soft_wdg = %d", lua_system_param.soft_wdg);
+  sprintf(buff,"   use_wwdg = %d", lua_system_param.use_wwdg);
   l_message(NULL,buff);
   sprintf(buff,"    wdg_tmo = %d", lua_system_param.wdg_tmo);
   l_message(NULL,buff);
@@ -126,18 +126,18 @@ static int set_sparams( lua_State* L )
     return 0;
   }
 
-  lua_getfield(L, 1, "soft_wdg");
+  lua_getfield(L, 1, "use_wwdg");
   if (!lua_isnil(L, -1)) {  // found?
     if( lua_isstring(L, -1) )   // deal with the string
     {
       uint8_t wd = luaL_checkinteger( L, -1 );
-      if (wd == 0) lua_system_param.soft_wdg=0;
-      else lua_system_param.soft_wdg=1;
-      l_message( NULL, "updated: soft_wdg, RESET in 10 sec!" );
+      if (wd == 0) lua_system_param.use_wwdg = 0;
+      else lua_system_param.use_wwdg = 1;
+      l_message( NULL, "updated: use_wwdg" );
       change++;
     } else
     {
-      l_message( NULL, "wrong arg type: soft_wdg" );
+      l_message( NULL, "wrong arg type: use_wwdg" );
     }
   }
 
@@ -255,7 +255,7 @@ static int set_sparams( lua_State* L )
     l_message( NULL, "New params saved." );
   }
   else {
-    l_message( NULL, "Params to change: 'soft_wdog', 'baud_rate', 'init_file'" );
+    l_message( NULL, "Params to change: use_wwdg,baud_rate,parity,inbuf_size,init_file,stack_size,wdg_tmo" );
   }
   
   return 0;
@@ -268,6 +268,7 @@ static int mcu_version( lua_State* L )
   lua_pushstring(L,BUILD_DATE);
   return 2;
 }
+
 static int mcu_wifiinfo( lua_State* L )
 {
   char wifi_ver[64] = {0};

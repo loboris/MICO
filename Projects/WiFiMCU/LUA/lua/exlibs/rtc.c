@@ -310,7 +310,7 @@ static int rtc_standby( lua_State* L )
     l_message( NULL, "mode has to be 0 or 1" );
     return 0;
   }
-  if (mode==1 && lua_system_param.soft_wdg==0) {
+  if (mode==1 && lua_system_param.use_wwdg == 0) {
     l_message(NULL,"IWDG active, cannot enter STOP mode."); 
     return 0;
   }
@@ -388,7 +388,7 @@ static int rtc_standbyUntil( lua_State* L )
     l_message( NULL, "mode has to be 0 or 1" );
     return 0;
   }
-  if (mode==1 && lua_system_param.soft_wdg==0) {
+  if (mode==1 && lua_system_param.use_wwdg == 0) {
     l_message(NULL,"IWDG active, cannot enter STOP mode."); 
     return 0;
   }
