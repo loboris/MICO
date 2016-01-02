@@ -309,6 +309,14 @@ static int mcu_chipid( lua_State* L )
     lua_pushstring(L,str);
     return 1;
 }
+static int mcu_random( lua_State* L )
+{
+    uint32_t rand;
+    MicoRandomNumberRead(&rand, sizeof(uint32_t));
+    lua_pushinteger(L,rand);
+    return 1;
+}
+
 extern unsigned char boot_reason;
 static int mcu_bootreason( lua_State* L )
 {
@@ -343,6 +351,7 @@ const LUA_REG_TYPE mcu_map[] =
   { LSTRKEY( "sgetparams" ), LFUNCVAL(get_sparams)},
   { LSTRKEY( "setparams" ), LFUNCVAL(set_sparams)},
   { LSTRKEY( "queuepush" ), LFUNCVAL(queue_push)},
+  { LSTRKEY( "random" ), LFUNCVAL(mcu_random)},
 #if LUA_OPTIMIZE_MEMORY > 0
 #endif      
   {LNILKEY, LNILVAL}

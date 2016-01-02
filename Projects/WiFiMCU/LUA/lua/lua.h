@@ -378,6 +378,8 @@ enum{
   NETTMR,
   onUART1,
   onUART2,
+  onMQTT,
+  onMQTTmsg,
   USER,
 };
 
@@ -388,6 +390,7 @@ typedef struct _msg
   int            para1;   // which type
   int            para2;   // parameter
   unsigned char* para3;   // pointer param
+  unsigned char* para4;   // pointer param
 } queue_msg_t;
 
 /* }====================================================================== */

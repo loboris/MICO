@@ -187,9 +187,11 @@ extern const luaR_entry rtc_map[];
 #ifdef USE_OLED_MODULE
 extern const luaR_entry oled_map[];
 #endif
-
 #ifdef USE_LCD_MODULE
 extern const luaR_entry lcd_map[];
+#endif
+#ifdef USE_MQTT_MODULE
+extern const luaR_entry mqtt_map[];
 #endif
 
 
@@ -246,6 +248,9 @@ const luaR_table lua_rotable[] =
 #endif    
 #ifdef USE_LCD_MODULE
     {LUA_LCDLIBNAME, lcd_map},
+#endif    
+#ifdef USE_MQTT_MODULE
+    {LUA_MQTTLIBNAME, mqtt_map},
 #endif    
     
     
@@ -325,6 +330,10 @@ LUALIB_API void luaL_openlibs (lua_State *L) {
 
 #ifdef USE_OLED_MODULE
   luaopen_oled(L);
+#endif
+
+#ifdef USE_MQTT_MODULE
+  luaopen_mqtt(L);
 #endif
 }
 

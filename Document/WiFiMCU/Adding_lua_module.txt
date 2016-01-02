@@ -20,8 +20,14 @@ Add in linit.c
 extern const luaR_entry mymodule_map[];
 #endif
 
-  to luaR_table lua_rotable[] add:
+  *** to luaR_table lua_rotable[] add:
 
   #ifdef USE_MYMODULE_MODULE
       {LUA_MYMODULELIBNAME, mymodule_map},
   #endif    
+
+  *** to luaL_openlibs(lua_State *L) add:
+  
+  #ifdef USE_MYMODULE_MODULE
+  luaopen_mymodule(L);
+  #endif

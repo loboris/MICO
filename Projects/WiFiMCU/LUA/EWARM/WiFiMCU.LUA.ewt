@@ -1311,6 +1311,9 @@
         <name>$PROJ_DIR$\..\lua\exlibs\mcu.c</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\lua\exlibs\mqtt.c</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\lua\exlibs\net.c</name>
       </file>
       <file>
@@ -1593,6 +1596,15 @@
         <name>$PROJ_DIR$\..\..\..\..\MICO\system\system_misc.c</name>
       </file>
     </group>
+  </group>
+  <group>
+    <name>MQTT</name>
+    <file>
+      <name>$PROJ_DIR$\..\MQTT\mico_mqtt_client_cm4_release.a</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\MQTT\MQTTClient.h</name>
+    </file>
   </group>
   <group>
     <name>Platform</name>

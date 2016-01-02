@@ -102,7 +102,7 @@ static void _tmr_handler( void* arg )
     msg.L = gL;
     msg.source = TMR;
     //msg.para1 = tmr_cb_ref[id];
-    msg.para2 = tmr_cb_ref[id];;
+    msg.para2 = tmr_cb_ref[id];
     mico_rtos_push_to_queue( &os_queue, &msg,0);
   }
 }

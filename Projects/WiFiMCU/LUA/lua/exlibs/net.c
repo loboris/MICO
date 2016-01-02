@@ -73,6 +73,9 @@ static mico_timer_t _timer_net;
 #define MAX_RECV_LEN 1024
 static char recvBuf[MAX_RECV_LEN];
 static int clientIndexK=0;
+static bool timer_net_is_started=false;
+
+
 
 // socket=net.new(net.TCP/UDP,net.SERVER/net.CLIENT)
 static int lnet_new( lua_State* L )
@@ -596,6 +599,8 @@ void _timer_net_handle( lua_State* gL )
 // == Timer interrupt handler =======
 static void _timer_handler( void* arg )
 {
+  UNUSED_PARAMETER( arg );
+
   queue_msg_t msg;
   msg.L = gL;
   msg.source = NETTMR;
@@ -605,8 +610,7 @@ static void _timer_handler( void* arg )
 
 static void startNetTimer(void)
 {
-  static bool timer_net_is_started=false;
-  //start timer
+  //start net timer
   if( !timer_net_is_started)
   {
     timer_net_is_started = true;

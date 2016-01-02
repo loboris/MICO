@@ -6,12 +6,15 @@
 #include "CheckSumUtils.h"
 #include "lua.h"
 #include "lauxlib.h"
+#include "MQTTClient.h"
 
 extern platform_uart_driver_t platform_uart_drivers[];
 extern const platform_uart_t  platform_uart_peripherals[];
 extern unsigned char boot_reason;
 extern void _timer_net_handle( lua_State* gL );
 extern void _do_freeBuf(uint8_t id);
+//extern uint8_t *MQTT_topicbuf;
+//extern uint8_t *MQTT_msgbuf;
 
 #define DEFAULT_WATCHDOG_TIMEOUT        10*1000  // 10 seconds
 #define main_log(M, ...) custom_log("main", M, ##__VA_ARGS__)
@@ -138,6 +141,38 @@ static void do_queue_task(queue_msg_t* msg)
   else if (msg->source == NETTMR)
   { // === execute net timer interrupt function ===
     _timer_net_handle(msg->L);
+  }
+  else if (msg->source == onMQTTmsg)
+  { // === execute onMQTT msg function ===
+    if (msg->para2 == LUA_NOREF) return;
+    if ((msg->para3 == NULL) || (msg->para4 == NULL)) return;
+    
+    lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
+    lua_pushlstring(msg->L, (const char*)(msg->para3), msg->para1 >> 16);
+    lua_pushinteger(msg->L, msg->para1 & 0xFFFF);
+    lua_pushlstring(msg->L, (const char*)(msg->para4), msg->para1 & 0xFFFF);
+    free(msg->para3);
+    msg->para3 = NULL;
+    free(msg->para4);
+    msg->para4 = NULL;
+    lua_call(msg->L, 3, 0);
+    lua_gc(msg->L, LUA_GCCOLLECT, 0);
+  }
+  else if (msg->source == onMQTT)
+  { // === execute onMQTT function ===
+    //_mqtt_handler();
+    if(msg->para2 == LUA_NOREF) return;
+    lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
+    if ((msg->para1 >> 16) != 0) {
+      lua_pushinteger(msg->L, msg->para1 & 0xFFFF);
+      lua_pushinteger(msg->L, msg->para1 >> 16);
+      lua_call(msg->L, 2, 0);
+    }
+    else {
+      lua_pushinteger(msg->L, msg->para1);
+      lua_call(msg->L, 1, 0);
+    }
+    lua_gc(msg->L, LUA_GCCOLLECT, 0);
   }
   else if ((msg->source == onUART1) || (msg->source == onUART2))
   { // === execute UART ON function ===
@@ -387,7 +422,7 @@ int application_start( void )
     lua_system_param.ID = LUA_PARAMS_ID;
     lua_system_param.use_wwdg = 0;
     lua_system_param.wdg_tmo    = DEFAULT_WATCHDOG_TIMEOUT;
-    lua_system_param.stack_size = 20*1024;
+    lua_system_param.stack_size = 8*1024;
     lua_system_param.inbuf_size = INBUF_SIZE;
     lua_system_param.baud_rate = 115200;
     lua_system_param.parity = NO_PARITY;
@@ -458,7 +493,7 @@ int application_start( void )
 
   // Create queue for interrupt servicing  
   mico_rtos_init_mutex(&lua_queue_mut);
-  mico_rtos_init_queue( &os_queue, "queue", sizeof(queue_msg_t), 5 );
+  mico_rtos_init_queue( &os_queue, "queue", sizeof(queue_msg_t), 10 );
   // Create and start queue thread
   if (mico_rtos_create_thread(&lua_queue_thread, MICO_APPLICATION_PRIORITY, "queue", queue_thread, lua_system_param.stack_size / 5 * 2, NULL ) != kNoErr) {
     lua_printf("error creating queue thread\r\n");
