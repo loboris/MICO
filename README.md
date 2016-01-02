@@ -26,9 +26,10 @@ WiFiMCU is developed based on EMW3165 module produced by [MXCHIP.INC](http://en.
 
 #Overview
 - Based on Lua 5.1.4 (package, string, table, math modules)<br/>
-- Build-in modules: mcu,gpio, timer, wifi, net, file, pwm, uart, adc, spi, i2c, bit<br/>
-- Modules to be builded: 1-wire, bit, mqtt...<br/>
-- Integer version provided<br/>
+- Build-in modules: mcu, gpio, timer, wifi, net, file, pwm, uart, adc, spi, i2c, 1-wire, bit, mqtt, rtc, oled, lcd, ...<br/>
+- Hardware & software SPI<br/>
+- Hardware & software UART<br/>
+- Float or Integer versions<br/>
 - `Free memory >48k bytes`<br/>
 
 ##Highlights
@@ -53,6 +54,8 @@ WiFiMCU is developed based on EMW3165 module produced by [MXCHIP.INC](http://en.
 - Receiver sensitivity:-87 dBm<br/>
 - Station,Soft AP and Station+Soft AP<br/>
 - CE, FCC suitable<br/>
+
+### [WiFiMCU LUA Reference](https://github.com/loboris/MICO/blob/master/Document/WiFiMCU/WiFiMCU%20Reference.pdf)<br/>
 
 ### [Documentation](https://github.com/loboris/MICO/tree/master/Document/WiFiMCU)<br/>
 
