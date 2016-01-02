@@ -5,8 +5,7 @@ print(mcu.mem())
 -- Set mqtt.debug to 1 if you want to see debug messages
 --mqtt.debug(1)
 
---cfg={};cfg.ssid='mySSID';cfg.pwd='maPasswd';wifi.startsta(cfg);cfg=nil;
-cfg={};cfg.ssid='LoBoInternet';cfg.pwd='1412lobo956';wifi.startsta(cfg);cfg=nil;
+cfg={};cfg.ssid='mySSID';cfg.pwd='maPasswd';wifi.startsta(cfg);cfg=nil;
 
 function cb_messagearrived1(topic,len,message)
 	print('** [Message Arrived from loboris]\r\n topic: '..topic..' \r\n message: '..message)
