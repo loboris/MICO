@@ -228,7 +228,7 @@ void localConfig_thread(void *inFd)
   close_client_fd = mico_create_event_fd( close_client_sem[close_sem_index] );
 
   config_log_trace();
-  httpHeader = HTTPHeaderCreateWithCallback(onReceivedData, onClearHTTPHeader, &httpContext);
+  httpHeader = HTTPHeaderCreateWithCallback( 512, onReceivedData, onClearHTTPHeader, &httpContext );
   require_action( httpHeader, exit, err = kNoMemoryErr );
   HTTPHeaderClear( httpHeader );
 
@@ -309,10 +309,7 @@ exit:
     close_client_sem[close_sem_index] = NULL;
   };
 
-  if(httpHeader) {
-    HTTPHeaderClear( httpHeader );
-    free(httpHeader);
-  }
+  HTTPHeaderDestory( &httpHeader );
   mico_rtos_delete_thread(NULL);
   return;
 }

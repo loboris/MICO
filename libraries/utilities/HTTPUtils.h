@@ -25,6 +25,7 @@
 #define __HTTPUtils_h__
 
 #include "Common.h"
+#include "mico.h"
 
 #include "URLUtils.h"
 #include "stdbool.h"
@@ -88,7 +89,8 @@
 
 typedef struct _HTTPHeader_t
 {
-    char                buf[ 512 ];        //! Buffer holding the start line and all headers.
+    char *              buf;                //! Buffer holding the start line and all headers.
+    size_t              bufLen;             //! The size of the buffer.
     size_t              len;                //! Number of bytes in the header.
     char *              extraDataPtr;       //! Ptr for any extra data beyond the header, it is alloced when http header is received.
     char *              otaDataPtr;         //! Ptr for any OTA data beyond the header, it is alloced when one OTA package is received.
@@ -143,6 +145,10 @@ int SocketReadHTTPHeader( int inSock, HTTPHeader_t *inHeader );
 
 int SocketReadHTTPBody( int inSock, HTTPHeader_t *inHeader );
 
+int SocketReadHTTPSHeader( mico_ssl_t ssl, HTTPHeader_t *inHeader );
+
+int SocketReadHTTPSBody( mico_ssl_t ssl, HTTPHeader_t *inHeader );
+
 int HTTPHeaderParse( HTTPHeader_t *ioHeader );
 
 int HTTPHeaderMatchMethod( HTTPHeader_t *inHeader, const char *method );
@@ -161,11 +167,13 @@ int HTTPGetHeaderField( const char *inHeaderPtr,
                              size_t     *outValueLen, 
                              const char **outNext );
 
-HTTPHeader_t * HTTPHeaderCreate( void );
+HTTPHeader_t * HTTPHeaderCreate( size_t bufLen );
 
-HTTPHeader_t * HTTPHeaderCreateWithCallback( onReceivedDataCallback , onClearCallback , void * context );
+HTTPHeader_t * HTTPHeaderCreateWithCallback( size_t bufLen, onReceivedDataCallback , onClearCallback , void * context );
 
 void HTTPHeaderClear( HTTPHeader_t *inHeader );
+
+void HTTPHeaderDestory( HTTPHeader_t **inHeader );
 
 int CreateSimpleHTTPOKMessage( uint8_t **outMessage, size_t *outMessageSize );
 

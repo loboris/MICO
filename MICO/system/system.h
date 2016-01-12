@@ -39,6 +39,10 @@
 extern "C" {
 #endif
 
+#define SYSTEM_VER_MAJOR    (2)
+#define SYSTEM_VER_MINOR    (4)
+#define SYSTEM_VER_REVISION (0)
+
 #define system_log(M, ...) custom_log("SYSTEM", M, ##__VA_ARGS__)
 #define system_log_trace() custom_log_trace("SYSTEM")
 
@@ -184,6 +188,7 @@ OSStatus system_notification_init( system_context_t * const inContext);
 
 OSStatus system_network_daemen_start( system_context_t * const inContext );
 
+OSStatus system_discovery_init( system_context_t * const inContext );
 
 
 void system_connect_wifi_normal( system_context_t * const inContext );

@@ -10,16 +10,6 @@
 #include "mico_platform.h"
 #include "user_config.h"
 
-#define delay_us(nus)  MicoNanosendDelay(1000*nus)
-
-#define SDA_OUT()       MicoGpioFinalize((mico_gpio_t)pinSDA);MicoGpioInitialize((mico_gpio_t)pinSDA,(mico_gpio_config_t)OUTPUT_PUSH_PULL)
-#define SDA_IN()        MicoGpioFinalize((mico_gpio_t)pinSDA); MicoGpioInitialize((mico_gpio_t)pinSDA,(mico_gpio_config_t)INPUT_PULL_UP)
-#define IIC_SCL(d) if (d==1) MicoGpioOutputHigh( (mico_gpio_t)pinSCL);\
-                   else MicoGpioOutputLow( (mico_gpio_t)pinSCL); 
-#define IIC_SDA(d) if (d==1) MicoGpioOutputHigh( (mico_gpio_t)pinSDA);\
-                   else MicoGpioOutputLow((mico_gpio_t)pinSDA); 
-#define READ_SDA   MicoGpioInputGet((mico_gpio_t)pinSDA)
-                   
 extern const char wifimcu_gpio_map[];
 #define NUM_GPIO 18
 static int platform_gpio_exists( unsigned pin )
@@ -27,290 +17,494 @@ static int platform_gpio_exists( unsigned pin )
   return pin < NUM_GPIO;
 }
 
-//i2c.setup(id,sda,scl)
-//write a data at reg_addd in dev_id
-//i2c.start(id)
-//i2c.address(id,device_id,'w')
-//i2c.write(id,addrHigh)
-//[i2c.write(id,addrLow)]
-//i2c.write(id,data)
-//i2c.stop(id)
+static mico_i2c_device_t hw_i2c;
+static uint8_t pinSDA = 0;
+static uint8_t pinSCL = 0;
+bool IIC_Init = false;
+bool hw_IIC_Init = false;
+static bool IIC_started = false;
+#define I2C_speed 360  // Standard mode, 100 kHz
 
-//read data at reg_addd in dev_id
-//i2c.start(id)
-//i2c.address(id,device_id,'w')
-//i2c.write(id,addr)
-//i2c.start(id)
-//i2c.address(id,device_id,'r')
-//data = i2c.read(id,1)
-//i2c.stop()
+//-------------------------------------------------------------------------
+// we use cycle counter for precise timing with software I2C
+#define CYCLE_COUNTING_INIT() \
+    do \
+    { \
+        /* enable DWT hardware and cycle counting */ \
+        CoreDebug->DEMCR = CoreDebug->DEMCR | CoreDebug_DEMCR_TRCENA_Msk; \
+        /* reset a counter */ \
+        DWT->CYCCNT = 0;  \
+        /* enable the counter */ \
+        DWT->CTRL = (DWT->CTRL | DWT_CTRL_CYCCNTENA_Msk) ; \
+    } \
+    while(0)
+//-------------------------------------------------------------------------
 
-uint8_t pinSDA = 0;
-uint8_t pinSCL = 0;
+//-------------------------
+static void IIC_Start(void)
+{
+  if ( IIC_started ) {
+    // if started, do a restart cond
+    // set SDA to 1
+    MicoGpioOutputHigh( (mico_gpio_t)pinSDA);
+    CYCLE_COUNTING_INIT();
+    while (DWT->CYCCNT < (I2C_speed * 2)) ;
 
-//i2c.setup(id,pinSDA, pinSCL)
+    // set SCL to 1
+    MicoGpioOutputHigh( (mico_gpio_t)pinSCL);
+    if (MicoGpioInputGet((mico_gpio_t)pinSCL) == 0) { // Allow for clock stretching
+      while ((MicoGpioInputGet((mico_gpio_t)pinSCL) == 0) && (DWT->CYCCNT < 10000)) ;
+      DWT->CYCCNT = 0;
+    }
+    while (DWT->CYCCNT < (I2C_speed * 2)) ;
+  }
+
+  //if( read_SDA() == 0 ) arbitration_lost();
+
+  // set SDA to 0
+  MicoGpioOutputLow( (mico_gpio_t)pinSDA);
+  CYCLE_COUNTING_INIT();
+  while (DWT->CYCCNT < (I2C_speed * 2)) ;
+
+  // set SCL to 0
+  MicoGpioOutputLow( (mico_gpio_t)pinSCL);
+  CYCLE_COUNTING_INIT();
+  while (DWT->CYCCNT < (I2C_speed * 2)) ;
+
+  IIC_started = true;
+}
+
+//------------------------
+static void IIC_Stop(void)
+{
+  // set SDA to 0
+  MicoGpioOutputLow( (mico_gpio_t)pinSDA);
+  CYCLE_COUNTING_INIT();
+  while (DWT->CYCCNT < (I2C_speed * 2)) ;
+
+  // set SCL to 1
+  MicoGpioOutputHigh( (mico_gpio_t)pinSCL);
+  CYCLE_COUNTING_INIT();
+  if (MicoGpioInputGet((mico_gpio_t)pinSCL) == 0) { // Allow for clock stretching
+    while ((MicoGpioInputGet((mico_gpio_t)pinSCL) == 0) && (DWT->CYCCNT < 10000)) ;
+    DWT->CYCCNT = 0;
+  }
+  while (DWT->CYCCNT < (I2C_speed * 2)) ;
+
+  // set SDA to 1
+  MicoGpioOutputHigh( (mico_gpio_t)pinSDA);
+  CYCLE_COUNTING_INIT();
+  while (DWT->CYCCNT < (I2C_speed * 2)) ;
+}
+
+//-----------------------------------
+static int IIC_Send_Byte(uint8_t txd)
+{
+  uint8_t t, data;   
+  
+  data = txd;
+  // Send 8 bits, MSB first
+  for(t=0;t<8;t++)
+    {
+      CYCLE_COUNTING_INIT();
+      if ((data & 0x80) == 0x80) MicoGpioOutputHigh( (mico_gpio_t)pinSDA);
+      else MicoGpioOutputLow( (mico_gpio_t)pinSDA);
+      data <<= 1;
+      // SDA change propagation delay, SCL=Low
+      while (DWT->CYCCNT < I2C_speed) ;
+
+      // Set SCL high to indicate a new valid SDA value is available
+      MicoGpioOutputHigh( (mico_gpio_t)pinSCL);
+      CYCLE_COUNTING_INIT();
+      if (MicoGpioInputGet((mico_gpio_t)pinSCL) == 0) { // Allow for clock stretching
+        while ((MicoGpioInputGet((mico_gpio_t)pinSCL) == 0) && (DWT->CYCCNT < 10000)) ;
+        DWT->CYCCNT = 0;
+      }
+      // Wait for SDA value to be read by slave
+      while (DWT->CYCCNT < I2C_speed) ;
+
+      // Clear the SCL to low in preparation for next change
+      MicoGpioOutputLow( (mico_gpio_t)pinSCL);
+    }
+
+  // Check ACK/NACK
+  CYCLE_COUNTING_INIT();
+  t = 1;
+  MicoGpioOutputHigh( (mico_gpio_t)pinSDA);
+  while (DWT->CYCCNT < I2C_speed) ;
+
+  MicoGpioOutputHigh( (mico_gpio_t)pinSCL);
+  CYCLE_COUNTING_INIT();
+  if (MicoGpioInputGet((mico_gpio_t)pinSCL) == 0) { // Allow for clock stretching
+    while ((MicoGpioInputGet((mico_gpio_t)pinSCL) == 0) && (DWT->CYCCNT < 10000)) ;
+    DWT->CYCCNT = 0;
+  }
+  // Wait for ACK to be set by slave
+  while (DWT->CYCCNT < I2C_speed) {
+    if (MicoGpioInputGet((mico_gpio_t)pinSDA) == 0) t = 0;
+  }
+
+  // Clear the SCL to low in preparation for next change
+  MicoGpioOutputLow( (mico_gpio_t)pinSCL);
+  
+  if (t == 0) return 0;
+  else return -1;
+}
+
+//---------------------------------------------------------------------------------------
+int _i2c_write(uint8_t id, uint16_t dev_adr, uint8_t* data, uint16_t count, uint16_t rep)
+{
+  uint16_t i, j;
+  
+  if (id == 0) { // === software i2c ===
+    // Send start condition
+    IIC_Start();
+    // Send address
+    int res = IIC_Send_Byte((uint8_t)(dev_adr << 1));
+    if (res != 0) return -9;
+    
+    for ( i = 0; i < count; i++ ) {
+      if (i == (count-1)) {
+        // repeat last byte rep times
+        for ( j = 0; j < rep; j++ ) {
+          res = IIC_Send_Byte(*(data + i));
+          if (res != 0) break; 
+        }
+        if (res != 0) break; 
+      }
+      else {
+        res = IIC_Send_Byte(*(data + i));
+        if (res != 0) break; 
+      }
+    }
+    // Send stop condition
+    IIC_Stop();
+
+    return res;
+  }
+  else { // === hardware i2c ===
+    hw_i2c.address = dev_adr;
+
+    OSStatus err = kNoErr;
+    mico_i2c_message_t i2c_msg = {NULL, NULL, 0, 0, 10, false};
+
+    err = MicoI2cBuildTxMessage(&i2c_msg, data, count, 3);
+    if (err != kNoErr) return -9;
+
+    err = MicoI2cTransfer(&hw_i2c, &i2c_msg, 1, rep);
+    if (err != kNoErr) return err;
+    return 0;
+  }
+}
+
+//ack=1 send ACK; ack=0 send nACK
+//---------------------------------------------
+static uint8_t IIC_Read_Byte(unsigned char ack)
+{
+  unsigned char i,receive=0;
+  
+  // Let the slave drive data
+  MicoGpioOutputHigh( (mico_gpio_t)pinSDA);
+  for(i=0;i<8;i++ )
+  {
+    // Wait for SDA value to be written by slave
+    CYCLE_COUNTING_INIT();
+    while (DWT->CYCCNT < I2C_speed) ;
+
+    // Set SCL high
+    MicoGpioOutputHigh( (mico_gpio_t)pinSCL);
+    CYCLE_COUNTING_INIT();
+    while (DWT->CYCCNT < I2C_speed) ;
+    // SCL is high, read out bit
+    if (MicoGpioInputGet((mico_gpio_t)pinSDA)) receive |= 1;
+    receive <<= 1;
+    // Set SCL low in preparation for next operation
+    MicoGpioOutputLow( (mico_gpio_t)pinSCL);
+  }					 
+
+  // Set ACK/NACK
+  CYCLE_COUNTING_INIT();
+  if (!ack) MicoGpioOutputHigh( (mico_gpio_t)pinSDA);
+  else MicoGpioOutputLow( (mico_gpio_t)pinSDA);
+
+  // SDA change propagation delay, SCL=Low
+  while (DWT->CYCCNT < I2C_speed) ;
+
+  // Set SCL high to indicate a new valid SDA value is available
+  MicoGpioOutputHigh( (mico_gpio_t)pinSCL);
+  CYCLE_COUNTING_INIT();
+  if (MicoGpioInputGet((mico_gpio_t)pinSCL) == 0) { // Allow for clock stretching
+    while ((MicoGpioInputGet((mico_gpio_t)pinSCL) == 0) && (DWT->CYCCNT < 10000)) ;
+    DWT->CYCCNT = 0;
+  }
+  // Wait for SDA value to be read by slave
+  while (DWT->CYCCNT < I2C_speed) ;
+
+  // Clear the SCL to low in preparation for next change
+  MicoGpioOutputLow( (mico_gpio_t)pinSCL);
+
+  return receive;
+}
+
+
+//i2c.setup(0, pinSDA, pinSCL)
+//i2c.setup(1, adr_len, mode)
+//==================================
 static int i2c_setup( lua_State* L )
 {
   unsigned id =  luaL_checkinteger( L, 1 );
+  if ((id != 0) && (id != 1)) return luaL_error( L, "id should be assigend 0 or 1" );
+
   unsigned sda = luaL_checkinteger( L, 2 );
   unsigned scl = luaL_checkinteger( L, 3 );
-  if (id !=0) return luaL_error( L, "id should assigend 0" );
-  MOD_CHECK_ID( gpio, sda );
-  MOD_CHECK_ID( gpio, scl );
-  pinSDA = wifimcu_gpio_map[sda];
-  pinSCL = wifimcu_gpio_map[scl];
   
-  MicoGpioFinalize((mico_gpio_t)pinSDA);
-  MicoGpioInitialize((mico_gpio_t)pinSDA,(mico_gpio_config_t)OUTPUT_PUSH_PULL);  
-  MicoGpioOutputHigh( (mico_gpio_t)pinSDA);
-  MicoGpioFinalize((mico_gpio_t)pinSCL);
-  MicoGpioInitialize((mico_gpio_t)pinSCL,(mico_gpio_config_t)OUTPUT_PUSH_PULL);  
-  MicoGpioOutputHigh( (mico_gpio_t)pinSCL);
-  return 0;
-}
-
-static void IIC_Start(void)
-{
-  SDA_OUT();
-  IIC_SDA(1);
-  IIC_SCL(1);
-  delay_us(4);
-  IIC_SDA(0);
-  delay_us(4);
-  IIC_SCL(0);
-  delay_us(4);
-}
-static void IIC_Stop(void)
-{
-  SDA_OUT();
-  IIC_SDA(0);
-  IIC_SCL(1);  
-  delay_us(4);
-  IIC_SDA(1);
-  delay_us(4);							   	
-}
-//return: 1 failed
-//return: 0 ok
-static uint8_t IIC_Wait_Ack(void)
-{
-  uint8_t ucErrTime=0;
-  SDA_OUT();
-  IIC_SDA(1);delay_us(1);
-  IIC_SCL(1);delay_us(1);
-  SDA_IN();
-  while(READ_SDA)
-  {
-    ucErrTime++;
-    if(ucErrTime>250)
-    {
-	IIC_Stop();
-	return 1;
-    }
-  }
-  IIC_SCL(0);
-  return 0;  
-} 
-
-static void IIC_Ack(void)
-{
-  IIC_SCL(0);
-  SDA_OUT();
-  IIC_SDA(0);
-  delay_us(2);
-  IIC_SCL(1);
-  delay_us(2);
-  IIC_SCL(0);
-}
+  if (id == 0) {
+    MOD_CHECK_ID( gpio, sda );
+    MOD_CHECK_ID( gpio, scl );
+    pinSDA = wifimcu_gpio_map[sda];
+    pinSCL = wifimcu_gpio_map[scl];
     
-static void IIC_NAck(void)
+    MicoGpioFinalize((mico_gpio_t)pinSDA);
+    MicoGpioFinalize((mico_gpio_t)pinSCL);
+    
+    MicoGpioInitialize((mico_gpio_t)pinSDA,(mico_gpio_config_t)OUTPUT_OPEN_DRAIN_NO_PULL);  
+    MicoGpioOutputHigh( (mico_gpio_t)pinSDA);
+    MicoGpioInitialize((mico_gpio_t)pinSCL,(mico_gpio_config_t)OUTPUT_OPEN_DRAIN_NO_PULL);  
+    MicoGpioOutputHigh( (mico_gpio_t)pinSCL);
+
+    IIC_Init = true;
+    IIC_started = false;
+    IIC_Start();
+    IIC_Send_Byte(0xFE);
+    IIC_Stop();
+  }
+  else {
+    hw_i2c.port = MICO_I2C_1;
+    if (sda == 1) hw_i2c.address_width = I2C_ADDRESS_WIDTH_10BIT;
+    else if (sda == 0) hw_i2c.address_width = I2C_ADDRESS_WIDTH_7BIT;
+    else return luaL_error( L, "addr_len should be assigend 0 or 1" );
+    if (scl == 0) hw_i2c.speed_mode = I2C_STANDARD_SPEED_MODE;
+    else if (scl == 1) hw_i2c.speed_mode = I2C_HIGH_SPEED_MODE;
+    else return luaL_error( L, "mode should be assigend 0 or 1" );
+      
+    hw_i2c.address = 0;
+    MicoI2cInitialize(&hw_i2c);
+    hw_IIC_Init = true;
+  }
+
+  return 0;
+}
+
+
+//===================================
+static int i2c_deinit( lua_State* L )
 {
-  IIC_SCL(0);
-  SDA_OUT();
-  IIC_SDA(1);
-  delay_us(2);
-  IIC_SCL(1);
-  delay_us(2);
-  IIC_SCL(0);
-}	
-static void IIC_Send_Byte(uint8_t txd)
-{
-  uint8_t t;   
-  SDA_OUT();
-  IIC_SCL(0);
-  for(t=0;t<8;t++)
-    {
-      //IIC_SDA=(txd&0x80)>>7;
-      if((txd&0x80)>>7)
-      {
-        IIC_SDA(1);
-      }
-      else
-      {
-        IIC_SDA(0);
-      }
-      txd<<=1;
-      delay_us(2);
-      IIC_SCL(1);
-      delay_us(2); 
-      IIC_SCL(0);	
-      delay_us(2);
+  unsigned id =  luaL_checkinteger( L, 1 );
+  if ((id != 0) && (id != 1)) return luaL_error( L, "id should be assigend 0 or 1" );
+
+  
+  if (id == 0) {
+    if (IIC_Init) {
+      MicoGpioFinalize((mico_gpio_t)pinSDA);
+      MicoGpioFinalize((mico_gpio_t)pinSCL);
+      IIC_Init = false;
+      IIC_started = false;
     }
-}
-//ack=1 send ACK; ack=0 send nACK
-uint8_t IIC_Read_Byte(unsigned char ack)
-{
-  unsigned char i,receive=0;
-  SDA_IN();
-  for(i=0;i<8;i++ )
-  {
-     IIC_SCL(0); 
-     delay_us(2);
-     IIC_SCL(1);
-     receive<<=1;
-     if(READ_SDA)receive++;
-      delay_us(1); 
-   }					 
-  if (!ack)
-    IIC_NAck();
-  else
-    IIC_Ack();
-  return receive;
-}
-//i2c.start(id)
-static int i2c_start( lua_State* L )
-{
-  unsigned id = luaL_checkinteger( L, 1 );
-  if (id !=0)   return luaL_error( L, "id should assigend 0" );
-  IIC_Start();
+  }
+  else {
+    if (hw_IIC_Init) MicoI2cFinalize(&hw_i2c);
+  }
+
   return 0;
 }
-//i2c.stop(id)
-static int i2c_stop( lua_State* L )
-{
-  unsigned id = luaL_checkinteger( L, 1 );
-  if (id !=0)   return luaL_error( L, "id should assigend 0" );
-  IIC_Stop();
-  return 0;
-}
-//i2c.address(id, dev_id, 'r'/'w')
-static int i2c_address( lua_State* L )
-{
-  unsigned id = luaL_checkinteger( L, 1 );
-  if (id !=0)   return luaL_error( L, "id should assigend 0" );
-  
-  unsigned int temp = luaL_checkinteger( L, 2 ); 
-  if( temp>127) return luaL_error( L, "dev_id is wrong" );
-  uint8_t dev_id = (uint8_t)(temp<<1);
-  
-  size_t sl=0;
-  const char *str = luaL_checklstring( L, 3, &sl );
-  if (str == NULL)
-   return luaL_error( L, "wrong arg type" );
-  if(sl == 1 && strcmp(str, "w") == 0)
-  {
-      IIC_Send_Byte(dev_id);
-      if(IIC_Wait_Ack()==1) lua_pushnil(L);  else lua_pushboolean(L, true);
-  }
-  else if(sl == 1 && strcmp(str, "r") == 0)
-  {
-      IIC_Send_Byte(dev_id|0x01);
-      if(IIC_Wait_Ack()==1) lua_pushnil(L);  else lua_pushboolean(L, true);
-  }
-  return 1;
-}
-//i2c.write(id, data1,[data2],...)
+
+
+//i2c.write(id, dev_id, data1,[data2],...)
+//==================================
 static int i2c_write( lua_State* L )
 {
   unsigned id = luaL_checkinteger( L, 1 );
-  if (id !=0)   return luaL_error( L, "id should assigend 0" );
-  if( lua_gettop( L ) < 2 )
-    return luaL_error( L, "wrong arg type" );
+  if ((id != 0) && (id != 1)) return luaL_error( L, "id should be assigend 0 or 1" );
   
+  if( lua_gettop( L ) < 3 ) return luaL_error( L, "id,dev_id,data arg needed" );
+  
+  unsigned int dev_id = luaL_checkinteger( L, 2 ); 
+  
+  uint8_t b[512];
+  
+  // Copy data to buffer
   size_t datalen=0, i=0;
   int numdata=0;
-  uint32_t wrote = 0;
+  uint16_t wrote = 0;
   unsigned argn=0;
-  for( argn = 2; argn <= lua_gettop( L ); argn ++ )
+  
+  int res = 0;
+  for( argn = 3; argn <= lua_gettop( L ); argn ++ )
   {
-    if( lua_type( L, argn ) == LUA_TNUMBER )
-    {
+    if( lua_type( L, argn ) == LUA_TNUMBER ) {
       numdata = ( int )luaL_checkinteger( L, argn );
-      if( numdata < 0 || numdata > 255 )
-        return luaL_error( L, "wrong arg range" );
-      IIC_Send_Byte((uint8_t)numdata);
-      if(IIC_Wait_Ack()==1) break;
-      wrote ++;
+      if ((numdata >= 0) && (numdata <= 255)) {
+        b[wrote++] = (uint8_t)numdata;
+      }
     }
-    else if( lua_istable( L, argn ) )
-    {
+    else if ( lua_istable( L, argn ) ) {
       datalen = lua_objlen( L, argn );
-      for( i = 0; i < datalen; i ++ )
-      {
+      for( i = 0; i < datalen; i ++ ) {
         lua_rawgeti( L, argn, i + 1 );
         numdata = ( int )luaL_checkinteger( L, -1 );
         lua_pop( L, 1 );
-        if( numdata < 0 || numdata > 255 )
-          return luaL_error( L, "wrong arg range" );
-        IIC_Send_Byte((uint8_t)numdata);
-        if(IIC_Wait_Ack()==1) break;
+        if ((numdata >= 0) && (numdata <= 255)) {
+          b[wrote++] = (uint8_t)numdata;
+        }
       }
-      wrote += i;
-      if( i < datalen )
-        break;
+      if (res != 0) break; 
     }
-    else
-    {
+    else {
       const char *pdata = luaL_checklstring( L, argn, &datalen );
-      for( i = 0; i < datalen; i ++ )
-      {
-        IIC_Send_Byte((uint8_t)pdata[i]);
-        if(IIC_Wait_Ack()==1) break;
+      for ( i = 0; i < datalen; i ++ ) {
+        b[wrote++] = (uint8_t)numdata;
       }
-      wrote += i;
-      if( i < datalen )
-        break;
+      if (res != 0) break; 
     }
   }
-  lua_pushinteger( L, wrote );
+
+  if (id == 0) { // === software i2c ===
+    if (!IIC_Init) return luaL_error( L, "software i2c not initialized" );
+    if ((dev_id < 7) || (dev_id >= 0x78)) {
+      return luaL_error( L, "dev_id is wrong" );
+    }
+  }
+  else { // === hardware i2c ===
+    if (!hw_IIC_Init) return luaL_error( L, "hardware i2c not initialized" );
+
+    if (hw_i2c.address_width == I2C_ADDRESS_WIDTH_10BIT) {
+      if ((dev_id < 7) || (dev_id >= 0x0400)) dev_id = 0;
+    }
+    else {
+      if ((dev_id < 7) || (dev_id >= 0x78)) dev_id = 0;
+    }
+    if (dev_id == 0) return luaL_error( L, "dev_id is wrong" );
+
+  }
+
+  if (wrote > 0) {
+    res = _i2c_write(id, dev_id, &b[0], wrote, 1);
+    if (res == 0) res = wrote;
+  }
+  else res = 0;
+  
+  lua_pushinteger( L, res );
+  
   return 1;
 }
-//i2c.read(id,n)
+
+//i2c.read(id, dev_id, n)
+//=================================
 static int i2c_read( lua_State* L )
 {
   unsigned id = luaL_checkinteger( L, 1 );
-  if (id !=0)   return luaL_error( L, "id should assigend 0" );
-  uint32_t size = ( uint32_t )luaL_checkinteger( L, 2 );
-  if( size == 0 ) return 0;
-  
-  int i=0;
-  luaL_Buffer b;
-  int data;
-  luaL_buffinit( L, &b );
-  for( i = 0; i < size; i ++ )
-  {
-    if ( i == size -1)
-    data = IIC_Read_Byte(0);
-    else
-    data = IIC_Read_Byte(1);
-    luaL_addchar( &b, ( char )data );
-  /*  if( ( data = IIC_Send_Byte( id, i >= size - 1 ) ) == -1 )
-        break;
-    else
-  luaL_addchar( &b, ( char )data );*/
+  if ((id != 0) && (id != 1)) return luaL_error( L, "id should be assigend 0 or 1" );
+
+  unsigned int dev_id = luaL_checkinteger( L, 2 ); 
+
+  uint16_t size = ( uint32_t )luaL_checkinteger( L, 3 );
+  if ( size == 0 ) {
+    lua_pushinteger(L, 0);
+    lua_pushinteger(L, 0);
+    return 2;
   }
-  luaL_pushresult(&b);
-  return 1;
+  
+  if (size > 512) size = 512;
+  
+  uint8_t b[512];
+  int i=0;
+  uint8_t data;
+
+  if (id == 0) { // === software i2c ===
+    if (!IIC_Init) return luaL_error( L, "software i2c not initialized" );
+    if ((dev_id < 7) || (dev_id >= 0x78)) {
+      return luaL_error( L, "dev_id is wrong" );
+    }
+
+    // Send start condition
+    IIC_Start();
+    // Send address
+    int res = IIC_Send_Byte((dev_id << 1) | 1);
+    if (res != 0) {
+      IIC_Stop();
+      lua_pushinteger(L, -1);
+      lua_pushinteger(L, res);
+      goto exit;
+    }
+    
+    for( i = 0; i < size; i ++ )
+    {
+      if (i == (size-1)) data = IIC_Read_Byte(0);
+      else  data = IIC_Read_Byte(1);
+      b[i] = data;
+    }
+
+    // Send stop condition
+    IIC_Stop();
+  }
+  else { // === hardware i2c ===
+    if (!hw_IIC_Init) return luaL_error( L, "hardware i2c not initialized" );
+
+    if (hw_i2c.address_width == I2C_ADDRESS_WIDTH_10BIT) {
+      if ((dev_id < 7) || (dev_id >= 0x0400)) dev_id = 0;
+    }
+    else {
+      if ((dev_id < 7) || (dev_id >= 0x78)) dev_id = 0;
+    }
+    if (dev_id == 0) return luaL_error( L, "dev_id is wrong" );
+
+    hw_i2c.address = dev_id;
+
+    OSStatus err = kNoErr;
+    mico_i2c_message_t i2c_msg = {NULL, NULL, 0, 0, 10, false};
+
+    err = MicoI2cBuildRxMessage(&i2c_msg, b, size, 3);
+    if (err != kNoErr) {
+      lua_pushinteger( L, -1 );
+      lua_pushinteger( L, err );
+      goto exit;
+    }
+    err = MicoI2cTransfer(&hw_i2c, &i2c_msg, 1, 1);
+    if (err != kNoErr) {
+      lua_pushinteger( L, -2 );
+      lua_pushinteger( L, err );
+      goto exit;
+    }
+  }
+
+  if (size == 1) {
+    lua_pushinteger( L, 1);
+    lua_pushinteger( L, b[0]);
+  }
+  else {
+    lua_pushinteger( L, size);
+    lua_newtable(L);
+    if (id == 0) {
+      for( i = 0; i < size; i ++ ) {
+        lua_pushinteger( L, b[i] );
+        lua_rawseti(L,-2,i + 1);
+      }
+    }
+  }
+  
+exit:  
+  return 2;
 }
+
+
 #define MIN_OPT_LEVEL  2
 #include "lrodefs.h"
 const LUA_REG_TYPE i2c_map[] =
 {
-  { LSTRKEY( "setup" ), LFUNCVAL( i2c_setup )},
-  { LSTRKEY( "start" ), LFUNCVAL( i2c_start )},
-  { LSTRKEY( "stop" ),  LFUNCVAL( i2c_stop )},
-  { LSTRKEY( "address" ),  LFUNCVAL( i2c_address )},
-  { LSTRKEY( "write" ), LFUNCVAL( i2c_write )},
-  { LSTRKEY( "read" ),  LFUNCVAL( i2c_read )},
+  { LSTRKEY( "setup" ),  LFUNCVAL( i2c_setup )},
+  { LSTRKEY( "deinit" ), LFUNCVAL( i2c_deinit )},
+  { LSTRKEY( "write" ),  LFUNCVAL( i2c_write )},
+  { LSTRKEY( "read" ),   LFUNCVAL( i2c_read )},
 #if LUA_OPTIMIZE_MEMORY > 0
 #endif          
   {LNILKEY, LNILVAL}

@@ -67,21 +67,14 @@
 /******************************************************
 *               Function Declarations
 ******************************************************/
-//extern WEAK void PlatformEasyLinkButtonClickedCallback(void);
-//extern WEAK void PlatformEasyLinkButtonLongPressedCallback(void);
-//extern WEAK void bootloader_start(void);
 
 /******************************************************
 *               Variables Definitions
 ******************************************************/
 
-//static uint32_t _default_start_time = 0;
-//static mico_timer_t _button_EL_timer;
-
 const platform_gpio_t platform_gpio_pins[] =
 {
   /* Common GPIOs for internal use */
-  //[MICO_SYS_LED]                      = { GPIOB,  8 },
   [STDIO_UART_RX]                     = { GPIOA,  3 },  
   [STDIO_UART_TX]                     = { GPIOA,  2 },  
   [FLASH_PIN_SPI_CS  ]                = { GPIOA, 15 },
@@ -96,13 +89,13 @@ const platform_gpio_t platform_gpio_pins[] =
   [MICO_GPIO_12]                      = { GPIOA,  3 },  // [RX0]  (USB2SER)
   [MICO_GPIO_14]                      = { GPIOA,  0 },  // [EN]
   [MICO_GPIO_16]                      = { GPIOC, 13 },  // [D2]
-  [MICO_GPIO_17]                      = { GPIOB, 10 },  // [D3]   PWM
-  [MICO_GPIO_18]                      = { GPIOB,  9 },  // [D11]  PWM  SDA
+  [MICO_GPIO_17]                      = { GPIOB, 10 },  // [D3]   PWM  I2C_SCL
+  [MICO_GPIO_18]                      = { GPIOB,  9 },  // [D11]  PWM  I2C_SDA
   [MICO_GPIO_19]                      = { GPIOB, 12 },  // [D4]
   [MICO_GPIO_27]                      = { GPIOA, 12 },  // [D7]   SPI5_MISO
   [MICO_GPIO_29]                      = { GPIOA, 10 },  // [D8]   SPI5_MOSI  RX1  PWM
   [MICO_GPIO_30]                      = { GPIOB,  6 },  // [D9]   TX1  PWM
-  [MICO_GPIO_31]                      = { GPIOB,  8 },  // [D10]  PWM  SCL
+  [MICO_GPIO_31]                      = { GPIOB,  8 },  // [D10]  PWM
   [MICO_GPIO_33]                      = { GPIOB, 13 },  // [D12]  PWM
   [MICO_GPIO_34]                      = { GPIOA,  5 },  // [D13]  PWM  ADC
   [MICO_GPIO_35]                      = { GPIOA, 11 },  // [D14]  PWM
@@ -208,16 +201,14 @@ const platform_pwm_t  platform_pwm_peripherals[] =
   
 };
 
-// const platform_i2c_t platform_i2c_peripherals[] = NULL;
-
 const platform_i2c_t platform_i2c_peripherals[] =
 {
   [MICO_I2C_1] =
   {
-    .port                         = I2C1,
-    .pin_scl                      = &platform_gpio_pins[MICO_GPIO_31],
+    .port                         = I2C2,
+    .pin_scl                      = &platform_gpio_pins[MICO_GPIO_17],
     .pin_sda                      = &platform_gpio_pins[MICO_GPIO_18],
-    .peripheral_clock_reg         = RCC_APB1Periph_I2C1,
+    .peripheral_clock_reg         = RCC_APB1Periph_I2C2,
     .tx_dma                       = DMA1,
     .tx_dma_peripheral_clock      = RCC_AHB1Periph_DMA1,
     .tx_dma_stream                = DMA1_Stream7,
@@ -226,10 +217,12 @@ const platform_i2c_t platform_i2c_peripherals[] =
     .rx_dma_stream_id             = 5,
     .tx_dma_channel               = DMA_Channel_1,
     .rx_dma_channel               = DMA_Channel_1,
-    .gpio_af                      = GPIO_AF_I2C1
+    .gpio_af_scl                  = GPIO_AF_I2C2,
+    .gpio_af_sda                  = GPIO_AF9_I2C2
   },
 };
 
+platform_i2c_driver_t platform_i2c_drivers[MICO_I2C_MAX];
 
 const platform_uart_t platform_uart_peripherals[] =
 {
@@ -553,7 +546,7 @@ MICO_RTOS_DEFINE_ISR( DMA2_Stream2_IRQHandler )
 
 void platform_init_peripheral_irq_priorities( void )
 {
-  /* Interrupt priority setup. Called by WICED/platform/MCU/STM32F2xx/platform_init.c */
+  /* Interrupt priority setup. Called by MICO/platform/MCU/STM32F2xx/platform_init.c */
   NVIC_SetPriority( RTC_WKUP_IRQn    ,  1 ); /* RTC Wake-up event   */
   NVIC_SetPriority( SDIO_IRQn        ,  2 ); /* WLAN SDIO           */
   NVIC_SetPriority( DMA2_Stream3_IRQn,  3 ); /* WLAN SDIO DMA       */
@@ -573,64 +566,11 @@ void platform_init_peripheral_irq_priorities( void )
   NVIC_SetPriority( EXTI15_10_IRQn   , 14 ); /* GPIO                */
 }
 
-#if 0
-static void _button_EL_irq_handler( void* arg )
-{
-  (void)(arg);
-  int interval = -1;
-  
-  if ( MicoGpioInputGet( (mico_gpio_t)EasyLink_BUTTON ) == 0 ) {
-    _default_start_time = mico_get_time()+1;
-    mico_start_timer(&_button_EL_timer);
-    MicoGpioEnableIRQ( (mico_gpio_t)EasyLink_BUTTON, IRQ_TRIGGER_RISING_EDGE, _button_EL_irq_handler, NULL );
-  } else {
-    interval = mico_get_time() + 1 - _default_start_time;
-    if ( (_default_start_time != 0) && interval > 50 && interval < RestoreDefault_TimeOut){
-      /* EasyLink button clicked once */
-      PlatformEasyLinkButtonClickedCallback();
-      MicoGpioEnableIRQ( (mico_gpio_t)EasyLink_BUTTON, IRQ_TRIGGER_FALLING_EDGE, _button_EL_irq_handler, NULL );
-   }
-   mico_stop_timer(&_button_EL_timer);
-   _default_start_time = 0;
-  }
-}
-
-static void _button_EL_Timeout_handler( void* arg )
-{
-  (void)(arg);
-  _default_start_time = 0;
-  MicoGpioEnableIRQ( (mico_gpio_t)EasyLink_BUTTON, IRQ_TRIGGER_FALLING_EDGE, _button_EL_irq_handler, NULL );
-  if( MicoGpioInputGet( (mico_gpio_t)EasyLink_BUTTON ) == 0){
-    PlatformEasyLinkButtonLongPressedCallback();
-  }
-  mico_stop_timer(&_button_EL_timer);
-}
-#endif
 
 void init_platform( void )
 {
-  //MicoGpioInitialize( (mico_gpio_t)MICO_SYS_LED, OUTPUT_PUSH_PULL );
-  //MicoGpioOutputLow( (mico_gpio_t)MICO_SYS_LED );
-  //MicoGpioInitialize( (mico_gpio_t)MICO_RF_LED, OUTPUT_OPEN_DRAIN_NO_PULL );
-  //MicoGpioOutputHigh( (mico_gpio_t)MICO_RF_LED );
-  
   MicoGpioInitialize((mico_gpio_t)BOOT_SEL, INPUT_PULL_UP);
   MicoGpioInitialize((mico_gpio_t)MFG_SEL, INPUT_PULL_UP);
-  
-  //  Initialise EasyLink buttons
-  //MicoGpioInitialize( (mico_gpio_t)EasyLink_BUTTON, INPUT_PULL_UP );
-  //mico_init_timer(&_button_EL_timer, RestoreDefault_TimeOut, _button_EL_Timeout_handler, NULL);
-  //MicoGpioEnableIRQ( (mico_gpio_t)EasyLink_BUTTON, IRQ_TRIGGER_BOTH_EDGES, _button_EL_irq_handler, NULL );
-
-  //MicoFlashInitialize( MICO_SPI_FLASH );
-  
-#ifdef USE_MiCOKit_EXT
-  //dc_motor_init( );
-  //dc_motor_set( 0 );
-  
-  //rgb_led_init();
-  //rgb_led_open(0, 0, 0);
-#endif
 }
 
 #ifdef BOOTLOADER
@@ -650,14 +590,6 @@ void init_platform_bootloader( void )
   
   MicoGpioInitialize((mico_gpio_t)BOOT_SEL, INPUT_PULL_UP);
   MicoGpioInitialize((mico_gpio_t)MFG_SEL, INPUT_PULL_UP);
-  
-#ifdef USE_MiCOKit_EXT
-  //dc_motor_init( );
-  //dc_motor_set( 0 );
-  
-  //rgb_led_init();
-  //rgb_led_open(0, 0, 0);
-#endif
   
   /* Specific operations used in EMW3165 production */
 #define NEED_RF_DRIVER_COPY_BASE    ((uint32_t)0x08008000)
@@ -779,15 +711,11 @@ bool MicoExtShouldEnterTestMode(void)
 
 bool MicoShouldEnterMFGMode(void)
 {
-  //if(MicoGpioInputGet((mico_gpio_t)BOOT_SEL)==false && MicoGpioInputGet((mico_gpio_t)MFG_SEL)==false)
-  //  return true;
-  //else
     return false;
 }
 
 bool MicoShouldEnterBootloader(void)
 {
-  //if(MicoGpioInputGet((mico_gpio_t)BOOT_SEL)==false && MicoGpioInputGet((mico_gpio_t)MFG_SEL)==true)
   if(MicoGpioInputGet((mico_gpio_t)MICO_GPIO_2)==false)
     return true;
   else

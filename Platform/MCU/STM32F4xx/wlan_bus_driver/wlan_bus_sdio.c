@@ -153,7 +153,7 @@ static void              sdio_prepare_data_transfer ( bus_transfer_direction_t d
 
 void dma_irq ( void );
 OSStatus host_platform_sdio_transfer( bus_transfer_direction_t direction, sdio_command_t command, sdio_transfer_mode_t mode, sdio_block_size_t block_size, uint32_t argument, /*@null@*/ uint32_t* data, uint16_t data_size, sdio_response_needed_t response_expected, /*@out@*/ /*@null@*/ uint32_t* response );
-extern void wiced_platform_notify_irq( void );
+extern void wlan_notify_irq( void );
 
 /******************************************************
  *             Function definitions
@@ -164,7 +164,7 @@ static void sdio_oob_irq_handler( void* arg )
 {
     UNUSED_PARAMETER(arg);
     platform_mcu_powersave_exit_notify( );
-    wiced_platform_notify_irq( );
+    wlan_notify_irq( );
 }
 
 OSStatus host_enable_oob_interrupt( void )
@@ -197,7 +197,7 @@ static void sdio_int_pin_irq_handler( void* arg ) //SDIO 1 Bit mode
 {
     UNUSED_PARAMETER(arg);
     platform_mcu_powersave_exit_notify( );
-    wiced_platform_notify_irq( );
+    wlan_notify_irq( );
 }
 
 bool host_platform_is_sdio_int_asserted(void)
@@ -274,10 +274,10 @@ void sdio_irq( void )
     /* Check whether the external interrupt was triggered */
     if ( ( intstatus & SDIO_STA_SDIOIT ) != 0 )
     {
-        /* Clear the interrupt and then inform WICED thread */
+        /* Clear the interrupt and then inform MiCO thread */
         SDIO->ICR = SDIO_ICR_SDIOITC;
         platform_mcu_powersave_exit_notify( );
-        wiced_platform_notify_irq( );
+        wlan_notify_irq( );
     }
 #endif
 }

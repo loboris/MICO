@@ -177,7 +177,7 @@ OSStatus platform_rtc_init(void)
   }
 #else
   //#ifdef RTC_ENABLED
-  /* application must have wiced_application_default_time structure declared somewhere, otherwise it wont compile */
+  /* application must have mico_application_default_time structure declared somewhere, otherwise it wont compile */
   /* write default application time inside rtc */
   platform_rtc_set_time(&mico_default_time);
   //#endif /* RTC_ENABLED */
@@ -191,10 +191,9 @@ OSStatus platform_rtc_init(void)
 
 /**
 * This function will return the value of time read from the on board CPU real time clock. Time value must be given in the format of
-* the structure wiced_rtc_time_t
+* the structure mico_rtc_time_t
 *
-* @return    WICED_SUCCESS : on success.
-* @return    WICED_ERROR   : if an error occurred with any step
+* @return    kNoErr : on success.
 */
 OSStatus platform_rtc_get_time( platform_rtc_time_t* time)
 {
@@ -221,7 +220,7 @@ OSStatus platform_rtc_get_time( platform_rtc_time_t* time)
   time->year    = rtc_read_date.RTC_Year;
   
   return kNoErr;
-#else /* #ifdef WICED_ENABLE_MCU_RTC */
+#else /* #ifdef MICO_ENABLE_MCU_RTC */
   UNUSED_PARAMETER(time);
   return kUnsupportedErr;
 #endif /* #ifdef MICO_ENABLE_MCU_RTC */
@@ -229,10 +228,9 @@ OSStatus platform_rtc_get_time( platform_rtc_time_t* time)
 
 /**
 * This function will set MCU RTC time to a new value. Time value must be given in the format of
-* the structure wiced_rtc_time_t
+* the structure mico_rtc_time_t
 *
-* @return    WICED_SUCCESS : on success.
-* @return    WICED_ERROR   : if an error occurred with any step
+* @return    kNoErr : on success.
 */
 OSStatus platform_rtc_set_time( const platform_rtc_time_t* time )
 {

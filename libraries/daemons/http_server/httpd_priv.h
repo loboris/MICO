@@ -31,10 +31,8 @@
 #ifndef __HTTPD_PRIV_H__
 #define __HTTPD_PRIV_H__
 
-#include <httpd.h>
+#include "httpd.h"
 #include "MICO.h"
-#include "Debug.h"
-
 
 //#define CONFIG_HTTPD_DEBUG 
 
@@ -94,5 +92,5 @@ enum {
 
 int httpd_send_error(int conn, int http_error);
 
-bool httpd_is_https_active();
+bool httpd_is_https_active( void );
 #endif				/* __HTTPD_PRIV_H__ */

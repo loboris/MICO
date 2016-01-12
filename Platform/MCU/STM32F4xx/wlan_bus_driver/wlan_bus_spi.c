@@ -1,14 +1,6 @@
-/*
- * Copyright 2013, Broadcom Corporation
- * All Rights Reserved.
- *
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
- * the contents of this file may not be disclosed to third parties, copied
- * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
- */
 
-#include "MicoRtos.h"
+
+#include "mico.h"
 #include "misc.h"
 #include "string.h" /* For memcpy */
 #include "platform_config.h"
@@ -50,7 +42,7 @@ static mico_semaphore_t spi_transfer_finished_semaphore;
 extern void MCU_CLOCKS_NEEDED( void );
 extern void MCU_CLOCKS_NOT_NEEDED( void );
 
-extern void wiced_platform_notify_irq( void );
+extern void wlan_notify_irq( void );
 
 /******************************************************
  *             Function definitions
@@ -82,7 +74,7 @@ static void spi_irq_handler( void* arg )
 #ifndef MICO_DISABLE_MCU_POWERSAVE
     platform_mcu_powersave_exit_notify( );
 #endif /* ifndef MICO_DISABLE_MCU_POWERSAVE */
-    wiced_platform_notify_irq( );
+    wlan_notify_irq( );
 }
 
 void platform_wifi_spi_rx_dma_irq( void )

@@ -161,10 +161,14 @@ static int set_sparams( lua_State* L )
     if( lua_isstring(L, -1) )   // deal with the string
     {
       uint16_t stksz = luaL_checkinteger( L, -1 );
-      if (stksz < 5000 || stksz > 31000) stksz = 20*1024;
-      lua_system_param.stack_size = stksz;
-      l_message( NULL, "updated: stack_size" );
-      change++;
+      if (stksz < 8192 || stksz > 24576) {
+        l_message( NULL, "stack_size: 8192 ~ 24576, not updated" );
+      }
+      else {
+        lua_system_param.stack_size = stksz;
+        l_message( NULL, "updated: stack_size" );
+        change++;
+      }
     } else
     {
       l_message( NULL, "wrong arg type: stack_size" );

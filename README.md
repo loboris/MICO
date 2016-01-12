@@ -1,7 +1,7 @@
 MICO
 ====
 
-###Mico-controller based Internet Connectivity Operation System ver 2.3.0.2
+###Mico-controller based Internet Connectivity Operation System ver 2.4
 
 
 ###Feathers
@@ -28,6 +28,7 @@ WiFiMCU is developed based on EMW3165 module produced by [MXCHIP.INC](http://en.
 - Based on Lua 5.1.4 (package, string, table, math modules)<br/>
 - Build-in modules: mcu, gpio, timer, wifi, net, file, pwm, uart, adc, spi, i2c, 1-wire, bit, mqtt, rtc, oled, lcd, ...<br/>
 - Hardware & software SPI<br/>
+- Hardware & software I2C<br/>
 - Hardware & software UART<br/>
 - Float or Integer versions<br/>
 - `Free memory >48k bytes`<br/>
@@ -55,7 +56,7 @@ WiFiMCU is developed based on EMW3165 module produced by [MXCHIP.INC](http://en.
 - Station,Soft AP and Station+Soft AP<br/>
 - CE, FCC suitable<br/>
 
-### [WiFiMCU LUA Reference](https://github.com/loboris/MICO/blob/master/Document/WiFiMCU/WiFiMCU%20Reference.pdf)<br/>
+### [WiFiMCU LUA Reference](https://github.com/loboris/MICO/blob/master/Document/WiFiMCU/WiFiMCU%20LUA%20Reference.pdf)<br/>
 
 ### [Documentation](https://github.com/loboris/MICO/tree/master/Document/WiFiMCU)<br/>
 

@@ -32,7 +32,7 @@
 #ifndef __HTTP_PARSE_H__
 #define __HTTP_PARSE_H__
 
-#include <httpd.h>
+#include "httpd.h"
 
 
 /** Parse tag/value form elements present in HTTP POST body

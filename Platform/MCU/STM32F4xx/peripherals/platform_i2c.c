@@ -67,12 +67,12 @@
 
 static OSStatus i2c_address_device( const platform_i2c_t* i2c, const platform_i2c_config_t* config, int retries, uint8_t direction );
 static OSStatus i2c_wait_for_event( I2C_TypeDef* i2c, uint32_t event_id, uint32_t number_of_waits );
-static OSStatus i2c_transfer_message_no_dma( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* message );
+static OSStatus i2c_transfer_message_no_dma( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* message, uint16_t rep );
 #ifdef I2C_USE_DMA
 static OSStatus i2c_rx_with_dma( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* message );
 static OSStatus i2c_tx_with_dma( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* message );
 #else
-static OSStatus i2c_tx_no_dma( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* message );
+static OSStatus i2c_tx_no_dma( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* message, uint16_t rep );
 static OSStatus i2c_rx_no_dma( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* message );
 #endif
 
@@ -101,8 +101,8 @@ OSStatus platform_i2c_init( const platform_i2c_t* i2c, const platform_i2c_config
   RCC_APB1PeriphResetCmd( i2c->peripheral_clock_reg, DISABLE );
   
   // GPIO Configuration
-  platform_gpio_set_alternate_function( i2c->pin_scl->port, i2c->pin_scl->pin_number, GPIO_OType_OD, GPIO_PuPd_NOPULL, i2c->gpio_af );
-  platform_gpio_set_alternate_function( i2c->pin_sda->port, i2c->pin_sda->pin_number, GPIO_OType_OD, GPIO_PuPd_NOPULL, i2c->gpio_af );
+  platform_gpio_set_alternate_function( i2c->pin_scl->port, i2c->pin_scl->pin_number, GPIO_OType_OD, GPIO_PuPd_NOPULL, i2c->gpio_af_scl );
+  platform_gpio_set_alternate_function( i2c->pin_sda->port, i2c->pin_sda->pin_number, GPIO_OType_OD, GPIO_PuPd_NOPULL, i2c->gpio_af_sda );
   
 #ifdef I2C_USE_DMA
   // Enable the DMA clock
@@ -502,13 +502,13 @@ static OSStatus i2c_dma_transfer( mico_i2c_device_t* device, mico_i2c_message_t*
 }
 #else
 
-static OSStatus i2c_transfer_message_no_dma( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* message )
+static OSStatus i2c_transfer_message_no_dma( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* message, uint16_t rep )
 {
     OSStatus err;
 
     if ( message->tx_buffer != NULL )
     {
-        err = i2c_tx_no_dma( i2c, config, message );
+        err = i2c_tx_no_dma( i2c, config, message, rep );
         if ( err != kNoErr )
         {
             goto exit;
@@ -579,7 +579,7 @@ exit:
   return err;
 }
 
-OSStatus platform_i2c_transfer( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* messages, uint16_t number_of_messages )
+OSStatus platform_i2c_transfer( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* messages, uint16_t number_of_messages, uint16_t rep )
 {
   OSStatus err = kNoErr;
   int      i   = 0;
@@ -594,7 +594,7 @@ OSStatus platform_i2c_transfer( const platform_i2c_t* i2c, const platform_i2c_co
     err = i2c_dma_transfer(device, &messages[i]);
     require_noerr(err, exit);
 #else  
-    err = i2c_transfer_message_no_dma( i2c, config, &messages[ i ] );
+    err = i2c_transfer_message_no_dma( i2c, config, &messages[ i ], rep );
     require_noerr(err, exit);
 #endif
   }
@@ -631,12 +631,6 @@ exit:
 
 static OSStatus i2c_wait_for_event( I2C_TypeDef* i2c, uint32_t event_id, uint32_t number_of_waits )
 {
-#ifdef NO_MICO_RTOS
-  mico_thread_msleep_no_os(2);
-#else
-  mico_thread_msleep(2);
-#endif
-  
   while ( I2C_CheckEvent( i2c, event_id ) != SUCCESS )
   {
     number_of_waits--;
@@ -651,6 +645,7 @@ static OSStatus i2c_wait_for_event( I2C_TypeDef* i2c, uint32_t event_id, uint32_
 static OSStatus i2c_address_device( const platform_i2c_t* i2c, const platform_i2c_config_t* config, int retries, uint8_t direction )
 {
   OSStatus err = kTimeoutErr;
+  retries = 1000;
 
   /* Some chips( authentication and security related chips ) has to be addressed several times before they acknowledge their address */
   for ( ; retries != 0 ; --retries )
@@ -673,6 +668,27 @@ static OSStatus i2c_address_device( const platform_i2c_t* i2c, const platform_i2
       if ( err == kNoErr )
         goto exit;
     }
+    else if ( config->address_width == I2C_ADDRESS_WIDTH_10BIT )
+    {
+      /* send the bits 9~8 of the address and R/W bit set to write of the requested i2c, wait for an acknowledge */
+      I2C_Send7bitAddress( i2c->port, (uint8_t) ( ((config->address >> 7) & 6) | 0xF0 ), direction );
+
+      /* wait till address gets sent and the direction bit is sent and */
+      err = i2c_wait_for_event( i2c->port, (direction == I2C_Direction_Transmitter) ? I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED : I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED, I2C_FLAG_CHECK_LONG_TIMEOUT );
+      if ( err == kNoErr )
+        goto exit;
+      /* send the bits 7~0 of the address , wait for an acknowledge */
+      I2C_SendData( i2c->port, (uint8_t) ( config->address & 0x00FF ) );
+
+      /* wait till address gets sent and the direction bit is sent and */
+      err = i2c_wait_for_event( i2c->port, (direction == I2C_Direction_Transmitter) ? I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED : I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED, I2C_FLAG_CHECK_LONG_TIMEOUT );
+      if ( err == kNoErr )
+        goto exit;
+    }
+    else {
+      err = -1;
+      goto exit;
+    }
     /* TODO: Support other address widths */
   }
 
@@ -680,23 +696,35 @@ exit:
     return err;
 }
 
-static OSStatus i2c_tx_no_dma( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* message )
+static OSStatus i2c_tx_no_dma( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* message, uint16_t rep )
 {
     OSStatus          err = kNoErr;
-    int               i;
+    int               i, j;
 
     /* Send data */
     err = i2c_address_device( i2c, config, message->retries, I2C_Direction_Transmitter );
     require_noerr(err, exit);
 
-    for ( i = 0; i < message->tx_length; i++ )
-    {
-        I2C_SendData( i2c->port, ((uint8_t*)message->tx_buffer)[ i ] );
+	for ( i = 0; i < message->tx_length; i++ )
+	{
+	  if (i == (message->tx_length - 1)) {
+	    // repeat last byte rep times
+		for ( j = 0; j < rep; j++ ) {
+		  I2C_SendData( i2c->port, ((uint8_t*)message->tx_buffer)[ i ] );
 
-        /* wait till it actually gets transferred and acknowledged */
-        err = i2c_wait_for_event( i2c->port, I2C_EVENT_MASTER_BYTE_TRANSMITTED, I2C_FLAG_CHECK_TIMEOUT );
-        require_noerr(err, exit);
-    }
+		  /* wait till it actually gets transferred and acknowledged */
+		  err = i2c_wait_for_event( i2c->port, I2C_EVENT_MASTER_BYTE_TRANSMITTED, I2C_FLAG_CHECK_TIMEOUT );
+		  require_noerr(err, exit);
+		}
+	  }
+	  else {
+		I2C_SendData( i2c->port, ((uint8_t*)message->tx_buffer)[ i ] );
+
+		/* wait till it actually gets transferred and acknowledged */
+		err = i2c_wait_for_event( i2c->port, I2C_EVENT_MASTER_BYTE_TRANSMITTED, I2C_FLAG_CHECK_TIMEOUT );
+		require_noerr(err, exit);
+	  }
+	}
 
 exit:
     return err;

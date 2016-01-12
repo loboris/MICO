@@ -151,7 +151,7 @@ void mico_rtos_suspend_all_thread(void);
   * @return   none
   */
 long mico_rtos_resume_all_thread(void);
-long mico_rtos_resume_thread(mico_thread_t* thread);
+
 
 /** @brief    Sleeps until another thread has terminated
   *

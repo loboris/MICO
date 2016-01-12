@@ -53,6 +53,25 @@ typedef system_context_t mico_Context_t;
   */
 
 /*****************************************************************************/
+/** \defgroup system_mico System general tools
+  * @brief Read MiCO system's version.
+  * @{
+  */
+/*****************************************************************************/
+
+/**
+  * @brief  Read MiCO system version.
+  * @param  major: Major version number.
+  * @param  minor: Minor version number.
+  * @param  revision: Revision nember.
+  * @retval kNoErr is returned on success, otherwise, kXXXErr is returned.
+  */
+void mico_system_version( uint8_t *major, uint8_t *minor, uint8_t *revision );
+
+
+/** @} */
+
+/*****************************************************************************/
 /** \defgroup system_context Core Data Functions
   * @brief System core data managment, should initialized before other system functions
   * @{

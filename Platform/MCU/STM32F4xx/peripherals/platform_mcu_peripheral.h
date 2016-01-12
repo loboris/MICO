@@ -186,9 +186,14 @@ typedef struct
     int                    rx_dma_stream_id;
     uint32_t               tx_dma_channel;
     uint32_t               rx_dma_channel;
-    uint8_t                gpio_af;
+    uint8_t                gpio_af_scl;
+    uint8_t                gpio_af_sda;
 } platform_i2c_t;
 
+typedef struct
+{
+    mico_mutex_t              i2c_mutex;
+} platform_i2c_driver_t;
 
 typedef void (* wakeup_irq_handler_t)(void *arg);
 

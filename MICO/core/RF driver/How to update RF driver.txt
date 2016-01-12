@@ -1,3 +1,9 @@
+
+
+/*********************************              How to update RF driver            *********************************************************************/
+
+
+
 1. Connect Debug UART to PC and open serial port terminal software, like: Super terminal or secureCRT. This how to doc use secureCRT for demonstration.
 2. Pull down boot pin and reset the driver. MICO device will enter bootloader mode and print the command list:
 
@@ -46,3 +52,28 @@ Transferring /Users/William/Develop/mxchipWNet Pro Demo@EMW316x/Library/RF drive
 -------------------
 
 5. Release BOOT pin, and reset the MICO device.
+
+/**********************************    Relationship with wifi module   *****************************************************/
+
+Relationship with wifi module
+^ File name                 ^ wifi module  ^ note   ^
+| 43341B0.bin               |EMW 3238      |         |
+| BCM43362-5.90.230.10.bin  |EMW 1062      | old     |
+| BCM43362-5.90.230.12.bin  |EMW 1062      | new     |
+
+/************************************************************************************************************************************/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

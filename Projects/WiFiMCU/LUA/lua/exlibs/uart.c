@@ -542,6 +542,39 @@ static int uart_setup( lua_State* L )
   return 0;
 }
 
+//uart.deinit(id)
+//====================================
+static int uart_deinit( lua_State* L )
+{
+  uint8_t id = luaL_checkinteger( L, 1 );
+
+  if ((id == 1) && (usrUART_init == 0)) {
+    return luaL_error( L, "UART not initialized" );
+  }
+  else if ((id == 2) && (swUART.init == 0)) {
+    return luaL_error( L, "swUART not initialized" );
+  }
+  
+  if (id == 1) {
+    MicoUartFinalize(LUA_USR_UART);
+    usr_uart_cb_ref = LUA_NOREF;
+    //if (plua_usr_usart_thread !=NULL) mico_rtos_delete_thread(plua_usr_usart_thread);
+    usrUART_init = 0;
+  }
+  else if (id == 2) {
+    TIM_Cmd(TIM11, DISABLE);
+    TIM_ClearITPendingBit(TIM11, TIM_IT_Update);
+    MicoGpioDisableIRQ(swUART.rx_pin);
+    MicoGpioFinalize(swUART.tx_pin);
+    MicoGpioFinalize(swUART.rx_pin);
+    
+    if (swUART.tx_buf !=NULL) free(swUART.tx_buf);
+    if (swUART.rx_buf !=NULL) free(swUART.rx_buf);
+    swUART.init = 0;
+  }
+  return 0;
+}
+
 //uart.on(id,function(t))
 //================================
 static int uart_on( lua_State* L )
@@ -776,6 +809,7 @@ static int uart_write( lua_State* L )
 const LUA_REG_TYPE uart_map[] =
 {
   { LSTRKEY( "setup" ), LFUNCVAL( uart_setup )},
+  { LSTRKEY( "deinit" ), LFUNCVAL( uart_deinit )},
   { LSTRKEY( "on" ), LFUNCVAL( uart_on )},
   { LSTRKEY( "send" ), LFUNCVAL( uart_send )},
   { LSTRKEY( "recv" ), LFUNCVAL( uart_recv )},

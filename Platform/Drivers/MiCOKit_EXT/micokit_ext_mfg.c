@@ -24,11 +24,8 @@
 #include "micokit_ext.h"
 #include "mico_system.h"
 
-#include "temp_hum_sensor\BME280\bme280_user.h"
-#include "temp_hum_sensor\DHT11\DHT11.h"
-
-#define micokit_ext_mfg(M, ...) custom_log("MiCOKit-ext", M, ##__VA_ARGS__)
-#define micokit_ext_mfg_trace() custom_log_trace("MiCOKit-ext")
+#include "sensor/BME280/bme280_user.h"
+#include "sensor/DHT11/DHT11.h"
 
 extern mico_semaphore_t      mfg_test_state_change_sem;
 extern volatile int16_t      mfg_test_module_number;
@@ -36,9 +33,8 @@ extern volatile int16_t      mfg_test_module_number;
 //---------------------------- user modules functions --------------------------
 
 // Key1 clicked callback:  previous test module in test mode
-void user_key1_clicked_callback(void)
+WEAK void user_key1_clicked_callback(void)
 {
-  //micokit_ext_mfg("user_key1_clicked_callback");
   if(NULL != mfg_test_state_change_sem){
     if( 0 < mfg_test_module_number){
       mfg_test_module_number = (mfg_test_module_number - 1)%(MFG_TEST_MAX_MODULE_NUM+1);
@@ -52,9 +48,8 @@ void user_key1_clicked_callback(void)
 }
 
 // Key2 clicked callback:  next test module in test mode
-void user_key2_clicked_callback(void)
+WEAK void user_key2_clicked_callback(void)
 {
-  //micokit_ext_mfg("user_key2_clicked_callback");
   if(NULL != mfg_test_state_change_sem){
     mfg_test_module_number = (mfg_test_module_number+1)%(MFG_TEST_MAX_MODULE_NUM+1);
     mico_rtos_set_semaphore(&mfg_test_state_change_sem);  // start next module
@@ -109,6 +104,8 @@ void micokit_ext_mfg_test(mico_Context_t *inContext)
   int32_t bme280_temp = 0;
   uint32_t bme280_hum = 0;
   uint32_t bme280_press = 0;
+  
+  UNUSED_PARAMETER(inContext);
   
   mico_rtos_init_semaphore(&mfg_test_state_change_sem, 1); 
   err = mico_system_notify_register( mico_notify_WIFI_SCAN_COMPLETED, (void *)mico_notify_WifiScanCompleteHandler, inContext );
@@ -192,7 +189,7 @@ void micokit_ext_mfg_test(mico_Context_t *inContext)
             sprintf(str, "%s BME280\r\nMoule not found!", OLED_MFG_TEST_PREFIX);
             mf_printf(str);
             // goto next mdoule
-            mico_thread_sleep(1);
+            mico_thread_msleep(500);
             mfg_test_module_number = (mfg_test_module_number+1)%(MFG_TEST_MAX_MODULE_NUM+1);
             break;
           }
@@ -256,6 +253,7 @@ void micokit_ext_mfg_test(mico_Context_t *inContext)
       }
     default:
       goto exit;  // error
+      //break;
     }
   }
   

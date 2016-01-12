@@ -431,10 +431,10 @@ char *strdup(const char *src)
 }
 
 
-int wiced_platform_get_rtc_time (){
+int mico_platform_get_rtc_time (){
     return 1;
 }
-int wiced_platform_set_rtc_time (){
+int mico_platform_set_rtc_time (){
     return 0;
 }
 

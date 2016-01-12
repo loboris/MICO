@@ -33,12 +33,12 @@ struct Network
   uint16_t ssl_flag;  // bit0: ssl_enable, bit1: ssl_debug_enable, bit2~4: ssl_version
 };
 
-enum {
+/*enum {
   SSL_V3_MODE = 1,
   TLS_V1_0_MODE = 2,
   TLS_V1_1_MODE = 3,
   TLS_V1_2_MODE = 4,
-};
+};*/
 
 typedef struct _ssl_opts_t {
   bool ssl_enable;

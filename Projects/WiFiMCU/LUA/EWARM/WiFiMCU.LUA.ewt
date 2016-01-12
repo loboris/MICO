@@ -1560,24 +1560,6 @@
         <name>$PROJ_DIR$\..\..\..\..\MICO\system\config_server\config_server_menu.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\easylink\MFi_WAC_CM3_Debug.a</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\easylink\MFi_WAC_CM3_Release.a</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\command_console\mico_cli.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\command_console\mico_cli.h</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\mdns\mico_mdns.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\..\..\MICO\system\mdns\mico_mdns.h</name>
-      </file>
-      <file>
         <name>$PROJ_DIR$\..\..\..\..\MICO\system\mico_system_init.c</name>
       </file>
       <file>

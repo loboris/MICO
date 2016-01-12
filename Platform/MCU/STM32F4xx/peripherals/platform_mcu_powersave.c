@@ -184,7 +184,7 @@ OSStatus platform_mcu_powersave_init(void)
   }
 #else
   //#ifdef RTC_ENABLED
-  /* application must have wiced_application_default_time structure declared somewhere, otherwise it wont compile */
+  /* application must have mico_application_default_time structure declared somewhere, otherwise it wont compile */
   /* write default application time inside rtc */
   platform_rtc_set_time( &default_rtc_time );
   //#endif /* RTC_ENABLED */
@@ -400,7 +400,6 @@ static unsigned long stop_mode_power_down_hook( unsigned long sleep_ms )
     /* which triggered a wake up event */
     ENABLE_INTERRUPTS;
     wake_up_interrupt_triggered = false;
-    UNUSED_VARIABLE(wake_up_interrupt_triggered);
     return retval;
   }
   else
@@ -464,7 +463,7 @@ void platform_mcu_enter_standby(uint32_t secondsToWakeup)
  *         IRQ Handlers Definition & Mapping
  ******************************************************/
 
-#ifndef WICED_DISABLE_MCU_POWERSAVE
+#ifndef MICO_DISABLE_MCU_POWERSAVE
 MICO_RTOS_DEFINE_ISR( RTC_WKUP_irq )
 {
     EXTI_ClearITPendingBit( RTC_INTERRUPT_EXTI_LINE );

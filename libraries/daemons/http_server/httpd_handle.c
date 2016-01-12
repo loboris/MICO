@@ -34,9 +34,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <httpd.h>
-#include <http_parse.h>
-#include <http-strings.h>
+#include "httpd.h"
+#include "http_parse.h"
+#include "http-strings.h"
 
 #include "httpd_priv.h"
 

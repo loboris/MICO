@@ -31,8 +31,8 @@
 
 #include <string.h>
 
-#include <httpd.h>
-#include <http-strings.h>
+#include "httpd.h"
+#include "http-strings.h"
 #include "httpd_priv.h"
 #include "MICO.h"
 #include "SocketUtils.h"

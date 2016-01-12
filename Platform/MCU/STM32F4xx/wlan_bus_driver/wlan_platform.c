@@ -32,6 +32,7 @@
 #include "platform_config.h"
 #include "platform_peripheral.h"
 #include "PlatformLogging.h"
+#include "wlan_platform_common.h"
 
 /* Used to give a 32k clock to EMW1062 wifi rf module */
 OSStatus host_platform_init_wlan_powersave_clock( void )

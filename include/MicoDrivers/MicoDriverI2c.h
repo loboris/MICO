@@ -175,11 +175,12 @@ OSStatus MicoI2cBuildCombinedMessage(mico_i2c_message_t* message, const void* tx
  * @param  device             : the i2c device to communicate with
  * @param  message            : a pointer to a message (or an array of messages) to be transmitted/received
  * @param  number_of_messages : the number of messages to transfer. [1 .. N] messages
+ * @param  rep                : repeat last byte of the message rep times
  *
  * @return    kNoErr        : on success.
  * @return    kGeneralErr   : if an error occurred during message transfer
  */
-OSStatus MicoI2cTransfer( mico_i2c_device_t* device, mico_i2c_message_t* message, uint16_t number_of_messages );
+OSStatus MicoI2cTransfer( mico_i2c_device_t* device, mico_i2c_message_t* message, uint16_t number_of_messages, uint16_t rep );
 
 
 /** Deinitialises an I2C device

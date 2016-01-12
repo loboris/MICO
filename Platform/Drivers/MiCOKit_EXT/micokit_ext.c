@@ -25,11 +25,20 @@
 #define micokit_ext_log(M, ...) custom_log("MICOKIT_EXT", M, ##__VA_ARGS__)
 #define micokit_ext_log_trace() custom_log_trace("MICOKIT_EXT")
 
+extern void user_key1_clicked_callback(void);
+extern void user_key1_long_pressed_callback(void);
+extern void user_key2_clicked_callback(void);
+extern void user_key2_long_pressed_callback(void);
+
 //------------------------------------- API ------------------------------------
 OSStatus user_modules_init(void)
 {
   OSStatus err = kUnknownErr;
   char oled_show_line[OLED_DISPLAY_MAX_CHAR_PER_ROW+1] = {'\0'};   // max char each line
+#if defined(MICO_EXT_KEY1)||defined(MICO_EXT_KEY2)
+  button_init_t init;
+#endif
+
   
   // init DC Motor(GPIO)
   dc_motor_init();
@@ -57,9 +66,22 @@ OSStatus user_modules_init(void)
   infrared_reflective_init();
   
   // init user key1 && key2
-  user_key1_init();
-  user_key2_init();
-  
+#ifdef MICO_EXT_KEY1
+  init.gpio = MICO_EXT_KEY1;
+  init.pressed_func = user_key1_clicked_callback;
+  init.long_pressed_func = NULL;
+  init.long_pressed_timeout = 5000;
+  button_init( IOBUTTON_USER_1, init);
+#endif
+
+#ifdef MICO_EXT_KEY2
+  init.gpio = MICO_EXT_KEY2;
+  init.pressed_func = user_key2_clicked_callback;
+  init.long_pressed_func = NULL;
+  init.long_pressed_timeout = 5000;
+  button_init( IOBUTTON_USER_2, init);
+#endif
+
   err = temp_hum_sensor_init();
   
 //  int32_t temperature;

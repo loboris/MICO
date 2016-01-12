@@ -22,28 +22,27 @@
 #ifndef __MICOKIT_EXT_DEF_H_
 #define __MICOKIT_EXT_DEF_H_
 
-#include "mico_platform.h"
-
 //-------------------------- MicoKit-EXT board pin define ----------------------
-#define MICO_EXT_OLED_SPI_PORT       (Arduino_SPI)
-#define MICO_EXT_OLED_SPI_SCK        (Arduino_SCK)       
-#define MICO_EXT_OLED_SPI_DIN        (Arduino_SI)  
-#define MICO_EXT_OLED_SPI_DC         (Arduino_SO)  
-#define MICO_EXT_OLED_SPI_CS         (Arduino_CS)
+#define OLED_SPI_PORT       (Arduino_SPI)
+#define OLED_SPI_SCK        (Arduino_SCK)
+#define OLED_SPI_DIN        (Arduino_SI)
+#define OLED_SPI_DC         (Arduino_SO)
+#define OLED_SPI_CS         (Arduino_CS)
 
-#define MICO_EXT_RGB_LED_P9813_CIN   (Arduino_SCL)
-#define MICO_EXT_RGB_LED_P9813_DIN   (Arduino_SDA)
+#define P9813_PIN_CIN       (Arduino_SCL)
+#define P9813_PIN_DIN       (Arduino_SDA)
 
-#define MICO_EXT_DC_MOTOR            (Arduino_D9)
+#define DC_MOTOR            (Arduino_D9)
 
 #define MICO_EXT_KEY1                (Arduino_D4)
 #define MICO_EXT_KEY2                (Arduino_D5)
 
-#define MICO_EXT_I2C_BME280          (Arduino_I2C)
-#define MICO_EXT_DHT11               (Arduino_D8)
+#define BME280_I2C_DEVICE            (Arduino_I2C)
+#define DHT11_DATA                   (Arduino_D8)
+
+#define APDS9930_I2C_DEVICE          (Arduino_I2C)
 
 #define MICO_EXT_ADC_LIGHT           (Arduino_A2)
-#define MICO_EXT_ADC_INFRARED        (Arduino_A3)
-
+#define INFARAED_REFLECTIVE_ADC      (Arduino_A3)
 
 #endif  // __MICOKIT_EXT_DEF_H_

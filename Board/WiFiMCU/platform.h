@@ -31,6 +31,9 @@
 
 #pragma once
 
+#ifndef __PLATFORM_H_
+#define __PLATFORM_H_
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -329,9 +332,6 @@ typedef enum
 //#define SFLASH_SUPPORT_WINBOND_PARTS
 
 
-//#define USE_MiCOKit_EXT
-//#define USE_RGB_LED_DRIVER_P9813
-
 #ifdef USE_MiCOKit_EXT
 #define MICO_I2C_CP         (Arduino_I2C)
 #else
@@ -356,3 +356,4 @@ void platform_check_bootreason( void );
 } /*extern "C" */
 #endif
 
+#endif

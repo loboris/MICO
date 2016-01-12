@@ -48,15 +48,21 @@ extern "C" {
   */
 
 #define AF_INET       2
+
 #define SOCK_STREAM   1
 #define SOCK_DGRM     2 
+
+#define IPPROTO_IP    0   
+#define SOL_SOCKET    1 
 #define IPPROTO_TCP   6
 #define IPPROTO_UDP   17
-#define SOL_SOCKET    1
+
 
 #define INADDR_ANY        0x0
 #define INADDR_BROADCAST  0xFFFFFFFF
 #define IPADDR_LOOPBACK   0x7F000001
+
+
 
 /**
   * @brief  Socket address structure define
@@ -225,22 +231,19 @@ struct sockaddr_t {
   * @brief  Time interval define used in @ref select
   */
 struct timeval_t {
-  unsigned long		tv_sec;		/**< seconds */
-  unsigned long		tv_usec;	/**< microseconds */
+  unsigned long   tv_sec;   /**< seconds */
+  unsigned long   tv_usec;  /**< microseconds */
 };
 
 typedef int socklen_t;
 
 /**
-  * @brief  Socket option types
+  * @brief  Socket option types, level: SOL_SOCKET
   */
 typedef enum {
   SO_REUSEADDR            = 0x0002,     /**< MICO socket always support this option. */
   SO_BROADCAST            = 0x0006,     /**< MICO socket always support this option. */
-  IP_ADD_MEMBERSHIP       = 0x0003,     /**< Join multicast group. */
-  IP_DROP_MEMBERSHIP      = 0x0004,     /**< Leave Multicast group. */
-  TCP_CONN_NUM            = 0x0006,     /**< Read the current connected TCP client number. */
-  TCP_MAX_CONN_NUM        = 0x0007,     /**< Set the max number of TCP client that server can support. */
+  SO_KEEPALIVE            = 0x0008,     /**< Enable keep alive for this socket. */
   SO_BLOCKMODE            = 0x1000,     /**< set socket as block(optval=0)/non-block(optval=1) mode. 
                                              Default is block mode. */
   SO_SNDTIMEO             = 0x1005,     /**< Send timeout in block mode. block for ever in dafault mode. */
@@ -249,6 +252,37 @@ typedef enum {
   SO_TYPE                 = 0x1008,     /**< Get socket type. */
   SO_NO_CHECK             = 0x100a      /**< Don't create UDP checksum. */
 } SOCK_OPT_VAL;
+
+/**
+  * @brief  IP option types, level: IPPROTO_IP
+  */
+typedef enum {
+  IP_ADD_MEMBERSHIP       = 0x0003,     /**< Join multicast group. */
+  IP_DROP_MEMBERSHIP      = 0x0004,     /**< Leave Multicast group. */
+} IP_OPT_VAL;
+
+/**
+  * @brief  TCP option types, level: IPPROTO_TCP
+  */
+typedef enum {
+  TCP_CONN_NUM            = 0x0006,     /**< Read the current connected TCP client number. */
+  TCP_MAX_CONN_NUM        = 0x0007,     /**< Set the max number of TCP client that server can support. */
+  TCP_KEEPIDLE            = 0x0003,     /**< set pcb->keep_idle  - send KEEPALIVE probes when idle for pcb->keep_idle milliseconds */
+  TCP_KEEPINTVL           = 0x0004,     /**< set pcb->keep_intvl - Use seconds for get/setsockopt */
+  TCP_KEEPCNT             = 0x0005,     /**< set pcb->keep_cnt   - Use number of probes sent for get/setsockopt */
+} TCP_OPT_VAL;
+
+typedef void* mico_ssl_t;
+
+/**
+  * @brief  Supported SSL protocol version
+  */
+typedef enum {
+  SSL_V3_MODE   = 1,
+  TLS_V1_0_MODE = 2,
+  TLS_V1_1_MODE = 3,
+  TLS_V1_2_MODE = 4,
+} SSL_VERSION;
 
 #define FD_SETSIZE        24    /**< MAX fd number is 24 in MICO. */
 
@@ -304,7 +338,7 @@ int socket(int domain, int type, int protocol);
   * @brief  Set options on sockets
   * @attention  Never doing operations on one socket in different MICO threads
   * @param  sockfd: A file descriptor
-  * @param  level: This parameter can be one value: SOL_SOCKET
+  * @param  level: This parameter can be : IPPROTO_IP, SOL_SOCKET, IPPROTO_TCP, IPPROTO_UDP
   * @param  optname: This parameter is defined in SOCK_OPT_VAL
   * @param  optval: address of buffer in which the value for the requested option(s) 
   *         are to be set.
@@ -317,7 +351,7 @@ int setsockopt(int sockfd, int level, int optname,const void *optval, socklen_t 
   * @brief  Get options on sockets
   * @attention  Never doing operations on one socket in different MICO threads
   * @param  sockfd: A file descriptor
-  * @param  level: This parameter can be one value: SOL_SOCKET
+  * @param  level: This parameter can be : IPPROTO_IP, SOL_SOCKET, IPPROTO_TCP, IPPROTO_UDP
   * @param  optname: This parameter is defined in SOCK_OPT_VAL
   * @param  optval: address of buffer in which the value for the requested option(s)
   *         are to be returned.
@@ -327,7 +361,6 @@ int setsockopt(int sockfd, int level, int optname,const void *optval, socklen_t 
   * @retval On success, zero is returned.  On error, -1 is returned.
   */
 int getsockopt(int sockfd, int level, int optname,const void *optval, socklen_t *optlen);
-
 /**
   * @brief  bind a name to a socket
   * @attention  Never doing operations on one socket in different MICO threads
@@ -612,10 +645,21 @@ void set_tcp_keepalive(int inMaxErrNum, int inSeconds);
 void get_tcp_keepalive(int *outMaxErrNum, int *outSeconds);
 
 
+/** @brief      Used to set the ssl protocol version for both ssl client and ssl server 
+ *
+ *  @note       This function should be called before ssl is ready to function (before
+ *              ssl_connect and ssl_accept is called by application ).
+ *
+ *  @param      version: SSL protocol version, Refer SSL_VERSION for details.
+ *
+ *  @retval     void
+ */
+void ssl_version_set( SSL_VERSION version );
+
 /* SSL */
 /** @brief      Used by the SSL server. Set the certificate and private key for a SSL server. 
  *
- * @details    This function is called on the server side to set it's certifact and private key.
+ * @details     This function is called on the server side to set it's certifact and private key.
  *              It must be called before ssl_accept. These two arguments must be global
  *              string buffer, library will not create a copy for them.
  *
@@ -639,7 +683,7 @@ void ssl_set_cert(const char *_cert_pem, const char *private_key_pem);
  *
  *  @retval     return the SSL context pointer on success or NULL for fail.
  */
-void* ssl_connect(int fd, int calen, char*ca, int *errno); 
+mico_ssl_t ssl_connect(int fd, int calen, char*ca, int *errno); 
 
 /** @brief      SSL Server accept a SSL connection
  *
@@ -647,7 +691,7 @@ void* ssl_connect(int fd, int calen, char*ca, int *errno);
  *
  *  @retval     return the SSL context pointer on success or NULL for fail.
  */
-void* ssl_accept(int fd); 
+mico_ssl_t ssl_accept(int fd); 
 
 
 /** @brief      SSL send data
@@ -659,7 +703,7 @@ void* ssl_accept(int fd);
  *  @retval     On success, these calls return the number of bytes sent.  On error,
  *             -1 is returned,
  */
-int ssl_send(void* ssl, char *data, int len);
+int ssl_send(mico_ssl_t ssl, void* data, size_t len);
 
 /** @brief      SSL receive data
  *
@@ -670,7 +714,7 @@ int ssl_send(void* ssl, char *data, int len);
  *  @retval     On success, these calls return the number of bytes received.  On error,
  *             -1 is returned,
  */
-int ssl_recv(void* ssl, char *data, int len);
+int ssl_recv(mico_ssl_t ssl, void* data, size_t len);
 
 /** @brief      Close the SSL session, release resource.
  *
@@ -678,7 +722,7 @@ int ssl_recv(void* ssl, char *data, int len);
  *
  *  @retval     kNoerr or kGeneralErr
  */
-int ssl_close(void* ssl);
+int ssl_close(mico_ssl_t ssl);
 
 /**
   * @}

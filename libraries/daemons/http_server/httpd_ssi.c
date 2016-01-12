@@ -28,21 +28,22 @@
 *  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR 
 *  IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ******************************************************************************
-
-
-* Description
-*  SSI processor for simple web server
-*  syntax of a script is
-*   %! <func_name> [optional_arg]
-*   %! : <include html filename>
-*   <standard html>
-*
 */
+
+/*
+ * Description
+ *  SSI processor for simple web server
+ *  syntax of a script is
+ *   %! <func_name> [optional_arg]
+ *   %! : <include html filename>
+ *   <standard html>
+ *
+ */
 
 
 #include <string.h>
 
-#include <httpd.h>
+#include "httpd.h"
 
 #include "httpd_priv.h"
 

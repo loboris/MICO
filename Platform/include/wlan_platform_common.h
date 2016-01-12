@@ -111,7 +111,7 @@ typedef enum
  *                 Global Variables
  ******************************************************/
 
-/* Externed from <WICED-SDK>/platforms/<Platform>/platform.c */
+/* Externed from <MiCO-SDK>/platforms/<Platform>/platform.c */
 extern const platform_gpio_t wifi_control_pins[];
 extern const platform_gpio_t wifi_sdio_pins   [];
 extern const platform_gpio_t wifi_spi_pins    [];
@@ -122,6 +122,7 @@ extern const platform_spi_t  wifi_spi;
  ******************************************************/
 
 extern void platform_wifi_spi_rx_dma_irq( void );
+extern OSStatus host_platform_deinit_wlan_powersave_clock( void );
 
 
 #ifdef __cplusplus

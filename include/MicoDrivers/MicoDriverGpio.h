@@ -45,7 +45,7 @@
  *                   Macros
  ******************************************************/  
 
-#define MicoGpioInputGet wiced_gpio_input_get
+#define MicoGpioInputGet mico_gpio_input_get
 
 /******************************************************
  *                   Enumerations
@@ -170,7 +170,7 @@ OSStatus MicoGpioEnableIRQ( mico_gpio_t gpio, mico_gpio_irq_trigger_t trigger, m
  *
  * Disables an interrupt trigger for an input GPIO pin.
  * Using this function on a gpio pin which has not been set up
- * using @ref wiced_gpio_input_irq_enable is undefined.
+ * using @ref mico_gpio_input_irq_enable is undefined.
  *
  * @param gpio    : the gpio pin which provided the interrupt trigger
  *

@@ -49,7 +49,7 @@ Porting Notes
 ------------------------------------------------------------------------------------------------------------
 * This file defines and consolidates various standardised data types required by the Platform Peripheral API
 * Generic Platform Peripheral data types are defined in this file
-* MCU-specific data types are defined in <WICED-SDK>/platform/MCU/<MCU_family>/platform_mcu_peripheral.h
+* MCU-specific data types are defined in <MiCO-SDK>/platform/MCU/<MCU_family>/platform_mcu_peripheral.h
 * platform_mcu_peripheral.h may include declarations, definitions, and function prototypes which are local to the MCU family
 * The following table outlines the structures that need to be defined in platform_mcu_peripheral.h:
 +------------------------+-----------------------+
@@ -73,7 +73,7 @@ Porting Notes
  *                    Constants
  ******************************************************/
 
-#define WICED_PERIPHERAL_UNSUPPORTED ( 0xFFFFFFFF )
+#define MICO_PERIPHERAL_UNSUPPORTED ( 0xFFFFFFFF )
 
 /* SPI mode constants */
 #define SPI_CLOCK_RISING_EDGE  ( 1 << 0 )
@@ -686,7 +686,6 @@ bool platform_i2c_probe_device( const platform_i2c_t* i2c, const platform_i2c_co
  * @param[in]     tx_buffer        : transmit buffer
  * @param[in]     tx_buffer_length : transmit buffer length is bytes
  * @param[in]     retries          : number of transmission retries
- * @param[in]     disable_dma      : WICED_TRUE if DMA is disabled
  *
  * @return @ref OSStatus
  */
@@ -700,7 +699,6 @@ OSStatus platform_i2c_init_tx_message( platform_i2c_message_t* message, const vo
  * @param[in]     rx_buffer        : receive buffer
  * @param[in]     rx_buffer_length : receive buffer length is bytes
  * @param[in]     retries          : number of transmission retries
- * @param[in]     disable_dma      : WICED_TRUE if DMA is disabled
  *
  * @return @ref OSStatus
  */
@@ -716,7 +714,6 @@ OSStatus platform_i2c_init_rx_message( platform_i2c_message_t* message, void* rx
  * @param[in]     tx_buffer_length : transmit buffer length is bytes
  * @param[in]     rx_buffer_length : receive buffer length is bytes
  * @param[in]     retries          : number of transmission retries
- * @param[in]     disable_dma      : WICED_TRUE if DMA is disabled
  *
  * @return @ref OSStatus
  */
@@ -729,10 +726,11 @@ OSStatus platform_i2c_init_combined_message( platform_i2c_message_t* message, co
  * @param[in] i2c_interface      : I2C interface
  * @param[in] messages           : pointer to an array of messages to transceive
  * @param[in] number_of_messages : number of messages in the array
+ * @param[in] rep                : repeat last byte of the message rep times
  *
  * @return @ref OSStatus
  */
-OSStatus platform_i2c_transfer( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* messages, uint16_t number_of_messages );
+OSStatus platform_i2c_transfer( const platform_i2c_t* i2c, const platform_i2c_config_t* config, platform_i2c_message_t* messages, uint16_t number_of_messages, uint16_t rep );
 
 
 /**

@@ -28,11 +28,10 @@
 *  IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ******************************************************************************
 */ 
+#pragma once
 
 #ifndef __MICOPLATFORM_H__
 #define __MICOPLATFORM_H__
-
-#pragma once
 
 #include "common.h"
 

@@ -85,7 +85,7 @@ void MicoRtcInitialize(void);
 
 /**
  * This function will return the value of time read from the on board CPU real time clock. Time value must be given in the format of
- * the structure wiced_rtc_time_t
+ * the structure mico_rtc_time_t
  *
  * @param time        : pointer to a time structure
  *
@@ -96,7 +96,7 @@ OSStatus MicoRtcGetTime(mico_rtc_time_t* time);
 
 /**
  * This function will set MCU RTC time to a new value. Time value must be given in the format of
- * the structure wiced_rtc_time_t
+ * the structure mico_rtc_time_t
  *
  * @param time        : pointer to a time structure
  *
