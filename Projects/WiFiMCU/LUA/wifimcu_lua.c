@@ -422,7 +422,7 @@ int application_start( void )
     lua_system_param.ID = LUA_PARAMS_ID;
     lua_system_param.use_wwdg = 0;
     lua_system_param.wdg_tmo    = DEFAULT_WATCHDOG_TIMEOUT;
-    lua_system_param.stack_size = 8*1024;
+    lua_system_param.stack_size = 10*1024;
     lua_system_param.inbuf_size = INBUF_SIZE;
     lua_system_param.baud_rate = 115200;
     lua_system_param.parity = NO_PARITY;
