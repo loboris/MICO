@@ -1020,7 +1020,7 @@
         <name>$PROJ_DIR$\..\..\..\..\include\MicoDrivers\MicoDriverGpio.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\include\MicoDrivers\MicoDriverI2c.h</name>
+        <name>$PROJ_DIR$\..\..\..\..\include\MicoDrivers\MICODriverI2c.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\..\..\include\MicoDrivers\MicoDriverMFiAuth.h</name>
@@ -1228,6 +1228,9 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\lua\exlibs\DefaultFonts.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\lua\exlibs\DefaultPropFont.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\lua\exlibs\file.c</name>

@@ -24,10 +24,10 @@
 
 #define INITR_GREENTAB 0x0
 #define INITR_REDTAB   0x1
-#define INITR_BLACKTAB   0x2
+#define INITR_BLACKTAB 0x2
 
-#define ST7735_TFTWIDTH  128
-#define ST7735_TFTHEIGHT 160
+#define ST7735_WIDTH  128
+#define ST7735_HEIGHT 160
 
 #define ST7735_NOP     0x00
 #define ST7735_SWRESET 0x01
@@ -39,14 +39,14 @@
 #define ST7735_PTLON   0x12
 #define ST7735_NORON   0x13
 
-#define ST7735_INVOFF  0x20
-#define ST7735_INVON   0x21
-#define ST7735_DISPOFF 0x28
-#define ST7735_DISPON  0x29
-#define ST7735_CASET   0x2A
-#define ST7735_RASET   0x2B
-#define ST7735_RAMWR   0x2C
-#define ST7735_RAMRD   0x2E
+#define TFT_INVOFF     0x20
+#define TFT_INVONN     0x21
+#define TFT_DISPOFF    0x28
+#define TFT_DISPON     0x29
+#define TFT_CASET      0x2A
+#define TFT_RASET      0x2B
+#define TFT_RAMWR      0x2C
+#define TFT_RAMRD      0x2E
 
 #define ST7735_PTLAR   0x30
 #define ST7735_COLMOD  0x3A
@@ -74,6 +74,62 @@
 
 #define ST7735_GMCTRP1 0xE0
 #define ST7735_GMCTRN1 0xE1
+
+#define ILI9341_WIDTH  240
+#define ILI9341_HEIGHT 320
+
+#define ILI9341_NOP     0x00
+#define ILI9341_SWRESET 0x01
+#define ILI9341_RDDID   0x04
+#define ILI9341_RDDST   0x09
+
+#define ILI9341_SLPIN   0x10
+#define ILI9341_SLPOUT  0x11
+#define ILI9341_PTLON   0x12
+#define ILI9341_NORON   0x13
+
+#define ILI9341_RDMODE  0x0A
+#define ILI9341_RDMADCTL  0x0B
+#define ILI9341_RDPIXFMT  0x0C
+#define ILI9341_RDIMGFMT  0x0D
+#define ILI9341_RDSELFDIAG  0x0F
+
+#define ILI9341_GAMMASET 0x26
+
+#define ILI9341_PTLAR   0x30
+#define ILI9341_MADCTL  0x36
+#define ILI9341_PIXFMT  0x3A
+
+#define ILI9341_FRMCTR1 0xB1
+#define ILI9341_FRMCTR2 0xB2
+#define ILI9341_FRMCTR3 0xB3
+#define ILI9341_INVCTR  0xB4
+#define ILI9341_DFUNCTR 0xB6
+
+#define ILI9341_PWCTR1  0xC0
+#define ILI9341_PWCTR2  0xC1
+#define ILI9341_PWCTR3  0xC2
+#define ILI9341_PWCTR4  0xC3
+#define ILI9341_PWCTR5  0xC4
+#define ILI9341_VMCTR1  0xC5
+#define ILI9341_VMCTR2  0xC7
+
+#define ILI9341_RDID1   0xDA
+#define ILI9341_RDID2   0xDB
+#define ILI9341_RDID3   0xDC
+#define ILI9341_RDID4   0xDD
+
+#define ILI9341_GMCTRP1 0xE0
+#define ILI9341_GMCTRN1 0xE1
+
+#define ILI9341_POWERA	0xCB
+#define ILI9341_POWERB	0xCF
+#define ILI9341_POWER_SEQ       0xED
+#define ILI9341_DTCA	0xE8
+#define ILI9341_DTCB	0xEA
+#define ILI9341_PRC	0xF7
+#define ILI9341_3GAMMA_EN	0xF2
+
 
 // Color definitions
 #define TFT_BLACK       0x0000      /*   0,   0,   0 */
@@ -112,13 +168,17 @@
 #define PORTRAIT_FLIP	2
 #define LANDSCAPE_FLIP	3
 
-#define CENTER	-1
-#define RIGHT	-2
+#define LASTX	-1
+#define LASTY	-2
+#define CENTER	-3
+#define RIGHT	-4
 
 #define SMALL_FONT  0
 #define BIG_FONT    1
 #define FONT_7SEG   2
 #define FONT_8x8    3
+#define DEJAVU_18   4
+#define DEJAVU_24   5
 
 #define bitmapdatatype uint16_t *
 
@@ -126,16 +186,23 @@
    
 extern const char wifimcu_gpio_map[];
 extern uint8_t spiInit[];
-extern uint16_t _spi_write(uint8_t id, uint8_t databits,uint8_t* data, uint16_t count, uint16_t rep);
+extern void _MicoLcdTransfer( uint8_t* buf, int len );
+extern void _swLcdTransfer( uint8_t* buf, int len );
+
 extern uint8_t SmallFont[];         
 extern uint8_t Font8x8[];
-extern unsigned char BigFont[];
+extern uint8_t BigFont[];
+extern uint8_t DejaVuSans18[];
+extern uint8_t DejaVuSans12[];
+extern uint8_t DejaVuSans24[];
+
 extern spiffs fs;
 extern volatile int file_fd;
 int mode2flag(char *mode);
 
 static uint8_t TFT_SPI_ID = 255;
-static uint8_t TFT_pinDC  = 255;
+uint8_t TFT_pinDC  = 255;
+static uint8_t TFT_type   = 0;
 
 static int platform_gpio_exists( unsigned pin )
 {
@@ -143,8 +210,8 @@ static int platform_gpio_exists( unsigned pin )
 }
 
 
-static uint16_t _width = ST7735_TFTWIDTH;
-static uint16_t _height = ST7735_TFTHEIGHT;
+static uint16_t _width = ST7735_WIDTH;
+static uint16_t _height = ST7735_HEIGHT;
 
 #ifndef LCD_SOFT_RESET
   uint8_t lcd_pinRST  = 255;
@@ -156,10 +223,9 @@ static uint16_t _height = ST7735_TFTHEIGHT;
 #define LCD_DC0   MicoGpioOutputLow( (mico_gpio_t)TFT_pinDC );
 
 static int colstart = 0;
-static int rowstart = 0; // May be overridden in init func
-//static uint8_t tabcolor	= 0;
-static uint8_t orientation = PORTRAIT;
-static int rotation = 0;
+static int rowstart = 0;               // May be overridden in init func
+static uint8_t orientation = PORTRAIT; // screen orientation
+static int rotation = 0;               // font rotation
 
 typedef struct _font {
 	uint8_t 	*font;
@@ -171,85 +237,199 @@ typedef struct _font {
 	uint16_t        color;
 } Font;
 
+typedef struct _propFont {
+      uint8_t charCode;
+      int adjYOffset;
+      int width;
+      int height;
+      int xOffset;
+      int xDelta;
+      uint16_t dataPtr;
+} propFont;
+
 static Font cfont;
+static propFont fontChar;
 static uint8_t _transparent = 0;
-static uint8_t _wrap = 0;
+static uint8_t _wrap = 0; // carracter wrapping to new line
+static uint8_t _forceFixed = 0;
 static uint16_t _fg = TFT_GREEN;
 static uint16_t _bg = TFT_BLACK;
-static uint8_t ccbuf[32];
+
+#define CCBUF_SIZE 272  // set the size 16 * n
+static uint8_t ccbuf[CCBUF_SIZE];
+static uint16_t ccbufPtr = 0;
+static uint16_t cbuf_ptr1 = 0;
+static uint16_t cbuf_ptr2 = 0;
+static uint16_t cbuf_ndata = 0;
+
 static int TFT_X  = 0;
 static int TFT_Y  = 0;
+static int TFT_OFFSET  = 0;
+static uint8_t first_data = 0;
 
 #define swap(a, b) { int16_t t = a; a = b; b = t; }
 
-
-// Send control command to controller
-//---------------------------------
-static void ST7735_sendCmd(uint8_t cmd) {
-  ccbuf[0] = cmd;
-  LCD_DC0;
-  _spi_write(TFT_SPI_ID, 8, &ccbuf[0], 1, 1);
-}
-
-// Send parameters of the command to controller
-//-----------------------------------
-static void ST7735_sendData(uint8_t data) {
-  ccbuf[0] = data;
-  LCD_DC1;
-  _spi_write(TFT_SPI_ID, 8, &ccbuf[0], 1, 1);
-}
-
-//--------------------------------------------------------------------------
-static void ST7735_setAddrWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1) {
-  
-  ccbuf[0] = 0x00;
-  ccbuf[1] = x0+colstart;          // XSTART 
-  ccbuf[2] = 0x00;
-  ccbuf[3] = x1+colstart;          // XEND
-  ST7735_sendCmd(ST7735_CASET);  // Column addr set
-  LCD_DC1;
-  _spi_write(TFT_SPI_ID, 8, &ccbuf[0], 4, 1);
-
-  ccbuf[0] = 0x00;
-  ccbuf[1] = y0+rowstart;          // YSTART
-  ccbuf[2] = 0x00;
-  ccbuf[3] = y1+rowstart;          // YEND
-  ST7735_sendCmd(ST7735_RASET);  // Row addr set
-  LCD_DC1;
-  _spi_write(TFT_SPI_ID, 8, &ccbuf[0], 4, 1);
-  ST7735_sendCmd(ST7735_RAMWR);  // write to RAM
-}
 /*
-//-----------------------
-static void ST7735_putpix(uint16_t c) {
-  ccbuf[0] = (uint8_t)(c >> 8);
-  ccbuf[1] = (uint8_t)(c & 0xFF);
-  _spi_write(TFT_SPI_ID, 8, &ccbuf[0], 2, 1);
+//---------------------------------
+static void dbgBuf(uint16_t size) {
+  int i;
+  char* buf_str = (char*) malloc (2*size + 1);
+  char* buf_ptr = buf_str;
+
+  for (i = 0; i < size; i++) {
+    buf_ptr += sprintf(buf_ptr, "%02X", ccbuf[i]);
+  }
+  sprintf(buf_ptr,"\r\n");
+  *(buf_ptr + 1) = '\0';
+  printf("%s", buf_str);
 }
 */
-//----------------------------------------
-static void ST7735_putpixels(uint16_t c, uint16_t cnt) {
-  ccbuf[0] = (uint8_t)(c >> 8);
-  ccbuf[1] = (uint8_t)(c & 0xFF);
-  LCD_DC1;  
-  _spi_write(TFT_SPI_ID, 8, &ccbuf[0], 2, cnt);
+
+//----------------------------------------------------
+static void _LcdSpiTransfer( uint8_t* buf, int len ) {
+  if (TFT_SPI_ID == 2) _MicoLcdTransfer( buf, len );
+  else _swLcdTransfer( buf, len );
+}
+                            
+//-----------------------------------------
+static void ccbufPushByte( uint8_t data ) {
+  ccbuf[ccbufPtr++] = data;
 }
 
-//--------------------------------------
-static void ST7735_pushColor(uint16_t color) {
-  ccbuf[0] = (uint8_t)(color >> 8);
-  ccbuf[1] = (uint8_t)(color & 0xFF);
-  LCD_DC1;  
-  _spi_write(TFT_SPI_ID, 8, &ccbuf[0], 2, 1);
+//--------------------------------------------
+static void ccbufPushUint16( uint16_t data ) {
+  ccbuf[ccbufPtr++] = (uint8_t)(data >> 8);
+  ccbuf[ccbufPtr++] = (uint8_t)(data & 0x00FF);
+}
+
+//------------------------------------------
+static void ccbufPushLong( uint32_t data ) {
+  ccbuf[ccbufPtr++] = (uint8_t)(data >> 24);
+  ccbuf[ccbufPtr++] = (uint8_t)(data >> 16);
+  ccbuf[ccbufPtr++] = (uint8_t)(data >> 8);
+  ccbuf[ccbufPtr++] = (uint8_t)(data & 0x000000FF);
+}
+
+//-----------------------------------
+static void ccbufFlash( uint8_t n ) {
+  if (ccbufPtr > (CCBUF_SIZE-n)) {
+    // write buffer
+    _LcdSpiTransfer( &ccbuf[0], ccbufPtr);
+    ccbufPtr = 0;
+  }
+}
+
+//-----------------------------
+static void ccbufSend( void ) {
+  if (ccbufPtr > 0) {
+    _LcdSpiTransfer( &ccbuf[0], ccbufPtr);
+    ccbufPtr = 0;
+  }
+}
+
+
+//------------------------------
+static void ccbufWrite( void ) {
+  // write lcd buffer
+  ccbufPtr = cbuf_ptr1;  // restore pointer to command
+  if ((TFT_type == 1) && (first_data == 0)) ccbufPushByte(0x3C); // continue write to RAM
+  else {
+    ccbufPushByte(TFT_RAMWR); // start write to RAM
+    first_data = 0;
+  }
+  ccbufPushUint16(cbuf_ndata);
+  ccbufPushLong(1);
+  _LcdSpiTransfer( &ccbuf[0], cbuf_ptr2);
+  // prepare for new data transfer
+  ccbufPtr = 7;
+  cbuf_ptr1 = 0;
+  cbuf_ndata = 0;
+}
+
+// Pushes color to buffer, window address is already set
+// saves the new buf pointer and data bytes counter
+// If the buffer is full, sends it to SPI
+//------------------------------------------
+static void ccbufPushColor( uint16_t clr ) {
+  if (ccbufPtr >= (CCBUF_SIZE-2)) ccbufWrite();
+
+  ccbufPushUint16(clr);
+  cbuf_ptr2 = ccbufPtr;  // save buffer length
+  cbuf_ndata += 2;       // increment data bytes counter
+}
+
+//-----------------------------------------------------------------------------------
+static void _TFT_pushAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+  ccbufFlash(22);
+  
+  ccbufPushByte(TFT_CASET);     // Column addr set
+  ccbufPushUint16(4);           // ndata
+  ccbufPushLong(1);             // repeat
+  ccbufPushUint16(x0+colstart); // XSTART 
+  ccbufPushUint16(x1+colstart); // XEND
+
+  ccbufPushByte(TFT_RASET);     // Row addr set
+  ccbufPushUint16(4);           // ndata
+  ccbufPushLong(1);             // repeat
+  ccbufPushUint16(y0+rowstart); // YSTART 
+  ccbufPushUint16(y1+rowstart); // YEND
+  cbuf_ptr1 = ccbufPtr;
+  
+  first_data = 1;
+}
+
+//----------------------------------------------------
+static void _TFT_pushColorRep(uint16_t x0, uint16_t y0,
+                       uint16_t x1, uint16_t y1,
+                       uint16_t color, uint32_t rep) {
+
+  //if ((x0 >= _width) || (x1 >= _width ) || (y0 >= _height) || (y1 >= _height)) return;
+
+  ccbufFlash(32);
+
+  //_TFT_pushAddrWindow(x0,y0,x1,y1);
+  ccbufPushByte(TFT_CASET);     // Column addr set
+  ccbufPushUint16(4);           // ndata
+  ccbufPushLong(1);             // repeat
+  ccbufPushUint16(x0+colstart); // XSTART 
+  ccbufPushUint16(x1+colstart); // XEND
+
+  ccbufPushByte(TFT_RASET);     // Row addr set
+  ccbufPushUint16(4);           // ndata
+  ccbufPushLong(1);             // repeat
+  ccbufPushUint16(y0+rowstart); // YSTART 
+  ccbufPushUint16(y1+rowstart); // YEND
+
+  ccbufPushByte(TFT_RAMWR); // write to RAM command
+  ccbufPushUint16(2);       // ndata
+  ccbufPushLong(rep);       // repeat
+  ccbufPushUint16(color);   // color
+
+  ccbufFlash(32);
+}
+
+// Push control command to buffer
+//----------------------------------------------------
+static void TFT_sendCmd(uint8_t cmd, uint16_t ndata) {
+  ccbufPushByte(cmd);
+  ccbufPushUint16(ndata);
+  ccbufPushLong(1);
+}
+
+// Push parameter of the command to buffer
+//-----------------------------------
+static void TFT_sendData(uint8_t data) {
+  ccbufPushByte(data);
 }
 
 
 // === ST7735 INITIALIZATION ===================================================
-// Rather than a bazillion ST7735_sendCmd() and ST7735_sendData() calls, screen
+// Rather than a bazillion TFT_sendCmd() and TFT_sendData() calls, screen
 // initialization commands and arguments are organized in these tables
 // stored in PROGMEM.  The table may look bulky, but that's mostly the
 // formatting -- storage-wise this is hundreds of bytes more compact
 // than the equivalent code.  Companion function follows.
+
 #define DELAY 0x80
 
 // Initialization commands for 7735B screens
@@ -301,15 +481,15 @@ static const uint8_t Bcmd[] = {
   0x1B, 0x1A, 0x24, 0x2B,
   0x06, 0x06, 0x02, 0x0F,
   10,				//     10 ms delay
-  ST7735_CASET  , 4      ,	// 15: Column addr set, 4 args, no delay:
+  TFT_CASET  , 4      , 	// 15: Column addr set, 4 args, no delay:
   0x00, 0x02,			//     XSTART = 2
   0x00, 0x81,			//     XEND = 129
-  ST7735_RASET  , 4      ,	// 16: Row addr set, 4 args, no delay:
+  TFT_RASET  , 4      , 	// 16: Row addr set, 4 args, no delay:
   0x00, 0x02,			//     XSTART = 1
   0x00, 0x81,			//     XEND = 160
   ST7735_NORON  ,   DELAY,	// 17: Normal display on, no args, w/delay
   10,				//     10 ms delay
-  ST7735_DISPON ,   DELAY,	// 18: Main screen turn on, no args, w/delay
+  TFT_DISPON ,   DELAY,  	// 18: Main screen turn on, no args, w/delay
   255				//     255 = 500 ms delay
 };
 
@@ -345,7 +525,7 @@ static const uint8_t  Rcmd1[] = {
   0x8A, 0xEE,
   ST7735_VMCTR1 , 1      ,	// 12: Power control, 1 arg, no delay:
   0x0E,
-  ST7735_INVOFF , 0      ,	// 13: Don't invert display, no args, no delay
+  TFT_INVOFF , 0      ,	// 13: Don't invert display, no args, no delay
   ST7735_MADCTL , 1      ,	// 14: Memory access control (directions), 1 arg:
   0xC0,				//     row addr/col addr, bottom to top refresh, RGB order
   ST7735_COLMOD , 1+DELAY,	//  15: Set color mode, 1 arg + delay:
@@ -356,10 +536,10 @@ static const uint8_t  Rcmd1[] = {
 // Init for 7735R, part 2 (green tab only)
 static const uint8_t Rcmd2green[] = {
   2,				//  2 commands in list:
-  ST7735_CASET  , 4      ,	//  1: Column addr set, 4 args, no delay:
+  TFT_CASET  , 4      ,	        //  1: Column addr set, 4 args, no delay:
   0x00, 0x02,			//     XSTART = 0
   0x00, 0x7F+0x02,		//     XEND = 129
-  ST7735_RASET  , 4      ,	//  2: Row addr set, 4 args, no delay:
+  TFT_RASET  , 4      ,	        //  2: Row addr set, 4 args, no delay:
   0x00, 0x01,			//     XSTART = 0
   0x00, 0x9F+0x01		//     XEND = 160
 };
@@ -367,10 +547,10 @@ static const uint8_t Rcmd2green[] = {
 // Init for 7735R, part 2 (red tab only)
 static const uint8_t Rcmd2red[] = {
   2,				//  2 commands in list:
-  ST7735_CASET  , 4      ,	//  1: Column addr set, 4 args, no delay:
+  TFT_CASET  , 4      ,	        //  1: Column addr set, 4 args, no delay:
   0x00, 0x00,			//     XSTART = 0
   0x00, 0x7F,			//     XEND = 127
-  ST7735_RASET  , 4      ,	//  2: Row addr set, 4 args, no delay:
+  TFT_RASET  , 4      ,	        //  2: Row addr set, 4 args, no delay:
   0x00, 0x00,			//     XSTART = 0
   0x00, 0x9F			//     XEND = 159
 };
@@ -390,40 +570,97 @@ static const uint8_t Rcmd3[] = {
   0x00, 0x00, 0x02, 0x10,
   ST7735_NORON  ,    DELAY,	//  3: Normal display on, no args, w/delay
   10,				//     10 ms delay
-  ST7735_DISPON ,    DELAY,	//  4: Main screen turn on, no args w/delay
+  TFT_DISPON ,    DELAY,	//  4: Main screen turn on, no args w/delay
   100				//     100 ms delay
+};
+
+// Init for ILI7341
+static const uint8_t ILI7341_init[] = {
+  25,                           // 25 commands in list
+  ILI9341_SWRESET, DELAY,   	//  1: Software reset, no args, w/delay
+  200,				//     50 ms delay
+  ILI9341_POWERA, 5, 0x39, 0x2C, 0x00, 0x34, 0x02, 
+  ILI9341_POWERB, 3, 0x00, 0XC1, 0X30, 
+  0xEF, 3, 0x03, 0x80, 0x02,
+  ILI9341_DTCA, 3, 0x85, 0x00, 0x78, 
+  ILI9341_DTCB, 2, 0x00, 0x00, 
+  ILI9341_POWER_SEQ, 4, 0x64, 0x03, 0X12, 0X81, 
+  ILI9341_PRC, 1, 0x20, 
+  ILI9341_PWCTR1, 1,    //Power control 
+  0x23,                 //VRH[5:0] 
+  ILI9341_PWCTR2, 1,    //Power control 
+  0x10,                 //SAP[2:0];BT[3:0] 
+  ILI9341_VMCTR1, 2,    //VCM control 
+  0x3e,                 //Contrast
+  0x28, 
+  ILI9341_VMCTR2, 1,    //VCM control2 
+  0x86,
+  ILI9341_MADCTL, 1,    // Memory Access Control 
+  0x48,
+  ILI9341_PIXFMT, 1,    
+  0x55, 
+  ILI9341_FRMCTR1, 2,
+  0x00,  
+  0x18, 
+  ILI9341_DFUNCTR, 3,    // Display Function Control 
+  0x08,
+  0x82,
+  0x27,  
+  ILI9341_PTLAR, 4, 0x00, 0x00, 0x01, 0x3F,
+  ILI9341_3GAMMA_EN, 1,  // 3Gamma Function Disable 
+  0x00, // 0x02
+  ILI9341_GAMMASET, 1,   //Gamma curve selected 
+  0x01, 
+  ILI9341_GMCTRP1, 15,   //Positive Gamma Correction
+  0x0F, 0x31, 0x2B, 0x0C, 0x0E, 0x08, 0x4E, 0xF1, 
+  0x37, 0x07, 0x10, 0x03, 0x0E, 0x09, 0x00, 
+  ILI9341_GMCTRN1, 15,   //Negative Gamma Correction
+  0x00, 0x0E, 0x14, 0x03, 0x11, 0x07, 0x31, 0xC1, 
+  0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F,
+  ILI9341_SLPOUT, DELAY, //  Sleep out
+  120,			 //  120 ms delay
+  TFT_DISPON, 0,
+  TFT_RAMWR, 0,
 };
 
 
 // Companion code to the above tables.  Reads and issues
 // a series of LCD commands stored in PROGMEM byte array.
+//--------------------------------------------
 static void commandList(const uint8_t *addr) {
-  uint8_t  numCommands, numArgs;
+  uint8_t  numCommands, numArgs, cmd;
   uint16_t ms;
 
   numCommands = *addr++;         // Number of commands to follow
+  ccbufPtr = 0;
   while(numCommands--) {         // For each command...
-    ST7735_sendCmd(*addr++);     //   Read, issue command
+    cmd = *addr++;               // save command
     numArgs  = *addr++;          //   Number of args to follow
     ms       = numArgs & DELAY;  //   If hibit set, delay follows args
     numArgs &= ~DELAY;           //   Mask out delay bit
+    TFT_sendCmd(cmd, numArgs);
     while(numArgs--) {           //   For each argument...
-      ST7735_sendData(*addr++);  //     Read, issue argument
+      TFT_sendData(*addr++);     //     Read, issue argument
     }
 
     if(ms) {
+      ccbufSend();
       ms = *addr++;              // Read post-command delay time (ms)
       if(ms == 255) ms = 500;    // If 255, delay for 500 ms
       mico_thread_msleep(ms);
     }
   }
+  ccbufSend();
 }
 
 // Initialization code common to both 'B' and 'R' type displays
+//-----------------------------------------------------
 static void ST7735_commonInit(const uint8_t *cmdList) {
 	// toggle RST low to reset; CS low so it'll listen to us
 #ifdef LCD_SOFT_RESET
-  ST7735_sendCmd(ST7735_SWRESET);
+  ccbufPtr = 0;
+  TFT_sendCmd(ST7735_SWRESET,0);
+  ccbufSend();
   mico_thread_msleep(125);
 #else
   LCD_RST1;
@@ -437,11 +674,13 @@ static void ST7735_commonInit(const uint8_t *cmdList) {
 }
 
 // Initialization for ST7735B screens
+//------------------------------
 static void ST7735_initB(void) {
   ST7735_commonInit(Bcmd);
 }
 
 // Initialization for ST7735R screens (green or red tabs)
+//-----------------------------------------
 static void ST7735_initR(uint8_t options) {
   mico_thread_msleep(50);
   ST7735_commonInit(Rcmd1);
@@ -457,8 +696,10 @@ static void ST7735_initR(uint8_t options) {
 
   // if black, change MADCTL color filter
   if (options == INITR_BLACKTAB) {
-    ST7735_sendCmd(ST7735_MADCTL);
-    ST7735_sendData(0xC0);
+    ccbufPtr = 0;
+    TFT_sendCmd(ST7735_MADCTL,1);
+    TFT_sendData(0xC0);
+    ccbufSend();
   }
 
   //  tabcolor = options;
@@ -466,43 +707,49 @@ static void ST7735_initR(uint8_t options) {
 
 
 // draw color pixel on screen
+//---------------------------------------------------------------
 static void TFT_drawPixel(int16_t x, int16_t y, uint16_t color) {
 
-	if((x < 0) ||(x >= _width) || (y < 0) || (y >= _height)) return;
-
-	ST7735_setAddrWindow(x,y,x+1,y+1);
-	ST7735_pushColor(color);
+  if ((x >= _width) || (y >= _height)) return;
+  
+  _TFT_pushColorRep(x,y,x,y, color, 1);
 }
 
 // fill a rectangle
+//------------------------------------------------------------------------------------
 static void TFT_fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {	
-	// rudimentary clipping (drawChar w/big text requires this)
-	if((x >= _width) || (y >= _height)) return;
-	if((x + w - 1) >= _width)  w = _width  - x;
-	if((y + h - 1) >= _height) h = _height - y;
-
-	ST7735_setAddrWindow(x, y, x+w-1, y+h-1);
-        ST7735_putpixels(color, h*w);
+  // rudimentary clipping
+  if ((x >= _width) || (y >= _height)) return;
+  if ((x + w - 1) >= _width)  w = _width  - x;
+  if ((y + h - 1) >= _height) h = _height - y;
+  if (w == 0) w = 1;
+  if (h == 0) h = 1;
+  ccbufPtr = 0;
+  _TFT_pushColorRep(x, y, x+w-1, y+h-1, color, (uint32_t)(h*w));
+  ccbufSend();
 }
 
+//------------------------------------------------------------------------------
 static void TFT_drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
-	// Rudimentary clipping
-	if((x >= _width) || (y >= _height)) return;
-	if((y+h-1) >= _height) h = _height-y;
-	ST7735_setAddrWindow(x, y, x, y+h-1);
-        ST7735_putpixels(color, h);
+  // Rudimentary clipping
+  if ((x >= _width) || (y >= _height)) return;
+  if ((y+h-1) >= _height) h = _height-y;
+
+  _TFT_pushColorRep(x, y, x, y+h-1, color, (uint32_t)h);
 }
 
+//------------------------------------------------------------------------------
 static void TFT_drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
-	// Rudimentary clipping
-	if((x >= _width) || (y >= _height)) return;
-	if((x+w-1) >= _width)  w = _width-x;
-	ST7735_setAddrWindow(x, y, x+w-1, y);
-        ST7735_putpixels(color, w);
+  // Rudimentary clipping
+  if ((x >= _width) || (y >= _height)) return;
+  if ((x+w-1) >= _width)  w = _width-x;
+
+  _TFT_pushColorRep(x, y, x+w-1, y, color, (uint32_t)w);
 }
 
 // Bresenham's algorithm - thx wikipedia - speed enhanced by Bodmer this uses
 // the eficient FastH/V Line draw routine for segments of 2 pixels or more
+//--------------------------------------------------------------------------------------
 static void TFT_drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color)
 {
   boolean steep = abs(y1 - y0) > abs(x1 - x0);
@@ -519,7 +766,9 @@ static void TFT_drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_
   int16_t err = dx >> 1, ystep = -1, xs = x0, dlen = 0;
 
   if (y0 < y1) ystep = 1;
-
+  
+  ccbufPtr = 0;
+  
   // Split into steep and not steep for FastH/V separation
   if (steep) {
     for (; x0 <= x1; x0++) {
@@ -548,80 +797,35 @@ static void TFT_drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_
     }
     if (dlen) TFT_drawFastHLine(xs, y0, dlen, color);
   }
+
+  ccbufSend(); // Flush buffer
 }
 
-
-
-void TFT_drawFastLine(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t color) {
-	signed char   dx, dy, sx, sy;
-	unsigned char  x,  y, mdx, mdy, l;
-
-	if (x1==x2) {
-		TFT_fillRect(x1,y1, x1,y2, color);
-		return;
-	}
-
-	if (y1==y2) {
-		TFT_fillRect(x1,y1, x2,y1, color);
-		return;
-	}
-
-	dx=x2-x1; dy=y2-y1;
-
-	if (dx>=0) { mdx=dx; sx=1; } else { mdx=x1-x2; sx=-1; }
-	if (dy>=0) { mdy=dy; sy=1; } else { mdy=y1-y2; sy=-1; }
-
-	x=x1; y=y1;
-
-	if (mdx>=mdy) {
-		l=mdx;
-		while (l>0) {
-			if (dy>0) { y=y1+mdy*(x-x1)/mdx; }
-			else { y=y1-mdy*(x-x1)/mdx; }
-			TFT_drawPixel(x,y,color);
-			x=x+sx;
-			l--;
-		}
-	} else {
-		l=mdy;
-		while (l>0) {
-			if (dy>0) { x=x1+((mdx*(y-y1))/mdy); }
-			else { x=x1+((mdx*(y1-y))/mdy); }
-			TFT_drawPixel(x,y,color);
-			y=y+sy;
-			l--;
-		}
-	}
-	TFT_drawPixel(x2, y2, color);
-}
-/*
-static void TFT_drawRect(uint8_t x1,uint8_t y1,uint8_t x2,uint8_t y2, uint16_t color) {
-	TFT_drawFastHLine(x1,y1,x2-x1, color);
-	TFT_drawFastVLine(x2,y1,y2-y1, color);
-	TFT_drawFastHLine(x1,y2,x2-x1, color);
-	TFT_drawFastVLine(x1,y1,y2-y1, color);
-}
-*/
-static void TFT_drawRect(uint8_t x1,uint8_t y1,uint8_t w,uint8_t h, uint16_t color) {
-	TFT_drawFastHLine(x1,y1,w, color);
-	TFT_drawFastVLine(x1+w-1,y1,h, color);
-	TFT_drawFastHLine(x1,y1+h-1,w, color);
-	TFT_drawFastVLine(x1,y1,h, color);
+//---------------------------------------------------------------------------------------
+static void TFT_drawRect(uint16_t x1,uint16_t y1,uint16_t w,uint16_t h, uint16_t color) {
+  ccbufPtr = 0;
+  TFT_drawFastHLine(x1,y1,w, color);
+  TFT_drawFastVLine(x1+w-1,y1,h, color);
+  TFT_drawFastHLine(x1,y1+h-1,w, color);
+  TFT_drawFastVLine(x1,y1,h, color);
+  ccbufSend(); // Flush buffer
 }
 
 // Draw a triangle
-static void TFT_drawTriangle(uint8_t x0, uint8_t y0,
-				uint8_t x1, uint8_t y1,
-				uint8_t x2, uint8_t y2, uint16_t color) {
+//------------------------------------------------------------------------------
+static void TFT_drawTriangle(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1,
+			     uint16_t x2, uint16_t y2, uint16_t color)
+{
   TFT_drawLine(x0, y0, x1, y1, color);
   TFT_drawLine(x1, y1, x2, y2, color);
   TFT_drawLine(x2, y2, x0, y0, color);
 }
 
 // Fill a triangle
-static void TFT_fillTriangle(uint8_t x0, uint8_t y0,
-				uint8_t x1, uint8_t y1,
-				uint8_t x2, uint8_t y2, uint16_t color)
+//-----------------------------------------------------------------------
+static void TFT_fillTriangle(uint16_t x0, uint16_t y0,
+				uint16_t x1, uint16_t y1,
+				uint16_t x2, uint16_t y2, uint16_t color)
 {
   int16_t a, b, y, last;
 
@@ -636,6 +840,8 @@ static void TFT_fillTriangle(uint8_t x0, uint8_t y0,
     swap(y0, y1); swap(x0, x1);
   }
 
+  ccbufPtr = 0;
+
   if(y0 == y2) { // Handle awkward all-on-same-line case as its own thing
     a = b = x0;
     if(x1 < a)      a = x1;
@@ -643,6 +849,7 @@ static void TFT_fillTriangle(uint8_t x0, uint8_t y0,
     if(x2 < a)      a = x2;
     else if(x2 > b) b = x2;
     TFT_drawFastHLine(a, y0, b-a+1, color);
+    ccbufSend(); // Flush buffer
     return;
   }
 
@@ -695,126 +902,68 @@ static void TFT_fillTriangle(uint8_t x0, uint8_t y0,
     if(a > b) swap(a,b);
     TFT_drawFastHLine(a, y, b-a+1, color);
   }
+
+  ccbufSend(); // Flush buffer
 }
 
+//----------------------------------------------------------------------------
 static void TFT_drawCircle(int16_t x, int16_t y, int radius, uint16_t color) {
-	int f = 1 - radius;
-	int ddF_x = 1;
-	int ddF_y = -2 * radius;
-	int x1 = 0;
-	int y1 = radius;
+  int f = 1 - radius;
+  int ddF_x = 1;
+  int ddF_y = -2 * radius;
+  int x1 = 0;
+  int y1 = radius;
 
-	ST7735_setAddrWindow(x, y + radius, x, y + radius);
-	ST7735_pushColor(color);
-	ST7735_setAddrWindow(x, y - radius, x, y - radius);
-	ST7735_pushColor(color);
-	ST7735_setAddrWindow(x + radius, y, x + radius, y);
-	ST7735_pushColor(color);
-	ST7735_setAddrWindow(x - radius, y, x - radius, y);
-	ST7735_pushColor(color);
-	while(x1 < y1) {
-		if(f >= 0) 
-		{
-			y1--;
-			ddF_y += 2;
-			f += ddF_y;
-		}
-		x1++;
-		ddF_x += 2;
-		f += ddF_x;    
-		ST7735_setAddrWindow(x + x1, y + y1, x + x1, y + y1);
-		ST7735_pushColor(color);
-		ST7735_setAddrWindow(x - x1, y + y1, x - x1, y + y1);
-		ST7735_pushColor(color);
-		ST7735_setAddrWindow(x + x1, y - y1, x + x1, y - y1);
-		ST7735_pushColor(color);
-		ST7735_setAddrWindow(x - x1, y - y1, x - x1, y - y1);
-		ST7735_pushColor(color);
-		ST7735_setAddrWindow(x + y1, y + x1, x + y1, y + x1);
-		ST7735_pushColor(color);
-		ST7735_setAddrWindow(x - y1, y + x1, x - y1, y + x1);
-		ST7735_pushColor(color);
-		ST7735_setAddrWindow(x + y1, y - x1, x + y1, y - x1);
-		ST7735_pushColor(color);
-		ST7735_setAddrWindow(x - y1, y - x1, x - y1, y - x1);
-		ST7735_pushColor(color);
-	}
+  if ((x >= _width) || (y >= _height)) return;
+  ccbufPtr = 0;
+
+  if ((y+radius) < _height) _TFT_pushColorRep(x, y + radius, x, y + radius, color, 1);
+  if ((y-radius) >= 0) _TFT_pushColorRep(x, y - radius, x, y - radius, color, 1);
+  if ((x+radius) < _width) _TFT_pushColorRep(x + radius, y, x + radius, y, color, 1);
+  if ((x-radius) > 0) _TFT_pushColorRep(x - radius, y, x - radius, y, color, 1);
+  while(x1 < y1) {
+    if (f >= 0) {
+      y1--;
+      ddF_y += 2;
+      f += ddF_y;
+    }
+    x1++;
+    ddF_x += 2;
+    f += ddF_x;
+    if (((x+x1) < _width) && ((y+y1) < _height))
+      _TFT_pushColorRep(x + x1, y + y1, x + x1, y + y1, color, 1);
+    if (((x-x1) > 0) && ((y+y1) < _height))
+      _TFT_pushColorRep(x - x1, y + y1, x - x1, y + y1, color, 1);
+    if (((x+x1) < _width) && ((y-y1) > 0))
+      _TFT_pushColorRep(x + x1, y - y1, x + x1, y - y1, color, 1);
+    if (((x-x1) > 0) && ((y-y1) > 0))
+      _TFT_pushColorRep(x - x1, y - y1, x - x1, y - y1, color, 1);
+    if (((x+y1) < _width) && ((y+x1) < _height))
+      _TFT_pushColorRep(x + y1, y + x1, x + y1, y + x1, color, 1);
+    if (((x-y1) > 0) && ((y+x1) < _height))
+      _TFT_pushColorRep(x - y1, y + x1, x - y1, y + x1, color, 1);
+    if (((x+y1) < _width) && ((y-x1) > 0))
+      _TFT_pushColorRep(x + y1, y - x1, x + y1, y - x1, color, 1);
+    if (((x-y1) > 0) && ((y-x1) > 0))
+      _TFT_pushColorRep(x - y1, y - x1, x - y1, y - x1, color, 1);
+  }
+  ccbufSend(); // Flush buffer
 }
 
+//----------------------------------------------------------------------------
 static void TFT_fillCircle(int16_t x, int16_t y, int radius, uint16_t color) {
-	int x1,y1;
-	for(y1=-radius; y1<=0; y1++) 
-		for(x1=-radius; x1<=0; x1++)
-			if(x1*x1+y1*y1 <= radius*radius) {
-				TFT_drawFastHLine(x+x1, y+y1, 2*(-x1), color);
-				TFT_drawFastHLine(x+x1, y-y1, 2*(-x1), color);
-				break;
-			}
+  int x1,y1;
+
+  ccbufPtr = 0;
+  for (y1=-radius; y1<=0; y1++) 
+    for (x1=-radius; x1<=0; x1++)
+      if (x1*x1+y1*y1 <= radius*radius) {
+        TFT_drawFastHLine(x+x1, y+y1, 2*(-x1), color);
+        TFT_drawFastHLine(x+x1, y-y1, 2*(-x1), color);
+        break;
+      }
+  ccbufSend(); // Flush buffer
 }
-
-/*
-static void TFT_drawBitmap(int x, int y, int sx, int sy, bitmapdatatype data, int scale) {
-	int tx, ty, tc, tsx, tsy;
-
-	if (scale==1) {
-		if (orientation == PORTRAIT || orientation == PORTRAIT_FLIP)
-		{
-			ST7735_setAddrWindow(x, y, x+sx-1, y+sy-1);
-			LCD_DC1;
-			for (tc=0; tc<(sx*sy); tc++)
-				ST7735_putpix(data[tc]);
-		} else {
-			for (ty=0; ty<sy; ty++) {
-				ST7735_setAddrWindow(x, y+ty, x+sx-1, y+ty);
-				LCD_DC1;
-				for (tx=sx-1; tx>=0; tx--)
-					ST7735_putpix(data[(ty*sx)+tx]);
-			}
-		}
-	} else {
-		if (orientation == PORTRAIT || orientation == PORTRAIT_FLIP) {
-			for (ty=0; ty<sy; ty++) {
-				ST7735_setAddrWindow(x, y+(ty*scale), x+((sx*scale)-1), y+(ty*scale)+scale);
-				for (tsy=0; tsy<scale; tsy++)
-					for (tx=0; tx<sx; tx++) {
-						for (tsx=0; tsx<scale; tsx++)
-							ST7735_pushColor(data[(ty*sx)+tx]);
-					}
-			}
-		} else {
-			for (ty=0; ty<sy; ty++) {
-				for (tsy=0; tsy<scale; tsy++) {
-					ST7735_setAddrWindow(x, y+(ty*scale)+tsy, x+((sx*scale)-1), y+(ty*scale)+tsy);
-					for (tx=sx-1; tx>=0; tx--) {
-						for (tsx=0; tsx<scale; tsx++)
-							ST7735_pushColor(data[(ty*sx)+tx]);
-					}
-				}
-			}
-		}
-	}
-}
-
-static void TFT_drawBitmapRotate(int x, int y, int sx, int sy, bitmapdatatype data, int deg, int rox, int roy) {
-	int tx, ty, newx, newy;
-	double radian;
-	radian=deg*0.0175;  
-
-	if (deg==0)
-		TFT_drawBitmap(x, y, sx, sy, data, 1);
-	else
-	{
-		for (ty=0; ty<sy; ty++)
-			for (tx=0; tx<sx; tx++) {
-				newx=(int)(x+rox+(((tx-rox)*cos(radian))-((ty-roy)*sin(radian))));
-				newy=(int)(y+roy+(((ty-roy)*cos(radian))+((tx-rox)*sin(radian))));
-
-				ST7735_setAddrWindow(newx, newy, newx, newy);
-				ST7735_pushColor(data[(ty*sx)+tx]);
-			}
-	}
-}
-*/
 
 //==============================================================================
 /**
@@ -920,11 +1069,37 @@ static void TFT_draw7seg(int16_t x, int16_t y, int8_t num, int16_t w, int16_t l,
 //==============================================================================
 
 
+// return max width of the proportional font
+//--------------------------------
+static uint8_t getMaxWidth(void) {
+  uint16_t tempPtr = 4; // point at first char data
+  uint8_t cc,cw,ch,w = 0;
+  do
+  {
+    cc = cfont.font[tempPtr++];
+    tempPtr++;
+    cw = cfont.font[tempPtr++];
+    ch = cfont.font[tempPtr++];
+    tempPtr += 2;
+    if (cc != 0xFF) {
+      if (cw != 0) {
+        if (cw > w) w = cw;
+        // packed bits
+        tempPtr += (((cw * ch)-1) / 8) + 1;
+      }
+    }
+  } while (cc != 0xFF);
+  
+  return w;
+}
+
 //-------------------------------------
 static void TFT_setFont(uint8_t font) {
-  if (font == SMALL_FONT) cfont.font=&SmallFont[0];
+  if (font == SMALL_FONT) cfont.font=&DejaVuSans12[0];
   else if (font == BIG_FONT) cfont.font=&BigFont[0];
-  else if (font == 3) cfont.font=&Font8x8[0];
+  else if (font == DEJAVU_18) cfont.font=&DejaVuSans18[0];
+  else if (font == DEJAVU_24) cfont.font=&DejaVuSans24[0];
+  else if (font == FONT_8x8) cfont.font=&Font8x8[0];
   else {
     cfont.font = NULL;
     if (font == FONT_7SEG) {
@@ -938,178 +1113,340 @@ static void TFT_setFont(uint8_t font) {
   }
   if (cfont.font != NULL) {
     cfont.bitmap = 1;
-    cfont.x_size=cfont.font[0];
-    cfont.y_size=cfont.font[1];
-    cfont.offset=cfont.font[2];
-    cfont.numchars=cfont.font[3];
+    cfont.x_size = cfont.font[0];
+    cfont.y_size = cfont.font[1];
+    cfont.offset = cfont.font[2];
+    if (cfont.x_size != 0) cfont.numchars = cfont.font[3];
+    else cfont.numchars = getMaxWidth();
   }
 }
 
+// private method to return the Glyph data for an individual character in the ttf font
+//---------------------------------
+static bool getCharPtr(uint8_t c) {
+  uint16_t tempPtr = 4; // point at first char data
+  
+  do {
+    fontChar.charCode = cfont.font[tempPtr++];
+    fontChar.adjYOffset = cfont.font[tempPtr++];
+    fontChar.width = cfont.font[tempPtr++];
+    fontChar.height = cfont.font[tempPtr++];
+    fontChar.xOffset = cfont.font[tempPtr++];
+    fontChar.xOffset = fontChar.xOffset < 0x80 ? fontChar.xOffset : (0x100 - fontChar.xOffset);
+    fontChar.xDelta = cfont.font[tempPtr++];
+    
+    if (c != fontChar.charCode && fontChar.charCode != 0xFF) {
+      if (fontChar.width != 0) {
+        // packed bits
+        tempPtr += (((fontChar.width * fontChar.height)-1) / 8) + 1;
+      }
+    }
+  } while (c != fontChar.charCode && fontChar.charCode != 0xFF);
+  
+  fontChar.dataPtr = tempPtr;
+  if (c == fontChar.charCode) {
+    if (_forceFixed > 0) {
+      // fix width & offset for forced fixed width
+      fontChar.xDelta = cfont.numchars;
+      fontChar.xOffset = (fontChar.xDelta - fontChar.width) / 2;
+    }
+  }
+  
+  return (fontChar.charCode != 0xFF);
+}
+
+// print rotated proportional character
+// character is already in fontChar
+//--------------------------------------------------------------
+static int rotatePropChar(int x, int y, int offset) {
+  uint8_t ch;
+  double radian = rotation * 0.0175;  
+  float cos_radian = cos(radian);
+  float sin_radian = sin(radian);
+   
+  ccbufPtr = 0;
+  uint8_t mask = 0x80;
+  for (int j=0; j < fontChar.height; j++) {
+    for (int i=0; i < fontChar.width; i++) {
+      if (((i + (j*fontChar.width)) % 8) == 0) {
+        mask = 0x80;
+        ch = cfont.font[fontChar.dataPtr++];
+      }
+      
+      int newX = (int)(x + (((offset + i) * cos_radian) - ((j+fontChar.adjYOffset)*sin_radian)));
+      int newY = (int)(y + (((j+fontChar.adjYOffset) * cos_radian) + ((offset + i) * sin_radian)));
+      if ((ch & mask) != 0) {
+        if ((newX < _width) && (newY < _height))
+          _TFT_pushColorRep(newX,newY,newX,newY,_fg, 1);
+      }
+      else {
+        if (!_transparent) {
+          // for non-transparent char put background pixel
+          if ((newX < _width) && (newY < _height))
+            _TFT_pushColorRep(newX,newY,newX,newY,_bg, 1);
+        }
+      }
+      mask >>= 1;
+    }
+  }
+  ccbufSend(); // Flush buffer
+
+  return fontChar.xDelta+1;
+}
+
+// print non-rotated proportional character
+// character is already in fontChar
+//---------------------------------------------------------
+static int printProportionalChar(int x, int y) {
+  uint8_t i,j,ch;
+  
+  // fill background if not transparent background
+  if (!_transparent) {
+    TFT_fillRect(x, y, fontChar.xDelta+1, cfont.y_size, _bg);
+  }
+  
+  // draw Glyph
+  ccbufPtr = 0;
+  cbuf_ndata = 0;
+  if (!_transparent) {
+    _TFT_pushAddrWindow(x+fontChar.xOffset, y+fontChar.adjYOffset,
+                        x+fontChar.xOffset+fontChar.width-1,
+                        y+fontChar.height+fontChar.adjYOffset-1);
+    ccbufPtr += 7;  // 7 bytes for write data command
+  }
+
+  uint8_t mask = 0x80;
+  for (j=0; j < fontChar.height; j++) {
+    for (i=0; i < fontChar.width; i++) {
+      if (((i + (j*fontChar.width)) % 8) == 0) {
+        mask = 0x80;
+        ch = cfont.font[fontChar.dataPtr++];
+      }
+      
+      if (_transparent) {
+        if ((ch & mask) !=0) {
+          _TFT_pushColorRep(x+fontChar.xOffset+i, y+j+fontChar.adjYOffset,
+                            x+fontChar.xOffset+i, y+j+fontChar.adjYOffset, _fg, 1);
+        }
+      }
+      else {
+        if ((ch & mask) !=0) ccbufPushColor(_fg);
+        else ccbufPushColor(_bg);
+      }
+      mask >>= 1;
+    }
+  }
+  if ((!_transparent) && (cbuf_ndata > 0)) ccbufWrite();
+  else ccbufSend(); // Flush buffer
+    
+  return fontChar.xDelta;
+}
+
+// non-rotated fixed width character
 //----------------------------------------------
 static void printChar(uint8_t c, int x, int y) {
-  uint8_t i,ch,fz;
-  uint16_t j;
-  uint16_t temp; 
+  uint8_t i,ch,fz,mask;
+  uint16_t j, temp; 
   int zz;
 
-  if (cfont.bitmap != 1) return;
-  if ((x+cfont.x_size-1) >= _width) return;
-  if (c < cfont.offset) return;
-  if ((c-cfont.offset) > cfont.numchars) return;
+  // fz = bytes per char row
+  fz = cfont.x_size/8;
+  if (cfont.x_size % 8) fz++;
   
-  if( cfont.x_size < 8 ) 
-    fz = cfont.x_size;
-  else
-    fz = cfont.x_size/8;
-  if (!_transparent) {
-    ST7735_setAddrWindow(x,y,x+cfont.x_size-1,y+cfont.y_size-1);
+  // get char address
+  temp = ((c-cfont.offset)*((fz)*cfont.y_size))+4;
 
-    temp=((c-cfont.offset)*((fz)*cfont.y_size))+4;
-    for(j=0;j<((fz)*cfont.y_size);j++) {
+  ccbufPtr = 0;
+  cbuf_ndata = 0;
+  if (!_transparent) {
+    _TFT_pushAddrWindow(x,y,x+cfont.x_size-1,y+cfont.y_size-1);
+    ccbufPtr += 7;
+    
+    for (j=0; j<((fz)*cfont.y_size); j++) {
+      // push pixels for all char bytes to buffer
       ch = cfont.font[temp];
-      for(i=0;i<8;i++) {   
-        if((ch&(1<<(7-i)))!=0)   
-        {
-          ST7735_pushColor(_fg);
-        } 
-        else
-        {
-          ST7735_pushColor(_bg);
-        }   
+      mask=0x80;
+      for (i=0; i<8; i++) {   
+        if ((ch & mask) !=0) ccbufPushColor(_fg);
+        else ccbufPushColor(_bg);
+        mask >>= 1;
       }
       temp++;
     }
-  } else {
-    temp=((c-cfont.offset)*((fz)*cfont.y_size))+4;
-    for(j=0;j<cfont.y_size;j++) 
-    {
-      for (zz=0; zz<(fz); zz++)
-      {
+  }
+  else {
+    // transparent background
+    for (j=0; j<cfont.y_size; j++) {
+      for (zz=0; zz<(fz); zz++) {
         ch = cfont.font[temp+zz]; 
-        for(i=0;i<8;i++)
-        {   
-          ST7735_setAddrWindow(x+i+(zz*8),y+j,x+i+(zz*8)+1,y+j+1);
-
-          if((ch&(1<<(7-i)))!=0)   
-          {
-            ST7735_pushColor(_fg);
-          } 
+        mask=0x80;
+        for (i=0; i<8; i++) {   
+          if ((ch & mask) !=0) {
+            _TFT_pushColorRep(x+i+(zz*8),y+j,x+i+(zz*8)+1,y+j+1,_fg, 1);
+          }
+          mask >>= 1;
         }
       }
       temp+=(fz);
     }
   }
+  if ((!_transparent) && (cbuf_ndata > 0)) ccbufWrite();
+  else ccbufSend(); // Flush buffer
 }
 
+// rotated fixed width character
 //--------------------------------------------------------
 static void rotateChar(uint8_t c, int x, int y, int pos) {
-  uint8_t i,j,ch,fz;
+  uint8_t i,j,ch,fz,mask;
   uint16_t temp; 
   int newx,newy;
   double radian = rotation*0.0175;
+  float cos_radian = cos(radian);
+  float sin_radian = sin(radian);
   int zz;
-
-  if (cfont.bitmap != 1) return;
-  if (c < cfont.offset) return;
-  if ((c-cfont.offset) > cfont.numchars) return;
 
   if( cfont.x_size < 8 ) fz = cfont.x_size;
   else fz = cfont.x_size/8;	
   temp=((c-cfont.offset)*((fz)*cfont.y_size))+4;
 
-  for(j=0;j<cfont.y_size;j++) {
+  ccbufPtr = 0;
+  for (j=0; j<cfont.y_size; j++) {
     for (zz=0; zz<(fz); zz++) {
-      ch = cfont.font[temp+zz]; 
-      for(i=0;i<8;i++) {   
-        newx=(int)(x+(((i+(zz*8)+(pos*cfont.x_size))*cos(radian))-((j)*sin(radian))));
-        newy=(int)(y+(((j)*cos(radian))+((i+(zz*8)+(pos*cfont.x_size))*sin(radian))));
+      ch = cfont.font[temp+zz];
+      mask = 0x80;
+      for (i=0; i<8; i++) {
+        newx=(int)(x+(((i+(zz*8)+(pos*cfont.x_size))*cos_radian)-((j)*sin_radian)));
+        newy=(int)(y+(((j)*cos_radian)+((i+(zz*8)+(pos*cfont.x_size))*sin_radian)));
 
         if ((newx+1 < _width) && (newy+1 < _height)) {
-          ST7735_setAddrWindow(newx,newy,newx+1,newy+1);
-
-          if ((ch&(1<<(7-i)))!=0) {
-            ST7735_pushColor(_fg);
+          if ((ch & mask) != 0) {
+            if ((newx < _width) && (newy < _height))
+              _TFT_pushColorRep(newx,newy,newx+1,newy+1,_fg, 1);
           }
-          else  {
-            if (!_transparent) ST7735_pushColor(_bg);
+          else {
+            if (!_transparent) {
+              if ((newx < _width) && (newy < _height))
+                _TFT_pushColorRep(newx,newy,newx+1,newy+1,_bg, 1);
+            }
           }
         }
+        mask >>= 1;
       }
     }
     temp+=(fz);
   }
+  ccbufSend(); // Flush buffer
   // calculate x,y for the next char
-  j=0; zz=0; i=0;
-  TFT_X = (int)(x+(((i+(zz*8)+((pos+1)*cfont.x_size))*cos(radian))-((j)*sin(radian))));
-  TFT_Y = (int)(y+(((j)*cos(radian))+((i+(zz*8)+((pos+1)*cfont.x_size))*sin(radian))));
+  TFT_X = (int)(x + ((pos+1) * cfont.x_size * cos_radian));
+  TFT_Y = (int)(y + ((pos+1) * cfont.x_size * sin_radian));
+}
+
+// returns the string width in pixels. Useful for positions strings on the screen.
+//----------------------------------
+static int getStringWidth(char* str) {
+  
+  // is it 7-segment font?
+  if (cfont.bitmap == 2) return ((2 * (2 * cfont.y_size + 1)) + cfont.x_size) * strlen(str);
+
+  // is it a fixed width font?
+  if (cfont.x_size != 0) return strlen(str) * cfont.x_size;
+  else {
+    // calculate the string width
+    char* tempStrptr = str;
+    int strWidth = 0;
+    while (*tempStrptr != 0) {
+      if (getCharPtr(*tempStrptr++)) strWidth += (fontChar.xDelta + 1);
+    }
+    return strWidth;
+  }
 }
 
 //---------------------------------------------
 static void TFT_print(char *st, int x, int y) {
-  int stl, i, w, h;
+  int stl, i, tmpw, tmph;
   uint8_t ch;
   
-  if (cfont.bitmap == 0) return;
+  if (cfont.bitmap == 0) return; // wrong font selected
   
-  if (cfont.bitmap == 2) {
-    w = (2 * (2 * cfont.y_size + 1)) + cfont.x_size;        // character width
-    h = (3 * (2 * cfont.y_size + 1)) + (2 * cfont.x_size);  // character height
-    if (x + w >= _width) return;
-    if (y + h >= _height) return;
-  }
-  else {
-    if ((x+cfont.x_size-1) >= _width) return;
-    if ((y+cfont.y_size-1) >= _height) return;
-  }
+  // for rotated string x cannot be RIGHT or CENTER
+  if ((rotation != 0) && (x < -2)) return;
   
-  stl = strlen(st);
-  if (x==RIGHT) {
-    if (cfont.bitmap == 1) x = _width-(stl*cfont.x_size);
-    else if (cfont.bitmap == 2) x = _width-(stl*w);
-  }
-  if (x==CENTER) {
-    if (cfont.bitmap == 1) x = (_width-(stl*cfont.x_size))/2;
-    else if (cfont.bitmap == 2) x = (_width-(stl*w))/2;
-  }
+  stl = strlen(st); // number of characters in string to print
+  
+  // set CENTER or RIGHT possition
+  tmpw = getStringWidth(st);
+  if (x==RIGHT) x = _width - tmpw;
+  if (x==CENTER) x = (_width - tmpw)/2;
   if (x < 0) x = 0;
 
   TFT_X = x;
   TFT_Y = y;
-  for (i=0; i<stl; i++) {
-    ch = *st++;
-    if (ch == 0x0D) {
-      if (!_transparent) {
-        if ((cfont.bitmap == 1) && (rotation==0)) TFT_fillRect(TFT_X, TFT_Y,  _width-TFT_X, cfont.y_size, _bg);
-        else if (cfont.bitmap == 2) TFT_fillRect(TFT_X, TFT_Y,  _width-TFT_X, h, _bg);
-      }
+  int offset = TFT_OFFSET;
+  
+  tmph = cfont.y_size;
+  // for non-proportional fonts, char width is the same for all chars
+  if (cfont.x_size != 0) {
+    if (cfont.bitmap == 2) { // 7-segment font
+      tmpw = (2 * (2 * cfont.y_size + 1)) + cfont.x_size;        // character width
+      tmph = (3 * (2 * cfont.y_size + 1)) + (2 * cfont.x_size);  // character height
     }
-    else if (ch == 0x0A) {
+    else tmpw = cfont.x_size;
+  }
+  
+  for (i=0; i<stl; i++) {
+    ch = *st++; // get char
+    
+    if (cfont.x_size == 0) {
+      // for proportional font get char width
+      if (getCharPtr(ch)) tmpw = fontChar.xDelta;
+    }
+    
+    if (ch == 0x0D) { // === '\r', erase to eol ====
+      if ((!_transparent) && (rotation==0)) TFT_fillRect(TFT_X, TFT_Y,  _width-TFT_X, tmph, _bg);
+    }
+    
+    else if (ch == 0x0A) { // ==== '\n', new line ====
       if (cfont.bitmap == 1) {
-        if (TFT_Y+cfont.y_size-1 >= _height) break;
-        TFT_Y += cfont.y_size;
+        TFT_Y += tmph;
+        if (TFT_Y >= _height) break;
         TFT_X = 0;
       }
     }
-    else if ((ch >= cfont.offset) && ((ch-cfont.offset) <= cfont.numchars)) {
-      if (cfont.bitmap == 1) {
-        if (TFT_X + cfont.x_size -1 >= _width) {
-          if (!_wrap) break; // no space for the next character
-          if (TFT_Y+cfont.y_size-1 >= _height) break;
-          TFT_Y += cfont.y_size;
-          TFT_X = x;
-        }
+    
+    else { // ==== other characters ====
+      // check if character can be displayed in the current line
+      if ((TFT_X+tmpw) > _width) {
+        if (_wrap == 0) break;
+        TFT_Y += tmph;
+        if (TFT_Y > _height) break;
+        TFT_X = 0;
+      }
+      
+      // Let's print the character
+      if (cfont.x_size == 0) {
+        // == proportional font
         if (rotation==0) {
-          printChar(ch, TFT_X, TFT_Y);
-          TFT_X += cfont.x_size;
+          TFT_X += printProportionalChar(TFT_X, TFT_Y)+1;
         }
         else {
-          rotateChar(ch, x, y, i);
+          offset += rotatePropChar(x, y, offset);
+          TFT_OFFSET = offset;
         }
       }
-      else if (cfont.bitmap == 2) {
-        if (TFT_X + w >= _width) break; // no space for the next character
-        TFT_draw7seg(TFT_X, TFT_Y, ch, cfont.y_size, cfont.x_size, _fg);
-        TFT_X += w + 2;
+      // == fixed font
+      else {
+        if (cfont.bitmap == 1) {
+          if ((ch < cfont.offset) || ((ch-cfont.offset) > cfont.numchars)) ch = cfont.offset;
+          if (rotation==0) {
+            printChar(ch, TFT_X, TFT_Y);
+            TFT_X += tmpw;
+          }
+          else rotateChar(ch, x, y, i);
+        }
+        else if (cfont.bitmap == 2) { // 7-seg font
+          TFT_draw7seg(TFT_X, TFT_Y, ch, cfont.y_size, cfont.x_size, _fg);
+          TFT_X += (tmpw + 2);
+        }
       }
     }
   }
@@ -1120,54 +1457,82 @@ static void TFT_print(char *st, int x, int y) {
 *********************** Service functions ***************************
 *********************************************************************/
 
+//------------------------------------------
 static void TFT_fillScreen(uint16_t color) {
-	TFT_fillRect(0, 0,  _width, _height, color);
+  TFT_fillRect(0, 0,  _width, _height, color);
 }
 
-// Change the image rotation.
-// Requires 2 bytes of transmission
+// Change the screen rotation.
 // Input: m new rotation value (0 to 3)
-// Output: none
-//-----------------------------------
+//--------------------------------------
 static void TFT_setRotation(uint8_t m) {
-	uint8_t rotation = m % 4; // can't be higher than 3
+  uint8_t rotation = m % 4; // can't be higher than 3
 
-        orientation = m;
-	ST7735_sendCmd(ST7735_MADCTL);
-	switch (rotation) {
-   case PORTRAIT:
-	   ST7735_sendData(MADCTL_MX | MADCTL_MY | MADCTL_RGB);
-	   _width  = ST7735_TFTWIDTH;
-	   _height = ST7735_TFTHEIGHT;
-	   break;
-   case LANDSCAPE:
-	   ST7735_sendData(MADCTL_MY | MADCTL_MV | MADCTL_RGB);
-	   _width  = ST7735_TFTHEIGHT;
-	   _height = ST7735_TFTWIDTH;
-	   break;
-   case PORTRAIT_FLIP:
-	   ST7735_sendData(MADCTL_RGB);
-	   _width  = ST7735_TFTWIDTH;
-	   _height = ST7735_TFTHEIGHT;
-	   break;
-   case LANDSCAPE_FLIP:
-	   ST7735_sendData(MADCTL_MX | MADCTL_MV | MADCTL_RGB);
-	   _width  = ST7735_TFTHEIGHT;
-	   _height = ST7735_TFTWIDTH;
-	   break;
-   default:
-	   return;
-	}
-	orientation = m;
+  orientation = m;
+  ccbufPtr = 0;
+  if (TFT_type == 0) {
+    TFT_sendCmd(ST7735_MADCTL, 1);
+    switch (rotation) {
+      case PORTRAIT:
+        TFT_sendData(MADCTL_MX | MADCTL_MY | MADCTL_RGB);
+        _width  = ST7735_WIDTH;
+        _height = ST7735_HEIGHT;
+        break;
+      case LANDSCAPE:
+        TFT_sendData(MADCTL_MY | MADCTL_MV | MADCTL_RGB);
+        _width  = ST7735_HEIGHT;
+        _height = ST7735_WIDTH;
+        break;
+      case PORTRAIT_FLIP:
+        TFT_sendData(MADCTL_RGB);
+        _width  = ST7735_WIDTH;
+        _height = ST7735_HEIGHT;
+        break;
+      case LANDSCAPE_FLIP:
+        TFT_sendData(MADCTL_MX | MADCTL_MV | MADCTL_RGB);
+        _width  = ST7735_HEIGHT;
+        _height = ST7735_WIDTH;
+        break;
+    }
+  }
+  else {
+    TFT_sendCmd(ILI9341_MADCTL,1);
+    switch (rotation) {
+      case PORTRAIT:
+        TFT_sendData(MADCTL_MX | MADCTL_BGR);
+        //TFT_sendData(0);
+        _width  = ILI9341_WIDTH;
+        _height = ILI9341_HEIGHT;
+        break;
+      case LANDSCAPE:
+        TFT_sendData(MADCTL_MV | MADCTL_BGR);
+        _width  = ILI9341_HEIGHT;
+        _height = ILI9341_WIDTH;
+        break;
+      case PORTRAIT_FLIP:
+        TFT_sendData(MADCTL_MY | MADCTL_BGR);
+        _width  = ILI9341_WIDTH;
+        _height = ILI9341_HEIGHT;
+        break;
+      case LANDSCAPE_FLIP:
+        TFT_sendData(MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+        _width  = ILI9341_HEIGHT;
+        _height = ILI9341_WIDTH;
+        break;
+   }
+  }
+  ccbufSend();
 }
 
 // Send the command to invert all of the colors.
 // Input: i 0 to disable inversion; non-zero to enable inversion
+//-------------------------------------------------
 static void TFT_invertDisplay(const uint8_t mode) {
-  if ( mode == INVERT_ON ) ST7735_sendCmd(ST7735_INVON);
-  else ST7735_sendCmd(ST7735_INVOFF);
+  ccbufPtr = 0;
+  if ( mode == INVERT_ON ) TFT_sendCmd(TFT_INVONN,0);
+  else TFT_sendCmd(TFT_INVOFF,0);
+  ccbufSend();
 }
-
 
 //--------------------------------------------------
 static uint8_t checkParam(uint8_t n, lua_State* L) {
@@ -1208,7 +1573,7 @@ static int lcd_init( lua_State* L )
 {
   uint8_t id = luaL_checkinteger( L, 1 );
   if ((id !=0) && (id !=1) && (id !=2)) {
-    l_message( NULL, "id should assigend 0,1 or 2" );
+    l_message( NULL, "SPI id should assigend 0,1 or 2" );
     lua_pushinteger( L, -1 );
     return 1;
   }
@@ -1227,6 +1592,7 @@ static int lcd_init( lua_State* L )
   MicoGpioOutputLow( (mico_gpio_t)TFT_pinDC );
 
   uint8_t typ = luaL_checkinteger( L, 3 );
+  TFT_type = 0;
   
   TFT_SPI_ID = id;
   TFT_setFont(FONT_8x8);
@@ -1234,13 +1600,19 @@ static int lcd_init( lua_State* L )
   _bg = TFT_BLACK;
   if (typ == 0) ST7735_initB();
   else if (typ == 1) ST7735_initR(INITR_BLACKTAB);
-  else ST7735_initR(INITR_GREENTAB);
-  
+  else if (typ == 2) ST7735_initR(INITR_GREENTAB);
+  else {
+    TFT_type = 1;
+    commandList(ILI7341_init);
+  }
+    
   if (lua_gettop(L) > 3) {
     typ = luaL_checkinteger( L, 4 );
     TFT_setRotation(typ);
   }
   TFT_fillScreen(TFT_BLACK);
+  rotation = 0;
+  _wrap = 0;
   
   lua_pushinteger( L, 0 );
   return 1;
@@ -1308,6 +1680,15 @@ static int lcd_setrot( lua_State* L )
   return 0;
 }
 
+//===================================
+static int lcd_setfixed( lua_State* L )
+{
+  if (TFT_SPI_ID > 2) return 0;
+  
+  _forceFixed = luaL_checkinteger( L, 1 );
+  return 0;
+}
+
 //====================================
 static int lcd_setfont( lua_State* L )
 {
@@ -1347,7 +1728,8 @@ static int lcd_setfont( lua_State* L )
 static int lcd_getfontsize( lua_State* L )
 {
   if (cfont.bitmap == 1) {
-    lua_pushinteger( L, cfont.x_size );
+    if (cfont.x_size != 0) lua_pushinteger( L, cfont.x_size );
+    else lua_pushinteger( L, getMaxWidth() );
     lua_pushinteger( L, cfont.y_size );
   }
   else if (cfont.bitmap == 2) {
@@ -1361,12 +1743,36 @@ static int lcd_getfontsize( lua_State* L )
   return 2;
 }
 
+//==========================================
+static int lcd_getscreensize( lua_State* L )
+{
+  lua_pushinteger( L, _width);
+  lua_pushinteger( L, _height);
+  return 2;
+}
+
+//==========================================
+static int lcd_getfontheight( lua_State* L )
+{
+  if (cfont.bitmap == 1) {
+    lua_pushinteger( L, cfont.y_size );
+  }
+  else if (cfont.bitmap == 2) {
+    lua_pushinteger( L, (3 * (2 * cfont.y_size + 1)) + (2 * cfont.x_size) );
+  }
+  else {
+    lua_pushinteger( L, 0);
+  }
+  return 1;
+}
+
 //===============================
 static int lcd_on( lua_State* L )
 {
   if (TFT_SPI_ID > 2) return 0;
-  
-  ST7735_sendCmd(ST7735_DISPON);
+  ccbufPtr = 0;  
+  TFT_sendCmd(TFT_DISPON,0);
+  ccbufSend();
   return 0;
 }
 
@@ -1374,8 +1780,9 @@ static int lcd_on( lua_State* L )
 static int lcd_off( lua_State* L )
 {
   if (TFT_SPI_ID > 2) return 0;
-  
-  ST7735_sendCmd(ST7735_DISPOFF);
+  ccbufPtr = 0;  
+  TFT_sendCmd(TFT_DISPOFF,0);
+  ccbufSend();
   return 0;
 }
 
@@ -1394,13 +1801,15 @@ static int lcd_putpixel( lua_State* L )
 {
   if (checkParam(2, L)) return 0;
   
-  uint8_t x = luaL_checkinteger( L, 1 );
-  uint8_t y = luaL_checkinteger( L, 2 );
+  uint16_t x = luaL_checkinteger( L, 1 );
+  uint16_t y = luaL_checkinteger( L, 2 );
   uint16_t color = _fg;
   
   if (lua_gettop(L) > 2) color = getColor( L, 3 );
-  
+
+  ccbufPtr = 0;  
   TFT_drawPixel(x,y,color);
+  ccbufSend(); // Flush buffer
   
   return 0;
 }
@@ -1412,10 +1821,10 @@ static int lcd_line( lua_State* L )
   
   uint16_t color = _fg;
   if (lua_gettop(L) > 4) color = getColor( L, 5 );
-  uint8_t x0 = luaL_checkinteger( L, 1 );
-  uint8_t y0 = luaL_checkinteger( L, 2 );
-  uint8_t x1 = luaL_checkinteger( L, 3 );
-  uint8_t y1 = luaL_checkinteger( L, 4 );
+  uint16_t x0 = luaL_checkinteger( L, 1 );
+  uint16_t y0 = luaL_checkinteger( L, 2 );
+  uint16_t x1 = luaL_checkinteger( L, 3 );
+  uint16_t y1 = luaL_checkinteger( L, 4 );
   TFT_drawLine(x0,y0,x1,y1,color);
   return 0;
 }
@@ -1427,10 +1836,10 @@ static int lcd_rect( lua_State* L )
   
   uint16_t fillcolor = _bg;
   if (lua_gettop(L) > 5) fillcolor = getColor( L, 6 );
-  uint8_t x = luaL_checkinteger( L, 1 );
-  uint8_t y = luaL_checkinteger( L, 2 );
-  uint8_t w = luaL_checkinteger( L, 3 );
-  uint8_t h = luaL_checkinteger( L, 4 );
+  uint16_t x = luaL_checkinteger( L, 1 );
+  uint16_t y = luaL_checkinteger( L, 2 );
+  uint16_t w = luaL_checkinteger( L, 3 );
+  uint16_t h = luaL_checkinteger( L, 4 );
   uint16_t color = getColor( L, 5 );
   if (lua_gettop(L) > 5) TFT_fillRect(x,y,w,h,fillcolor);
   if (fillcolor != color) TFT_drawRect(x,y,w,h,color);
@@ -1444,9 +1853,9 @@ static int lcd_circle( lua_State* L )
   
   uint16_t fillcolor = _bg;
   if (lua_gettop(L) > 4) fillcolor = getColor( L, 5 );
-  uint8_t x = luaL_checkinteger( L, 1 );
-  uint8_t y = luaL_checkinteger( L, 2 );
-  uint8_t r = luaL_checkinteger( L, 3 );
+  uint16_t x = luaL_checkinteger( L, 1 );
+  uint16_t y = luaL_checkinteger( L, 2 );
+  uint16_t r = luaL_checkinteger( L, 3 );
   uint16_t color = getColor( L, 4 );
   if (lua_gettop(L) > 4) TFT_fillCircle(x,y,r,fillcolor);
   if (fillcolor != color) TFT_drawCircle(x,y,r,color);
@@ -1460,12 +1869,12 @@ static int lcd_triangle( lua_State* L )
   
   uint16_t fillcolor = _bg;
   if (lua_gettop(L) > 7) fillcolor = getColor( L, 8 );
-  uint8_t x0 = luaL_checkinteger( L, 1 );
-  uint8_t y0 = luaL_checkinteger( L, 2 );
-  uint8_t x1 = luaL_checkinteger( L, 3 );
-  uint8_t y1 = luaL_checkinteger( L, 4 );
-  uint8_t x2 = luaL_checkinteger( L, 5 );
-  uint8_t y2 = luaL_checkinteger( L, 6 );
+  uint16_t x0 = luaL_checkinteger( L, 1 );
+  uint16_t y0 = luaL_checkinteger( L, 2 );
+  uint16_t x1 = luaL_checkinteger( L, 3 );
+  uint16_t y1 = luaL_checkinteger( L, 4 );
+  uint16_t x2 = luaL_checkinteger( L, 5 );
+  uint16_t y2 = luaL_checkinteger( L, 6 );
   uint16_t color = getColor( L, 7 );
   if (lua_gettop(L) > 7) TFT_fillTriangle(x0,y0,x1,y1,x2,y2,fillcolor);
   if (fillcolor != color) TFT_drawTriangle(x0,y0,x1,y1,x2,y2,color);
@@ -1487,6 +1896,9 @@ static int lcd_write( lua_State* L )
   
   int x = luaL_checkinteger( L, 1 );
   int y = luaL_checkinteger( L, 2 );
+  if ((x != LASTX) || (y != LASTY)) TFT_OFFSET = 0;
+  if (x == LASTX) x = TFT_X;
+  if (y == LASTY) y = TFT_Y;
   
   for( argn = 3; argn <= lua_gettop( L ); argn++ )
   {
@@ -1524,15 +1936,38 @@ static int lcd_write( lua_State* L )
   return 0;
 }
 
+/*
+//--------------------------------------------------------------------------------------------------------------
+static void TFT_drawBitmapRotate(int x, int y, int sx, int sy, bitmapdatatype data, int deg, int rox, int roy) {
+	int tx, ty, newx, newy;
+	double radian;
+	radian=deg*0.0175;  
+
+	if (deg==0)
+		TFT_drawBitmap(x, y, sx, sy, data, 1);
+	else
+	{
+		for (ty=0; ty<sy; ty++)
+			for (tx=0; tx<sx; tx++) {
+				newx=(int)(x+rox+(((tx-rox)*cos(radian))-((ty-roy)*sin(radian))));
+				newy=(int)(y+roy+(((ty-roy)*cos(radian))+((tx-rox)*sin(radian))));
+
+				TFT_setAddrWindow(newx, newy, newx, newy);
+				TFT_pushColor(data[(ty*sx)+tx]);
+			}
+	}
+}
+*/
+
 //==================================
 static int lcd_image( lua_State* L )
 {
   if (checkParam(5, L)) return 0;
 
   const char *fname;
-  uint8_t buf[320];
-  uint16_t xrd = 0;
-  size_t len;
+  uint8_t buf[670];
+  uint32_t xrd = 0;
+  size_t len,xendsize;
   
   int x = luaL_checkinteger( L, 1 );
   int y = luaL_checkinteger( L, 2 );
@@ -1544,7 +1979,13 @@ static int lcd_image( lua_State* L )
     l_message(NULL,"filename too long.");
     return 0;
   }
-  
+  if ((xsize > _width) || (ysize > _height)) {
+    l_message(NULL,"image too big.");
+    return 0;
+  }
+
+  if ((x+xsize) > _width) xendsize = _width-1;
+  else xendsize = x+xsize-1;
   if(FILE_NOT_OPENED!=file_fd){
     SPIFFS_close(&fs,file_fd);
     file_fd = FILE_NOT_OPENED;
@@ -1557,20 +1998,27 @@ static int lcd_image( lua_State* L )
     l_message(NULL,"Error opening file.");
     return 0;
   }
-  
+
   do {
     // read 1 imege line from file
-    xrd = SPIFFS_read(&fs, (spiffs_file)file_fd, &buf[0], 2*xsize);
+    ccbufPtr = 0;
+    _TFT_pushAddrWindow(x, y, xendsize, y);
+    
+    xrd = SPIFFS_read(&fs, (spiffs_file)file_fd, &buf[ccbufPtr+7], 2*xsize);
     if (xrd == 2*xsize) {
-      //TFT_drawBitmap(x, y, xsize, ysize, (bitmapdatatype)buf, 1);
-      ST7735_setAddrWindow(x, y, x+xsize-1, y);
-      LCD_DC1;
-      _spi_write(TFT_SPI_ID, 8, &buf[0], xrd, 1);
+      ccbufPushByte(TFT_RAMWR);
+      ccbufPushUint16(xrd);
+      ccbufPushLong(1);
+      
+      memcpy(&buf[0], &ccbuf[0], ccbufPtr);
+      _LcdSpiTransfer( &buf[0], ccbufPtr+xrd);
+
       y++;
-      ysize--;
+      if (y < _height) ysize--;
+      else ysize = 0;
     }
     else xrd = 0;
-  }while (xrd > 0 && ysize > 0);
+  }while ((xrd > 0) && (ysize > 0));
   
   if(FILE_NOT_OPENED!=file_fd){
     SPIFFS_close(&fs,file_fd);
@@ -1591,11 +2039,14 @@ const LUA_REG_TYPE lcd_map[] =
   { LSTRKEY( "on" ), LFUNCVAL( lcd_on )},
   { LSTRKEY( "off" ), LFUNCVAL( lcd_off )},
   { LSTRKEY( "setfont" ), LFUNCVAL( lcd_setfont )},
+  { LSTRKEY( "getscreensize" ), LFUNCVAL( lcd_getscreensize )},
   { LSTRKEY( "getfontsize" ), LFUNCVAL( lcd_getfontsize )},
+  { LSTRKEY( "getfontheight" ), LFUNCVAL( lcd_getfontheight )},
   { LSTRKEY( "setrot" ), LFUNCVAL( lcd_setrot )},
   { LSTRKEY( "setorient" ), LFUNCVAL( lcd_setorient )},
   { LSTRKEY( "setcolor" ), LFUNCVAL( lcd_setcolor )},
   { LSTRKEY( "settransp" ), LFUNCVAL( lcd_settransp )},
+  { LSTRKEY( "setfixed" ), LFUNCVAL( lcd_setfixed )},
   { LSTRKEY( "setwrap" ), LFUNCVAL( lcd_setwrap )},
   { LSTRKEY( "invert" ), LFUNCVAL( lcd_invert )},
   { LSTRKEY( "putpixel" ), LFUNCVAL( lcd_putpixel )},
@@ -1612,6 +2063,8 @@ const LUA_REG_TYPE lcd_map[] =
   { LSTRKEY( "LANDSCAPE_FLIP" ), LNUMVAL( LANDSCAPE_FLIP ) },
   { LSTRKEY( "CENTER" ),         LNUMVAL( CENTER ) },
   { LSTRKEY( "RIGHT" ),          LNUMVAL( RIGHT ) },
+  { LSTRKEY( "LASTX" ),          LNUMVAL( LASTX ) },
+  { LSTRKEY( "LASTY" ),          LNUMVAL( LASTY ) },
   { LSTRKEY( "BLACK" ),          LNUMVAL( TFT_BLACK ) },
   { LSTRKEY( "NAVY" ),           LNUMVAL( TFT_NAVY ) },
   { LSTRKEY( "DARKGREEN" ),      LNUMVAL( TFT_DARKGREEN ) },
@@ -1635,6 +2088,8 @@ const LUA_REG_TYPE lcd_map[] =
   { LSTRKEY( "FONT_BIG" ),       LNUMVAL( BIG_FONT ) },
   { LSTRKEY( "FONT_7SEG" ),      LNUMVAL( FONT_7SEG ) },
   { LSTRKEY( "FONT_8x8" ),       LNUMVAL( FONT_8x8 ) },
+  { LSTRKEY( "FONT_DEJAVU18" ),  LNUMVAL( DEJAVU_18 ) },
+  { LSTRKEY( "FONT_DEJAVU24" ),  LNUMVAL( DEJAVU_24 ) },
 #endif      
   {LNILKEY, LNILVAL}
 };
@@ -1651,6 +2106,8 @@ LUALIB_API int luaopen_lcd(lua_State *L)
   MOD_REG_NUMBER( L, "LANDSCAPE_FLIP",  LANDSCAPE_FLIP);
   MOD_REG_NUMBER( L, "CENTER" ),        CENTER);
   MOD_REG_NUMBER( L, "RIGHT" ),         RIGHT;
+  MOD_REG_NUMBER( L, "LASTX" ),         LASTY);
+  MOD_REG_NUMBER( L, "LASTY" ),         LASTX;
   MOD_REG_NUMBER( L, "BLACK",           TFT_BLACK);
   MOD_REG_NUMBER( L, "NAVY",            TFT_NAVY);
   MOD_REG_NUMBER( L, "DARKGREEN",       TFT_DARKGREEN);
@@ -1672,8 +2129,10 @@ LUALIB_API int luaopen_lcd(lua_State *L)
   MOD_REG_NUMBER( L, "PINK" ,           TFT_PINK);
   MOD_REG_NUMBER( L, "FONT_SMALL" ,     SMALL_FONT);
   MOD_REG_NUMBER( L, "FONT_BIG" ,       BIG_FONT);
-  MOD_REG_NUMBER( L, "7SEG_FONT" ,      FONT_7SEG);
+  MOD_REG_NUMBER( L, "FONT_7SEG" ,      FONT_7SEG);
   MOD_REG_NUMBER( L, "FONT_8x8" ,       FONT_8x8);
+  MOD_REG_NUMBER( L, "FONT_DEJAVU18" ,  DEJAVU_18);
+  MOD_REG_NUMBER( L, "FONT_DEJAVU24" ,  DEJAVU_24);
   return 1;
 #endif
 }

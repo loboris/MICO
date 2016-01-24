@@ -20,7 +20,7 @@
 
 extern const char wifimcu_gpio_map[];
 extern uint8_t spiInit[];
-extern uint16_t _spi_write(uint8_t id, uint8_t databits,uint8_t* data, uint16_t count, uint16_t rep);
+extern uint16_t _spi_write(uint8_t id, uint8_t databits,uint8_t* data, uint32_t count, uint32_t rep);
 extern int _i2c_write(uint8_t id, uint16_t dev_adr, uint8_t* data, uint16_t count, uint16_t rep);
 extern bool IIC_Init;
 extern bool hw_IIC_Init;

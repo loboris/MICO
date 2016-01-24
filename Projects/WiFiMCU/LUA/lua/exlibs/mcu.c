@@ -16,12 +16,21 @@
 #include "StringUtils.h"
 #include "CheckSumUtils.h"
 
+#ifndef RNG_NVIC_PREEMPTION_PRIORITY
+#define RNG_NVIC_PREEMPTION_PRIORITY   0x02
+#endif
+
+#ifndef RNG_NVIC_SUBPRIORITY
+#define RNG_NVIC_SUBPRIORITY           0x00
+#endif
+
    
 extern lua_system_param_t lua_system_param;
 extern uint16_t _get_luaparamsCRC( void );
 extern mico_queue_t os_queue;
 
 static lua_State* gL = NULL;
+
 
 //===================================
 static int queue_push( lua_State* L )
@@ -291,7 +300,7 @@ static int mcu_wifiinfo( lua_State* L )
 static int mcu_reboot( lua_State* L )
 {
    MicoSystemReboot();
-    return 0;
+   return 0;
 }
 
 static int mcu_memory( lua_State* L )
@@ -313,11 +322,35 @@ static int mcu_chipid( lua_State* L )
     lua_pushstring(L,str);
     return 1;
 }
+
+//===================================
 static int mcu_random( lua_State* L )
 {
-    uint32_t rand;
-    MicoRandomNumberRead(&rand, sizeof(uint32_t));
-    lua_pushinteger(L,rand);
+    int randn, minn, maxn;
+    uint16_t i;
+    uint8_t sd = 0;
+    
+    maxn = 0x7FFFFFFE;
+    minn = 0;
+    if (lua_gettop(L) >= 1) maxn = luaL_checkinteger( L, 1 );
+    if (lua_gettop(L) >= 2) minn = luaL_checkinteger( L, 2 );
+    if (lua_gettop(L) >= 3) sd = luaL_checkinteger( L, 3 );
+    if (maxn < minn) maxn = minn+1;
+    if (maxn <= 0) maxn = 1;
+    
+    if (sd) srand(mico_get_time());
+      
+    i = 0;
+    do {
+      //MicoRandomNumberRead(&rbuf, n);
+      randn = rand();
+      if (randn > maxn) randn = randn % (maxn+1);
+      i++;
+    } while ((i < 10000) && (randn < minn));
+    
+    if (randn < minn) randn = minn;
+    
+    lua_pushinteger(L,randn);
     return 1;
 }
 
@@ -363,6 +396,7 @@ const LUA_REG_TYPE mcu_map[] =
 
 LUALIB_API int luaopen_mcu(lua_State *L)
 {
+  srand(mico_get_time());
 #if LUA_OPTIMIZE_MEMORY > 0
     return 0;
 #else    

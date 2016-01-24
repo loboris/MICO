@@ -122,9 +122,11 @@ static void spi_delayx(uint32_t n) {
 //==============================================================================
 // Modified MICO SPI transfer
 //==============================================================================
+
 extern const platform_spi_t             platform_spi_peripherals[];
 extern platform_spi_driver_t            platform_spi_drivers[];
 extern const platform_gpio_t            platform_gpio_pins[];
+
 
 //-----------------------------------------------------------------------
 static uint16_t _spi_transfer( const platform_spi_t* spi, uint16_t data )
@@ -144,10 +146,10 @@ static uint16_t _spi_transfer( const platform_spi_t* spi, uint16_t data )
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static void _platform_spi_transfer( platform_spi_driver_t* driver, const platform_spi_config_t* config, const platform_spi_message_segment_t* segments, uint16_t rep )
+static void _platform_spi_transfer( platform_spi_driver_t* driver, const platform_spi_config_t* config, const platform_spi_message_segment_t* segments, uint32_t rep )
 {
   uint32_t count  = 0;
-  uint16_t n;
+  uint32_t n;
   
   platform_mcu_powersave_disable();
   
@@ -167,11 +169,16 @@ static void _platform_spi_transfer( platform_spi_driver_t* driver, const platfor
       while ( count-- )
       {
         data = 0xFF;
-        if ( send_ptr != NULL ) data = *send_ptr++;
+        if ( send_ptr != NULL ) data = *send_ptr;
         data = _spi_transfer( driver->peripheral, data );
         if ( rcv_ptr != NULL ) {
-          if ( send_ptr == NULL ) *rcv_ptr++ = (uint8_t)data;
+          if ( send_ptr == NULL ) *rcv_ptr = (uint8_t)data;
           else *rcv_ptr = (uint8_t)data;
+        }
+        if (send_ptr == rcv_ptr) send_ptr++;
+        else {
+          if ( send_ptr != NULL ) send_ptr++;
+          if ( rcv_ptr != NULL ) rcv_ptr++;
         }
       }
       send_ptr = ( const uint8_t* )segments[0].tx_buffer;
@@ -209,7 +216,7 @@ static void _platform_spi_transfer( platform_spi_driver_t* driver, const platfor
 }
 
 //--------------------------------------------------------------------------------------------------------------------
-static void _MicoSpiTransfer( const mico_spi_device_t* spi, const mico_spi_message_segment_t* segments, uint16_t rep )
+static void _MicoSpiTransfer( const mico_spi_device_t* spi, const mico_spi_message_segment_t* segments, uint32_t rep )
 {
   platform_spi_config_t config;
 
@@ -223,8 +230,185 @@ static void _MicoSpiTransfer( const mico_spi_device_t* spi, const mico_spi_messa
   mico_rtos_unlock_mutex( &platform_spi_drivers[spi->port].spi_mutex );
 }
 
+extern uint8_t TFT_pinDC;
+
+//--------------------------------------------------------------------
+static void _spi_writeByte( const platform_spi_t* spi, uint16_t data )
+{
+  // Wait until the transmit buffer is empty
+  while ( SPI_I2S_GetFlagStatus( spi->port, SPI_I2S_FLAG_TXE ) == RESET );
+  // Send the byte
+  SPI_I2S_SendData( spi->port, data );
+  //wait finish sending
+  while (SPI_I2S_GetFlagStatus(spi->port, SPI_I2S_FLAG_BSY) == SET);
+}
+
+// buf structure:
+// cmd ndata rep data1...datan cmd ......
+//----------------------------------------------------------------------------------------------------------------------------
+static void _platform_lcd_transfer( platform_spi_driver_t* driver, const platform_spi_config_t* config, uint8_t* buf, int len)
+{
+  int count = len;
+  uint16_t ndata, j;
+  uint32_t rep,i;
+  uint16_t data;
+  uint8_t* tmpbuf;
+  
+  platform_mcu_powersave_disable();
+  
+  while (count > 0) {
+    // send command, DC=0
+    MicoGpioOutputLow( (mico_gpio_t)TFT_pinDC );
+    // --- Activate chip select --------------------
+    platform_gpio_output_low( config->chip_select );
+    data = *buf++;
+    count--;
+    // --- send command byte ---
+    _spi_writeByte( driver->peripheral, data );
+    
+    // --- Deactivate chip select -------------------
+    platform_gpio_output_high( config->chip_select );
+
+    // get ndata & rep    
+    ndata = (uint16_t)(*buf++ << 8);
+    ndata += (uint16_t)(*buf++);
+    rep = (uint32_t)(*buf++ << 24);
+    rep += (uint32_t)(*buf++ << 16);
+    rep += (uint32_t)(*buf++ << 8);
+    rep += (uint32_t)(*buf++);
+    count -= 6;
+    if (count > 0) {
+      // --- send data, DC=1 ---
+      MicoGpioOutputHigh( (mico_gpio_t)TFT_pinDC );
+      // --- Activate chip select --------------------
+      platform_gpio_output_low( config->chip_select );
+      for (i=0; i<rep; i++) {
+        tmpbuf = buf;
+        for (j=0; j<ndata; j++) {
+          data = *tmpbuf++;
+          // --- send data byte ---
+          _spi_writeByte( driver->peripheral, data );
+        }
+      }
+      buf += ndata;
+      count -= ndata;
+      // --- Deactivate chip select -------------------
+      platform_gpio_output_high( config->chip_select );
+    }
+  }
+
+  platform_mcu_powersave_enable( );
+}
+
+//--------------------------------------------
+void _MicoLcdTransfer( uint8_t* buf, int len )
+{
+  platform_spi_config_t config;
+
+  config.chip_select = &platform_gpio_pins[HW_SPI5.chip_select];
+  config.speed       = HW_SPI5.speed;
+  config.mode        = HW_SPI5.mode;
+  config.bits        = HW_SPI5.bits;
+
+  mico_rtos_lock_mutex( &platform_spi_drivers[HW_SPI5.port].spi_mutex );
+  _platform_lcd_transfer( &platform_spi_drivers[HW_SPI5.port], &config, buf, len );
+  mico_rtos_unlock_mutex( &platform_spi_drivers[HW_SPI5.port].spi_mutex );
+}
+
 //==============================================================================
 //==============================================================================
+
+//--------------------------------------------
+static void _swspi_writeByte( uint16_t wdata )
+{
+  uint8_t i=0;
+  uint16_t data = wdata;
+  
+  for(i=0;i<8;i++)  
+  {
+    // set clk state before write edge
+    if ((SW_SPI.spiMode == 0) || (SW_SPI.spiMode == 2)) MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
+    else MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
+    
+    // set data bit -> MOSI
+    if((data & 0x80)==0x80) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinMOSI );  
+    else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinMOSI );
+    if (SW_SPI.speed >= 10) spi_delay();
+
+    // set clk write edge
+    if ((SW_SPI.spiMode == 0) || (SW_SPI.spiMode == 2)) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
+    else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
+    if (SW_SPI.speed >= 10) spi_delay();
+
+    data=(data<<1);  // next bit
+  }
+  
+  // set clk inactive state
+  if (SW_SPI.spiMode > 1) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
+  else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
+}
+
+//------------------------------------------
+void _swLcdTransfer( uint8_t* buf, int len )
+{
+  int count = len;
+  uint16_t ndata, j;
+  uint32_t rep,i;
+  uint16_t data;
+  uint8_t* tmpbuf;
+  
+  // set clk inactive state
+  if (SW_SPI.spiMode > 1) MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinSCK );
+  else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
+
+  while (count > 0) {
+    // send command, DC=0
+    MicoGpioOutputLow( (mico_gpio_t)TFT_pinDC );
+    // activate CS
+    MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinCS );
+    if (SW_SPI.speed >= 10) spi_delay();
+
+    data = *buf++;
+    count--;
+    // --- send command byte ---
+    _swspi_writeByte( data );
+    
+    // deactivate CS
+    MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinCS );
+    if (SW_SPI.speed >= 10) spi_delay();
+
+    // get ndata & rep    
+    ndata = (uint16_t)(*buf++ << 8);
+    ndata += (uint16_t)(*buf++);
+    rep = (uint32_t)(*buf++ << 24);
+    rep += (uint32_t)(*buf++ << 16);
+    rep += (uint32_t)(*buf++ << 8);
+    rep += (uint32_t)(*buf++);
+    count -= 6;
+    if (count > 0) {
+      // --- send data, DC=1 ---
+      MicoGpioOutputHigh( (mico_gpio_t)TFT_pinDC );
+      // activate CS
+      MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinCS );
+      if (SW_SPI.speed >= 10) spi_delay();
+
+      for (i=0; i<rep; i++) {
+        tmpbuf = buf;
+        for (j=0; j<ndata; j++) {
+          data = *tmpbuf++;
+          // --- send data byte ---
+          _swspi_writeByte( data );
+        }
+      }
+      buf += ndata;
+      count -= ndata;
+
+      // deactivate CS
+      MicoGpioOutputHigh( (mico_gpio_t)SW_SPI.pinCS );
+      if (SW_SPI.speed >= 10) spi_delay();
+    }
+  }
+}
 
 //--------------------------------------------------------
 static void checkSPIbits( uint8_t id, uint8_t databits ) {
@@ -244,7 +428,7 @@ static void checkSPIbits( uint8_t id, uint8_t databits ) {
 
 // Writes a byte to the SPI
 //-----------------------------------------------------------------------------------------------------
-static uint16_t hw_spi_write(uint8_t id, uint8_t databits, uint8_t* data, uint32_t count, uint16_t rep)
+static uint16_t hw_spi_write(uint8_t id, uint8_t databits, uint8_t* data, uint32_t count, uint32_t rep)
 {  
   uint16_t rxdata=0x0000;
   mico_spi_message_segment_t hwspi_msg = { data, NULL, (unsigned long)count };
@@ -264,11 +448,11 @@ static uint16_t hw_spi_write(uint8_t id, uint8_t databits, uint8_t* data, uint32
    SW_SPI.spiMode=2;       cpol 1 cpha 1: sck=1 falling edge send/read data
    SW_SPI.spiMode=3;       cpol 1 cpha 0: sck=1 rising  edge send/read data */
 //-------------------------------------------------------------------------------------------
-static uint16_t sw_spi_write(uint8_t databits,uint8_t* databuf, uint32_t count, uint16_t rep)
+static uint16_t sw_spi_write(uint8_t databits,uint8_t* databuf, uint32_t count, uint32_t rep)
 {
   uint8_t i=0;
   uint16_t rxdata=0x0000;
-  uint16_t j, k;
+  uint32_t j, k;
   uint16_t data;
   const uint8_t* dataptr = ( const uint8_t* )databuf;
   
@@ -342,7 +526,8 @@ static uint16_t sw_spi_write(uint8_t databits,uint8_t* databuf, uint32_t count, 
 //----------------------------------------------------------------------------------
 static void hw_spi_read(uint8_t id, uint8_t databits, uint8_t* data, uint16_t count)
 {  
-  mico_spi_message_segment_t hwspi_msg = { NULL, data, (unsigned long)count };
+  //mico_spi_message_segment_t hwspi_msg = { NULL, data, (unsigned long)count };
+  mico_spi_message_segment_t hwspi_msg = { data, data, (unsigned long)count };
 
   checkSPIbits(id, databits);
 
@@ -401,7 +586,7 @@ static void sw_spi_read(uint8_t databits, uint8_t* databuf, uint16_t count)
 }
 
 //-------------------------------------------------------------------------------------------
-uint16_t _spi_write(uint8_t id, uint8_t databits,uint8_t* data, uint16_t count, uint16_t rep)
+uint16_t _spi_write(uint8_t id, uint8_t databits,uint8_t* data, uint32_t count, uint32_t rep)
 {
   if (id == 0) return sw_spi_write(databits, data, count, rep);
   else return hw_spi_write(id,databits,data,count, rep);
@@ -887,8 +1072,16 @@ static int spi_readbytes( lua_State* L )
   
   int i=0;
   uint8_t rxbuffer[512];
+  for( i = 0; i < 512; i ++ ) {
+    rxbuffer[i] = 0xFF;
+  }
   lua_newtable(L);
 
+  if (lua_gettop(L) >= 3) {
+    uint8_t wb = ( uint8_t )luaL_checkinteger( L, 3);
+    rxbuffer[0] = wb;
+  }
+  
   _spi_read(id, BITS_8, &rxbuffer[0], size);
   for( i = 0; i < size; i ++ )
   {
