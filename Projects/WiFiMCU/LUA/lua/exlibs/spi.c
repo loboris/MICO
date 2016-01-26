@@ -257,11 +257,13 @@ static void _platform_lcd_transfer( platform_spi_driver_t* driver, const platfor
   platform_mcu_powersave_disable();
   
   while (count > 0) {
+    data = *buf++; // get command
+    if (data == 0) break;
+
     // send command, DC=0
     MicoGpioOutputLow( (mico_gpio_t)TFT_pinDC );
     // --- Activate chip select --------------------
     platform_gpio_output_low( config->chip_select );
-    data = *buf++;
     count--;
     // --- send command byte ---
     _spi_writeByte( driver->peripheral, data );
@@ -277,7 +279,7 @@ static void _platform_lcd_transfer( platform_spi_driver_t* driver, const platfor
     rep += (uint32_t)(*buf++ << 8);
     rep += (uint32_t)(*buf++);
     count -= 6;
-    if (count > 0) {
+    if ((count > 0) && (ndata > 0)) {
       // --- send data, DC=1 ---
       MicoGpioOutputHigh( (mico_gpio_t)TFT_pinDC );
       // --- Activate chip select --------------------
@@ -362,13 +364,15 @@ void _swLcdTransfer( uint8_t* buf, int len )
   else MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinSCK );
 
   while (count > 0) {
+    data = *buf++; // get command
+    if (data == 0) break;
+
     // send command, DC=0
     MicoGpioOutputLow( (mico_gpio_t)TFT_pinDC );
     // activate CS
     MicoGpioOutputLow( (mico_gpio_t)SW_SPI.pinCS );
     if (SW_SPI.speed >= 10) spi_delay();
 
-    data = *buf++;
     count--;
     // --- send command byte ---
     _swspi_writeByte( data );
@@ -385,7 +389,7 @@ void _swLcdTransfer( uint8_t* buf, int len )
     rep += (uint32_t)(*buf++ << 8);
     rep += (uint32_t)(*buf++);
     count -= 6;
-    if (count > 0) {
+    if ((count > 0) && (ndata > 0)) {
       // --- send data, DC=1 ---
       MicoGpioOutputHigh( (mico_gpio_t)TFT_pinDC );
       // activate CS
