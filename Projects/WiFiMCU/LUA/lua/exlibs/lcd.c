@@ -2254,7 +2254,7 @@ LUALIB_API int luaopen_lcd(lua_State *L)
   MOD_REG_NUMBER( L, "ST7735" ,         0;
   MOD_REG_NUMBER( L, "ST7735B" ,        1;
   MOD_REG_NUMBER( L, "ST7735G" ,        2;
-  MOD_REG_NUMBER( L, "ILI7341" ,        3;
+  MOD_REG_NUMBER( L, "ILI9341" ,        3;
   return 1;
 #endif
 }
