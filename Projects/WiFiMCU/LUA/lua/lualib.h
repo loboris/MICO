@@ -124,6 +124,11 @@ LUALIB_API int (luaopen_lcd) (lua_State *L);
 LUALIB_API int (luaopen_mqtt) (lua_State *L);
 #endif
 
+#ifdef USE_FTP_MODULE
+#define LUA_FTPLIBNAME	"ftp"
+LUALIB_API int (luaopen_ftp) (lua_State *L);
+#endif
+
 /* open all previous libraries */
 LUALIB_API void (luaL_openlibs) (lua_State *L); 
 

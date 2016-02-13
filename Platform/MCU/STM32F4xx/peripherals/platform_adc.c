@@ -86,21 +86,25 @@ OSStatus platform_adc_init( const platform_adc_t* adc, uint32_t sample_cycle )
 
     require_action_quiet( adc != NULL, exit, err = kParamErr);
     
-    /* Enable peripheral clock for this port */
-    err = platform_gpio_enable_clock( adc->pin );
-    require_noerr(err, exit);
+    ADC_DeInit();
+    
+    if (adc->pin != NULL) {
+      // Enable peripheral clock for this port
+      err = platform_gpio_enable_clock( adc->pin );
+      require_noerr(err, exit);
 
-    /* Initialize the associated GPIO */
-    gpio_init_structure.GPIO_Pin   = (uint32_t)( 1 << adc->pin->pin_number );;
-    gpio_init_structure.GPIO_Speed = (GPIOSpeed_TypeDef) 0;
-    gpio_init_structure.GPIO_Mode  = GPIO_Mode_AN;
-    gpio_init_structure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
-    gpio_init_structure.GPIO_OType = GPIO_OType_OD;
-    GPIO_Init( adc->pin->port, &gpio_init_structure );
+      // Initialize the associated GPIO
+      gpio_init_structure.GPIO_Pin   = (uint32_t)( 1 << adc->pin->pin_number );;
+      gpio_init_structure.GPIO_Speed = (GPIOSpeed_TypeDef) 0;
+      gpio_init_structure.GPIO_Mode  = GPIO_Mode_AN;
+      gpio_init_structure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+      gpio_init_structure.GPIO_OType = GPIO_OType_OD;
+      GPIO_Init( adc->pin->port, &gpio_init_structure );
+    }
 
     RCC_APB2PeriphClockCmd( adc->adc_peripheral_clock, ENABLE );
 
-    /* Initialize the ADC */
+    // Initialize the ADC
     ADC_StructInit( &adc_init_structure );
     adc_init_structure.ADC_Resolution         = ADC_Resolution_12b;
     adc_init_structure.ADC_ScanConvMode       = DISABLE;
@@ -117,16 +121,22 @@ OSStatus platform_adc_init( const platform_adc_t* adc, uint32_t sample_cycle )
     adc_common_init_structure.ADC_TwoSamplingDelay = ADC_TwoSamplingDelay_5Cycles;
     ADC_CommonInit( &adc_common_init_structure );
 
-    ADC_Cmd( adc->port, ENABLE );
-
-    /* Find the closest supported sampling time by the MCU */
-    for ( a = 0; ( a < sizeof( adc_sampling_cycle ) / sizeof(uint16_t) ) && adc_sampling_cycle[a] < sample_cycle; a++ )
-    {
+    if ((adc->channel == ADC_Channel_16) || (adc->channel == ADC_Channel_17)) {
+      ADC_TempSensorVrefintCmd(ENABLE);
+      platform_nanosecond_delay(10*1000);
+      a = 144;
+    }
+    else {
+      // Find the closest supported sampling time by the MCU
+      for ( a = 0; ( a < sizeof( adc_sampling_cycle ) / sizeof(uint16_t) ) && adc_sampling_cycle[a] < sample_cycle; a++ )
+      {
+      }
     }
 
-    /* Initialize the ADC channel */
+    // Initialize the ADC channel
     ADC_RegularChannelConfig( adc->port, adc->channel, adc->rank, a );
-
+    ADC_Cmd( adc->port, ENABLE );
+    
 exit:
     platform_mcu_powersave_enable();
     return err;
@@ -156,13 +166,36 @@ exit:
     return err;
 }
 
-OSStatus platform_adc_take_sample_stream( const platform_adc_t* adc, void* buffer, uint16_t buffer_length )
+OSStatus platform_adc_take_sample_stream( const platform_adc_t* adc, uint16_t* buffer, uint16_t buffer_length )
 {
-    UNUSED_PARAMETER(adc);
-    UNUSED_PARAMETER(buffer);
-    UNUSED_PARAMETER(buffer_length);
-    platform_log("unimplemented");
-    return kNotPreparedErr;
+  /*  
+  UNUSED_PARAMETER(adc);
+  UNUSED_PARAMETER(buffer);
+  UNUSED_PARAMETER(buffer_length);
+  platform_log("unimplemented");
+  return kNotPreparedErr;
+  */
+  OSStatus err = kNoErr;
+
+  platform_mcu_powersave_disable();
+  require_action_quiet( adc != NULL, exit, err = kParamErr);
+
+  for (uint16_t n=0; n<buffer_length; n++) {
+    /* Start conversion */
+    ADC_SoftwareStartConv( adc->port );
+
+    /* Wait until end of conversion */
+    while ( ADC_GetFlagStatus( adc->port, ADC_FLAG_EOC ) == RESET )
+    {
+    }
+
+    /* Read ADC conversion result */
+    *(buffer++) = ADC_GetConversionValue( adc->port );
+  }
+
+exit:
+  platform_mcu_powersave_enable();
+  return err;
 }
 
 OSStatus platform_adc_deinit( const platform_adc_t* adc )

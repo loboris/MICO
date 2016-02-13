@@ -22,6 +22,7 @@
 #include "spiffs.h"
 #include "spiffs_nucleus.h"
 
+extern void luaWdgReload( void );
 
 
 //---------------------------------------
@@ -70,6 +71,7 @@ static s32_t spiffs_rewrite_page(spiffs *fs, spiffs_page_ix cur_pix, spiffs_page
       SPIFFS_PAGE_TO_PADDR(fs, cur_pix) + sizeof(spiffs_page_header),
       SPIFFS_DATA_PAGE_SIZE(fs));
   SPIFFS_CHECK_RES(res);
+  luaWdgReload();
   return res;
 }
 
@@ -135,6 +137,7 @@ static s32_t spiffs_rewrite_index(spiffs *fs, spiffs_obj_id obj_id, spiffs_span_
   SPIFFS_CHECK_RES(res);
   res = spiffs_page_delete(fs, objix_pix);
 
+  luaWdgReload();
   return res;
 }
 
@@ -476,6 +479,7 @@ s32_t spiffs_lookup_consistency_check(spiffs *fs, u8_t check_all_objects) {
 
   if (fs->check_cb_f) fs->check_cb_f(SPIFFS_CHECK_LOOKUP, SPIFFS_CHECK_PROGRESS, 256, 0);
 
+  luaWdgReload();
   return res;
 }
 
@@ -501,6 +505,7 @@ static s32_t spiffs_page_consistency_check_i(spiffs *fs) {
 
   // for each range of pages fitting into work memory
   while (pix_offset < SPIFFS_PAGES_PER_BLOCK(fs) * fs->block_count) {
+    luaWdgReload();
     // set this flag to abort all checks and rescan the page range
     u8_t restart = 0;
     memset(fs->work, 0, SPIFFS_CFG_LOG_PAGE_SZ(fs));
@@ -508,6 +513,7 @@ static s32_t spiffs_page_consistency_check_i(spiffs *fs) {
     spiffs_block_ix cur_block = 0;
     // build consistency bitmap for id range traversing all blocks
     while (!restart && cur_block < fs->block_count) {
+      luaWdgReload();
       if (fs->check_cb_f) fs->check_cb_f(SPIFFS_CHECK_PAGE, SPIFFS_CHECK_PROGRESS,
           (pix_offset*256)/(SPIFFS_PAGES_PER_BLOCK(fs) * fs->block_count) +
           ((((cur_block * pages_per_scan * 256)/ (SPIFFS_PAGES_PER_BLOCK(fs) * fs->block_count))) / fs->block_count),
@@ -516,6 +522,7 @@ static s32_t spiffs_page_consistency_check_i(spiffs *fs) {
       // traverse each page except for lookup pages
       spiffs_page_ix cur_pix = SPIFFS_OBJ_LOOKUP_PAGES(fs) + SPIFFS_PAGES_PER_BLOCK(fs) * cur_block;
       while (!restart && cur_pix < SPIFFS_PAGES_PER_BLOCK(fs) * (cur_block+1)) {
+        luaWdgReload();
         // read header
         spiffs_page_header p_hdr;
         res = _spiffs_rd(fs, SPIFFS_OP_T_OBJ_LU2 | SPIFFS_OP_C_READ,
@@ -565,6 +572,7 @@ static s32_t spiffs_page_consistency_check_i(spiffs *fs) {
 
           // for all entries in index
           for (i = 0; !restart && i < entries; i++) {
+            luaWdgReload();
             spiffs_page_ix rpix = object_page_index[i];
             u8_t rpix_within_range = rpix >= pix_offset && rpix < pix_offset + pages_per_scan;
 
@@ -700,6 +708,7 @@ static s32_t spiffs_page_consistency_check_i(spiffs *fs) {
       u8_t bit_ix;
       for (byte_ix = 0; !restart && byte_ix < SPIFFS_CFG_LOG_PAGE_SZ(fs); byte_ix++) {
         for (bit_ix = 0; !restart && bit_ix < 8/bits; bit_ix ++) {
+          luaWdgReload();
           u8_t bitmask = (fs->work[byte_ix] >> (bit_ix * bits)) & 0x7;
           spiffs_page_ix cur_pix = pix_offset + byte_ix * (8/bits) + bit_ix;
 
@@ -864,6 +873,7 @@ static s32_t spiffs_object_index_consistency_check_v(spiffs *fs, spiffs_obj_id o
   u32_t *log_ix = (u32_t *)user_p;
   spiffs_obj_id *obj_table = (spiffs_obj_id *)fs->work;
 
+  luaWdgReload();
   if (fs->check_cb_f) fs->check_cb_f(SPIFFS_CHECK_INDEX, SPIFFS_CHECK_PROGRESS,
       (cur_block * 256)/fs->block_count, 0);
 

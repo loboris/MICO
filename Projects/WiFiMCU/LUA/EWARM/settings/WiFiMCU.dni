@@ -14,6 +14,9 @@ Checksum=282130587
 LoggingEnabled=_ 0
 LogFile=_ ""
 Category=_ 0
+[SfrWindow]
+Show=1 1
+Sort=4 0
 [InterruptLog]
 LogEnabled=0
 GraphEnabled=0

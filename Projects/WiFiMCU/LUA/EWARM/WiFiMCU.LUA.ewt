@@ -1302,6 +1302,9 @@
         <name>$PROJ_DIR$\..\lua\exlibs\file.c</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\lua\exlibs\ftp.c</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\lua\exlibs\gpio.c</name>
       </file>
       <file>

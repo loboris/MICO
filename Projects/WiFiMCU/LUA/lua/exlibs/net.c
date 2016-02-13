@@ -262,6 +262,8 @@ static void closeSocket(lua_State*L, int socketHandle)
       }
     }
 }
+
+//------------------------------------------------
 static void lgethostbyname_thread(void *inContext)
 {
   int k = clientIndexK;
@@ -271,7 +273,7 @@ static void lgethostbyname_thread(void *inContext)
   if(pDomain4Dns ==NULL) goto exit;
 
   gethostbyname((char *)pDomain4Dns, (uint8_t *)pIPstr, 16);
-  free(pDomain4Dns);pDomain4Dns=NULL;
+  free(pDomain4Dns); pDomain4Dns=NULL;
   
   if(pcltsockt[k] !=NULL)
   {
@@ -284,6 +286,7 @@ exit:
 }
 
 //net.close(socket)
+//===================================
 static int lnet_close( lua_State* L )
 {
   int socketHandle = luaL_checkinteger( L, 1 );
@@ -622,6 +625,7 @@ static void startNetTimer(void)
 
 //net.start(socket,port)
 //net.start(socket,port,"domain",[local port])
+//===================================
 static int lnet_start( lua_State* L )
 {
   int socketHandle = luaL_checkinteger( L, 1 );
@@ -685,17 +689,19 @@ static int lnet_start( lua_State* L )
   
   return 0;
 }
-//server
+
+//==server==
 //net.on(socket,"accept",accept_cb)  //(sktclt,ip,port)
 //net.on(socket,"receive",receive_cb)//(sktclt,data)
 //net.on(socket,"sent",sent_cb)//(sktclt)
 //net.on(socket,"disconnect",disconnect_cb)//(sktclt)
-//client
+//==client==
 //net.on(socket,"dnsfound",dnsfound_cb)//(socket,ip)
 //net.on(socket,"connect",connect_cb)//(socket)
 //net.on(socket,"receive",receive_cb)//(socket,data)
 //net.on(socket,"sent",sent_cb)//(socket)
 //net.on(socket,"disconnect",disconnect_cb)//(socket)
+//================================
 static int lnet_on( lua_State* L )
 {
   int socketHandle = luaL_checkinteger( L, 1 );
@@ -792,6 +798,7 @@ static int lnet_on( lua_State* L )
 }
 
 //net.send(socket,"data",[function_cb])
+//==================================
 static int lnet_send( lua_State* L )
 {
   int socketHandle = luaL_checkinteger( L, 1 );
@@ -882,7 +889,9 @@ static int lnet_send( lua_State* L )
   }
   return 0;
 }
+
 //ip,port = net.getip(clientSocket)
+//===================================
 static int lnet_getip( lua_State* L )
 {
   int socketHandle = luaL_checkinteger( L, 1 );

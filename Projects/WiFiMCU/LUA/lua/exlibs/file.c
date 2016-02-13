@@ -918,6 +918,18 @@ static int file_format( lua_State* L )
   return 0;
 }
 
+/*
+//====================================
+static int file_check( lua_State* L )
+{
+  if(SPIFFS_mounted(&fs)==false) lua_spiffs_mount();
+   
+  l_message(NULL,"checking fs, please wait...\r\n");
+  int ret = SPIFFS_check(&fs);
+  lua_pushinteger(L, ret);
+  return 1;
+}
+*/
 // file.open(filename, mode)
 //==================================
 static int file_open( lua_State* L )
@@ -1076,6 +1088,7 @@ static int file_read( lua_State* L )
 }
 
 // file.readline()
+//======================================
 static int file_readline( lua_State* L )
 {
   return file_g_read(L, LUAL_BUFFERSIZE, '\n');
@@ -1269,6 +1282,7 @@ const LUA_REG_TYPE file_map[] =
   { LSTRKEY( "list" ), LFUNCVAL( file_list ) },
   { LSTRKEY( "slist" ), LFUNCVAL( file_slist ) },
   { LSTRKEY( "format" ), LFUNCVAL( file_format ) },
+  //{ LSTRKEY( "check" ), LFUNCVAL( file_check ) },
   { LSTRKEY( "open" ), LFUNCVAL( file_open ) },
   { LSTRKEY( "close" ), LFUNCVAL( file_close ) },
   { LSTRKEY( "write" ), LFUNCVAL( file_write ) },

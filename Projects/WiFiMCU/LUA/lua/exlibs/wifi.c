@@ -644,6 +644,8 @@ static int lwifi_powersave( lua_State* L )
    
   return 0;
 }
+
+//=======================================
 static int lwifi_ntp_time (lua_State* L )
 {
   int tz = 0;
@@ -651,6 +653,7 @@ static int lwifi_ntp_time (lua_State* L )
   size_t len;
   char *ntpserv = "time1.google.com";
   npar = lua_gettop(L);
+  bool lg = false;
   
   if (npar > 0) {
     tz = luaL_checkinteger( L, 1 );
@@ -658,8 +661,14 @@ static int lwifi_ntp_time (lua_State* L )
   }
   if (npar > 1) {
     ntpserv = (char *)luaL_checklstring( L, 2, &len );
+    if (len == 0) ntpserv = "time1.google.com";
+  }
+  if (npar > 2) {
+    uint8_t ilg = luaL_checkinteger( L, 3 );
+    if (ilg == 1) lg = true;
   }
   
+  /*
   LinkStatusTypeDef link;
   memset(&link,0x00,sizeof(link));
   micoWlanGetLinkStatus(&link);
@@ -676,6 +685,9 @@ static int lwifi_ntp_time (lua_State* L )
     lua_pushstring(L,ntpserv);
     return 2;
   }
+  */
+  sntp_client_start(tz, (char *)ntpserv, lg);
+  return 0;
 }
 
 #define MIN_OPT_LEVEL       2

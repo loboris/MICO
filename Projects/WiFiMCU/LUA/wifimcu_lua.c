@@ -192,6 +192,25 @@ static void do_queue_task(queue_msg_t* msg)
     lua_call(msg->L, 2, 0);
     lua_gc(msg->L, LUA_GCCOLLECT, 0);
   }
+  else if (msg->source == onFTP)
+  { // === execute on FTP function ===
+    if (msg->para2 == LUA_NOREF) return;
+    if (msg->L == NULL) return;
+    
+    lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
+    if (msg->para3 == NULL) {
+      lua_pushinteger(msg->L, msg->para1);
+      lua_call(msg->L, 1, 0);
+    }
+    else {
+      lua_pushinteger(msg->L, msg->para1);
+      lua_pushlstring(msg->L, (const char*)(msg->para3), msg->para1);
+      free(msg->para3);
+      msg->para3 = NULL;
+      lua_call(msg->L, 2, 0);
+    }
+    lua_gc(msg->L, LUA_GCCOLLECT, 0);
+  }
   else if(msg->source == USER)
   { // === execute user function ===
     if(msg->para2 == LUA_NOREF) return;

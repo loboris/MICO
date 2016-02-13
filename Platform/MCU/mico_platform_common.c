@@ -151,7 +151,7 @@ OSStatus MicoAdcTakeSample( mico_adc_t adc, uint16_t* output )
   return (OSStatus) platform_adc_take_sample( &platform_adc_peripherals[adc], output );
 }
 
-OSStatus MicoAdcTakeSampleStreram( mico_adc_t adc, void* buffer, uint16_t buffer_length )
+OSStatus MicoAdcTakeSampleStream( mico_adc_t adc, void* buffer, uint16_t buffer_length )
 {
   if ( adc >= MICO_ADC_NONE )
     return kUnsupportedErr;

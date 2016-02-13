@@ -260,8 +260,7 @@ void init_architecture( void )
 
 #ifdef BOOTLOADER
   return;
-#endif
-  
+#else  
   /* Initialise RTC */
   platform_rtc_init( );
   
@@ -271,6 +270,7 @@ void init_architecture( void )
 #endif /* ifndef MICO_DISABLE_MCU_POWERSAVE */
 
   platform_mcu_powersave_disable( );
+#endif
 }
 
 OSStatus stdio_hardfault( char* data, uint32_t size )

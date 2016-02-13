@@ -3,7 +3,7 @@
 * @file    menu.c 
 * @author  William Xu, modified by LoBo
 * @version V2.0.0
-* @date    05-Oct-2014
+* @date    05-Oct-2014 ~ 02-Jan-2016
 * @brief   his file provides the software which contains the main menu routine.
 *          The main menu gives the options of:
 *             - downloading a new binary file, 

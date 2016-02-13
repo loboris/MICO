@@ -33,4 +33,4 @@
 
 #include "common.h"
 
-OSStatus sntp_client_start( int tz, char* ntpserv );
+OSStatus sntp_client_start( int tz, char *ntpserv, bool lg );

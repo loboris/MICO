@@ -380,6 +380,7 @@ enum{
   onUART2,
   onMQTT,
   onMQTTmsg,
+  onFTP,
   USER,
 };
 
@@ -388,7 +389,7 @@ typedef struct _msg
   char           source;  // which module
   lua_State*     L;
   int            para1;   // which type
-  int            para2;   // parameter
+  int            para2;   // parameter, call back function
   unsigned char* para3;   // pointer param
   unsigned char* para4;   // pointer param
 } queue_msg_t;

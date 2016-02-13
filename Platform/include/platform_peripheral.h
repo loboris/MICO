@@ -644,7 +644,7 @@ OSStatus platform_adc_take_sample( const platform_adc_t* adc, uint16_t* output )
  *
  * @return @ref OSStatus
  */
-OSStatus platform_adc_take_sample_stream( const platform_adc_t* adc, void* buffer, uint16_t buffer_length );
+OSStatus platform_adc_take_sample_stream( const platform_adc_t* adc, uint16_t* buffer, uint16_t buffer_length );
 
 
 /**

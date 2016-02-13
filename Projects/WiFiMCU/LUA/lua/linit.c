@@ -193,6 +193,9 @@ extern const luaR_entry lcd_map[];
 #ifdef USE_MQTT_MODULE
 extern const luaR_entry mqtt_map[];
 #endif
+#ifdef USE_FTP_MODULE
+extern const luaR_entry ftp_map[];
+#endif
 
 
 const luaR_table lua_rotable[] = 
@@ -251,6 +254,9 @@ const luaR_table lua_rotable[] =
 #endif    
 #ifdef USE_MQTT_MODULE
     {LUA_MQTTLIBNAME, mqtt_map},
+#endif    
+#ifdef USE_FTP_MODULE
+    {LUA_FTPLIBNAME, ftp_map},
 #endif    
     
     
@@ -334,6 +340,10 @@ LUALIB_API void luaL_openlibs (lua_State *L) {
 
 #ifdef USE_MQTT_MODULE
   luaopen_mqtt(L);
+#endif
+
+#ifdef USE_FTP_MODULE
+  luaopen_ftp(L);
 #endif
 }
 

@@ -364,7 +364,7 @@
         <option>
           <name>CCOptStrategy</name>
           <version>0</version>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCOptLevelSlave</name>
@@ -439,7 +439,7 @@
         <option>
           <name>CCOptStrategySlave</name>
           <version>0</version>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCGuardCalls</name>
@@ -1234,6 +1234,9 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\lua\exlibs\file.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\lua\exlibs\ftp.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\lua\exlibs\gpio.c</name>

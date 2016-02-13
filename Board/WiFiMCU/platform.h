@@ -288,6 +288,8 @@ typedef enum
     MICO_ADC_3,
     MICO_ADC_4,
     MICO_ADC_5,
+    MICO_ADC_6,
+    MICO_ADC_7,
     MICO_ADC_MAX, /* Denotes the total number of ADC port aliases. Not a valid ADC alias */
     MICO_ADC_NONE,
 } mico_adc_t;

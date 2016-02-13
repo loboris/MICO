@@ -178,7 +178,7 @@ static void _thread_mqtt(void*inContext)
   mqtt_log("[mqtt: ] MQTT Thread started.\r\n");
   
   while (1) {
-    mico_thread_sleep(5);
+    mico_thread_msleep(5);
       
     // --- Check if any active client left ---
     for (i=0; i<MAX_MQTT_NUM; i++) {

@@ -113,7 +113,7 @@ OSStatus MicoAdcTakeSample( mico_adc_t adc, uint16_t* output );
  * @return    kNoErr        : on success.
  * @return    kGeneralErr   : if an error occurred with any step
  */
-OSStatus MicoAdcTakeSampleStreram( mico_adc_t adc, void* buffer, uint16_t buffer_length );
+OSStatus MicoAdcTakeSampleStream( mico_adc_t adc, void* buffer, uint16_t buffer_length );
 
 
 /** De-initialises an ADC interface
