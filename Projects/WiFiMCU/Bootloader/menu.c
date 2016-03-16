@@ -3,7 +3,7 @@
 * @file    menu.c 
 * @author  William Xu, modified by LoBo
 * @version V2.0.0
-* @date    05-Oct-2014 ~ 02-Jan-2016
+* @date    05-Oct-2014 ~ 08-Mar-2016
 * @brief   his file provides the software which contains the main menu routine.
 *          The main menu gives the options of:
 *             - downloading a new binary file, 
@@ -41,6 +41,12 @@
 #include "StringUtils.h"
 #include "bootloader.h"
 #include <ctype.h>                    
+#include <spiffs.h>
+#include <spiffs_nucleus.h>
+
+extern spiffs fs;
+extern volatile int file_fd;
+#define FILE_NOT_OPENED 0
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -185,6 +191,125 @@ void SerialUpload(mico_flash_t flash, uint32_t flashdestination, char * fileName
 }
 
 /**
+* @brief  Flash application from file
+* @param  None
+* @retval None
+*/
+void FlashFile(mico_flash_t flash, uint32_t flashdestination, char * fileName, int32_t maxSize)
+{
+  int32_t Size = 0;
+  
+  printf("\r\nFlashing from file\n\r");
+
+  if (SPIFFS_mounted(&fs) == false) {
+    printf("FS not mounted!\r\n");
+    return;
+  }
+
+  if (FILE_NOT_OPENED != file_fd) {
+    SPIFFS_close(&fs,file_fd);
+    file_fd = FILE_NOT_OPENED;
+  }
+  
+  file_fd = SPIFFS_open(&fs, fileName, SPIFFS_RDONLY, 0);
+  if (file_fd < FILE_NOT_OPENED) {
+    file_fd = FILE_NOT_OPENED;
+    printf("File '%s' not found!\r\n", fileName);
+    return;
+  }
+
+  spiffs_stat s;
+  SPIFFS_fstat(&fs, file_fd, &s);
+  
+  Size = s.size;
+  if (Size > maxSize) {
+    printf("\r\nFile size (%d) too bigg for partition (%d)!\r\n", Size, maxSize);
+    SPIFFS_close(&fs,file_fd);
+    file_fd = FILE_NOT_OPENED;
+    return;
+  }
+
+  printf("Erasing flash partition ... ");  
+  if (platform_flash_erase(&platform_flash_peripherals[flash], flashdestination, flashdestination+maxSize-1) != 0) {
+    printf("error!\r\n");
+    SPIFFS_close(&fs,file_fd);
+    file_fd = FILE_NOT_OPENED;
+    return;
+  }
+  printf("done.\r\n");
+  
+  uint32_t read = 0;
+  uint32_t tot_read = 0;
+  uint32_t addr = flashdestination;
+  do {
+    read = SPIFFS_read(&fs, (spiffs_file)file_fd, &tab_1024[0], 1024);
+    if (read > 0) {
+      tot_read += read;
+      if ((addr-flashdestination+1024) >= maxSize) {
+        printf("\r\nPartition size exceded!\r\n");
+        break;
+      }
+      if (platform_flash_write(&platform_flash_peripherals[flash], &addr, &tab_1024[0], (uint32_t)read)  == 0) {
+        printf("\rProgress: %d of %d", tot_read, Size);
+      }
+      else {
+        printf("\r\nError writing to Flash!\r\n");
+        break;
+      }
+      if (read < 1024) break;
+    }
+  } while (read > 0);
+
+  printf("\r\nFinished.");
+  SPIFFS_close(&fs,file_fd);
+  file_fd = FILE_NOT_OPENED;
+}
+
+//==========================
+static int file_list( void )
+{
+  if (SPIFFS_mounted(&fs) == false) {
+    printf("FS not mounted!\r\n");
+    return -1;
+  }
+
+  spiffs_DIR d;
+  struct spiffs_dirent e;
+  struct spiffs_dirent *pe = &e;
+  uint8_t len = 0;
+
+  SPIFFS_opendir(&fs, "/", &d);
+  while ((pe = SPIFFS_readdir(&d, pe))) {
+    uint8_t nlen = strlen((char*)pe->name);
+    if (nlen > len) len = nlen;
+  }
+
+  if (len > 0) {
+    d.block = 0;
+    d.entry = 0;
+    if (len < 4) len = 4;
+    memset(&e, 0x00, sizeof(e));
+    pe = &e;
+    SPIFFS_opendir(&fs, "/", &d);
+    printf("\r\n %*s  %s\r\n", len, "Name", "Size");
+    printf(" %*s  %s\r\n", len, "----", "----");
+    while ((pe = SPIFFS_readdir(&d, pe))) {
+      if (pe->name[strlen((char *)pe->name)-1] == '/') {
+        printf(" %*s  <DIR>\r\n", len, pe->name);
+      }
+      else {
+        printf(" %*s  %i\r\n", len, pe->name, pe->size);
+      }
+    }
+  }
+  else printf("\r\nNo files!\r\n");
+  SPIFFS_closedir(&d);
+  
+  return 0;
+}
+
+
+/**
 * @brief  Display the Main Menu on HyperTerminal
 * @param  None
 * @retval None
@@ -223,6 +348,12 @@ void Main_Menu(void)
         SerialUpload( partition->partition_owner, partition->partition_start_addr, "BootLoaderImage.bin", partition->partition_length );
         continue;
       }
+      if (findCommandPara(cmdbuf, "f", NULL, 0) != -1) {
+        err = MicoFlashDisableSecurity( MICO_PARTITION_BOOTLOADER, 0x0, partition->partition_length );
+        require_noerr( err, exit);
+        FlashFile( partition->partition_owner, partition->partition_start_addr, "Bootloader.bin", partition->partition_length ); 							   	
+        continue;
+      }
       printf ("\n\rUpdating Bootloader...\n\r");
       err = MicoFlashDisableSecurity( MICO_PARTITION_BOOTLOADER, 0x0, partition->partition_length );
       require_noerr( err, exit);
@@ -236,6 +367,12 @@ void Main_Menu(void)
       if (findCommandPara(cmdbuf, "r", NULL, 0) != -1){
         printf ("\n\rRead application...\n\r");
         SerialUpload( partition->partition_owner, partition->partition_start_addr, "ApplicationImage.bin", partition->partition_length );
+        continue;
+      }
+      if (findCommandPara(cmdbuf, "f", NULL, 0) != -1){
+        err = MicoFlashDisableSecurity( MICO_PARTITION_APPLICATION, 0x0, partition->partition_length );
+        require_noerr( err, exit);
+        FlashFile( partition->partition_owner, partition->partition_start_addr, "WiFiMCU_Lua.bin", partition->partition_length ); 							   	
         continue;
       }
       printf ("\n\rUpdating application...\n\r");
@@ -252,9 +389,15 @@ void Main_Menu(void)
         continue;
       }
       
-      if (findCommandPara(cmdbuf, "r", NULL, 0) != -1){
+      if (findCommandPara(cmdbuf, "r", NULL, 0) != -1) {
         printf ("\n\rRead RF firmware...\n\r");
-        SerialUpload( partition->partition_owner, partition->partition_start_addr, "DriverImage.bin", partition->partition_length );
+        SerialUpload( partition->partition_owner, partition->partition_start_addr, "RFDriverImage.bin", partition->partition_length );
+        continue;
+      }
+      if (findCommandPara(cmdbuf, "f", NULL, 0) != -1) {
+        err = MicoFlashDisableSecurity( MICO_PARTITION_RF_FIRMWARE, 0x0, partition->partition_length );
+        require_noerr( err, exit);
+        FlashFile( partition->partition_owner, partition->partition_start_addr, "RFDriver.bin", partition->partition_length ); 							   	
         continue;
       }
       printf ("\n\rUpdating RF driver...\n\r");
@@ -286,11 +429,16 @@ void Main_Menu(void)
       SerialDownload( partition->partition_owner, partition->partition_start_addr, partition->partition_length );                        
     }
     
-    /***************** Command "8" or "ELUAFLASH": : Erase Lua SPI FLASH FS  *********************/
-    else if(strcmp(cmdname, "ELUAFLASH") == 0 || strcmp(cmdname, "8") == 0) {
+    /***************** Command "8" or "ERASELUAFLASH": : Erase Lua SPI FLASH FS  *********************/
+    else if(strcmp(cmdname, "ERASELUAFLASH") == 0 || strcmp(cmdname, "8") == 0) {
       partition = MicoFlashGetInfo( MICO_PARTITION_LUA );
       printf ("\n\rErasing Lua SPI FLASH FS content...\n\r");
       MicoFlashErase( MICO_PARTITION_LUA, 0x0, partition->partition_length );
+    }
+    
+    /***************** Command "9" or "FILELIST": : List files on LUA FS  *********************/
+    else if(strcmp(cmdname, "FILELIST") == 0 || strcmp(cmdname, "9") == 0) {
+      file_list();
     }
     
     /***************** Command "4" or "FLASHUPDATE": : Update the Flash  *************************/

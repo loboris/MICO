@@ -43,9 +43,13 @@ typedef struct {
         unsigned long  wdg_tmo;
         unsigned short stack_size;
         unsigned short inbuf_size;
+	unsigned char  wifi_start;
+          signed char  tz;
         unsigned long  baud_rate;
         unsigned char  parity;
-	char           init_file[16];
+	         char  init_file[16];
+	         char  wifi_ssid[32];
+	         char  wifi_key[64];
         unsigned short crc;
 } lua_system_param_t;
 //-------------------------

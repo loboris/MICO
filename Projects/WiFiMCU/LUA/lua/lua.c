@@ -25,8 +25,8 @@
 
 extern mico_mutex_t  lua_queue_mut;
 extern spiffs fs;
-extern void lua_spiffs_mount();
-extern lua_system_param_t lua_system_param;
+extern bool lua_spiffs_mount(uint8_t warn);
+extern int getLua_initFileName(char* fname);
 
 static lua_State *globalL = NULL;
 static const char *progname = LUA_PROGNAME;
@@ -121,9 +121,8 @@ static int docall (lua_State *L, int narg, int clear) {
 
 
 static void print_version (void) {
-  l_message(NULL,"\r\n");
   char temp[128];
-  sprintf(temp,"[ %s WiFiMCU Team     ]\r\n[ %s modified by LoBo ]\r\n",PRT_VERSION,BUILD_DATE);
+  sprintf(temp,"\r\n[ %s LoBo, %s ]\r\n",PRT_VERSION,BUILD_DATE);
   l_message(NULL,temp);
 }
 
@@ -244,31 +243,30 @@ static int loadline (lua_State *L) {
 //--------------------------------
 static void mydofile(lua_State *L)
 {
-  char fn[64];
+  char fn[16] = {0};
+  char buf[40] = {0};
   int file_fd=-1;
-  char *p_f = &lua_system_param.init_file[0];
 
-  lua_spiffs_mount();
-  
-  if (strlen(lua_system_param.init_file) == 0) {
-    l_message(NULL,"Init file not defined.");
-    return;
+  if (lua_spiffs_mount(1)) {
+    if ((getLua_initFileName(&fn[0]) == 0) || (strlen(fn) == 0)) {
+      l_message(NULL,"Init file not defined.");
+      return;
+    }
+
+    file_fd = SPIFFS_open(&fs,fn,SPIFFS_RDONLY,0);
+    if (file_fd < 0)
+    {
+      sprintf(buf, "Init file \"%s\" not found", fn);
+      l_message(NULL, buf);
+    }
+    else
+    {
+       SPIFFS_close(&fs, file_fd);
+       sprintf(buf, "Executing init file \"%s\" ...", fn);
+       l_message(NULL, buf);
+       dofile(L, fn);
+    }
   }
-  sprintf(fn, p_f);
-  file_fd = SPIFFS_open(&fs,fn,SPIFFS_RDONLY,0);
-  if(file_fd<0)
-  {
-    sprintf(fn,"Init file \"%s\" not found",lua_system_param.init_file);
-    l_message(NULL,fn);
-  }
-  else
-  {
-     SPIFFS_close(&fs,file_fd);
-     sprintf(fn,"Executing init file \"%s\" ...",lua_system_param.init_file);
-     l_message(NULL,fn);
-     sprintf(fn, p_f);
-     dofile(L,fn);
-  }    
 }
 
 //================================

@@ -1556,6 +1556,9 @@
       <file>
         <name>$PROJ_DIR$\..\..\..\..\MICO\security\MicoCrypto.a</name>
       </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\..\..\MICO\security\MicoSrpServer.a</name>
+      </file>
     </group>
     <group>
       <name>system</name>

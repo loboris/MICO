@@ -340,6 +340,7 @@
           <state>$PROJ_DIR$\..\..\..\..\include\MicoDrivers</state>
           <state>$PROJ_DIR$\..\sntp</state>
           <state>$PROJ_DIR$\..\MQTT</state>
+          <state>$PROJ_DIR$\..\..\..\..\MICO\security</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -1496,14 +1497,23 @@
       <file>
         <name>$PROJ_DIR$\..\..\..\..\MICO\security\MicoCrypto.a</name>
       </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\..\..\MICO\security\MicoSrpServer.a</name>
+      </file>
     </group>
     <group>
       <name>system</name>
       <file>
         <name>$PROJ_DIR$\..\..\..\..\MICO\system\config_server\config_server.c</name>
+        <excluded>
+          <configuration>WiFiMCU</configuration>
+        </excluded>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\..\..\MICO\system\config_server\config_server_menu.c</name>
+        <excluded>
+          <configuration>WiFiMCU</configuration>
+        </excluded>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\..\..\MICO\system\mico_system_init.c</name>
@@ -1516,6 +1526,9 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\..\..\MICO\system\mico_system_para_storage.c</name>
+        <excluded>
+          <configuration>WiFiMCU</configuration>
+        </excluded>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\..\..\MICO\system\system.h</name>

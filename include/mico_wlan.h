@@ -49,17 +49,20 @@ extern "C" {
 #define micoWlanSuspend           wlan_disconnect
 #define micoWlanSuspendStation    sta_disconnect
 #define micoWlanSuspendSoftAP     uap_stop
+/*
 #define micoWlanStartEasyLink     OpenEasylink2_withdata
 #define micoWlanStopEasyLink      CloseEasylink2
 #define micoWlanStartEasyLinkPlus OpenEasylink
 #define micoWlanStopEasyLinkPlus  CloseEasylink
+*/
 #define micoWlanStartWPS          OpenConfigmodeWPS
 #define micoWlanStopWPS           CloseConfigmodeWPS
 #define micoWlanEnablePowerSave   ps_enable
 #define micoWlanDisablePowerSave  ps_disable
+/*
 #define micoWlanStartAirkiss      OpenAirkiss
 #define micoWlanStopAirkiss       CloseAirkiss
-
+*/
 #define WiFi_Interface  wlanInterfaceTypedef
 #define net_para_st     IPStatusTypedef
 
@@ -259,7 +262,7 @@ typedef struct _linkStatus_t{
   int      channel;       /**< Channel of the current connected wlan */
 } LinkStatusTypeDef;
 
-
+/*
 typedef struct {
     char bssid[6];
     char ssid[33];
@@ -267,6 +270,7 @@ typedef struct {
     int  user_data_len;
     char user_data[65];
 } easylink_result_t;
+*/
 
 /** @defgroup MICO_WLAN_GROUP_1 MICO Wlan Functions
   * @{
@@ -300,7 +304,7 @@ OSStatus micoWlanStart(network_InitTypeDef_st* inNetworkInitPara);
  *          change back to normal: scan + connect mode refer to @ref micoWlanStart.
  *          This function returns after the fast connection try.
  *
- *  @note   This function cannot establish a soft ap, use StartNetwork() for this
+ *  @note   This function cannot establish a soft ap, use micoWlanStart() for this
  *          purpose. 
  *          If input SSID length is 0, MICO use BSSID to connect the target wlan.
  *          If both SSID and BSSID are all wrong, the connection will be failed.
@@ -367,7 +371,7 @@ OSStatus micoWlanPowerOn(void);
 /**@brief  Close all the Wi-Fi connections, station mode and soft ap mode
  * 
  * @note   This function also stop the background retry mechanism started by 
- *         MICOWlanStart() and MICOWlanStartAdv()
+ *         micoWlanStart() and micoWlanStartAdv()
  *
  * @retval kNoErr.
  */
@@ -376,7 +380,7 @@ OSStatus micoWlanSuspend(void);
 /** @brief  Close the connection in station mode
  * 
  *  @note   This function also stop the background retry mechanism started by 
- *          StartNetwork() and StartAdvNetwork()
+ *          micoWlanStart() and micoWlanStartAdv()
  *
  *  @retval kNoErr.
  */
@@ -407,7 +411,7 @@ OSStatus micoWlanSuspendSoftAP(void);
  *
  *  @retval kNoErr.
  */
-OSStatus micoWlanStartEasyLink(int inTimeout);
+//OSStatus micoWlanStartEasyLink(int inTimeout);
 
 /** @brief  Start EasyLink plus configuration with user extra data
  * 
@@ -424,14 +428,14 @@ OSStatus micoWlanStartEasyLink(int inTimeout);
  *
  *  @retval kNoErr.
  */
-OSStatus micoWlanStartEasyLinkPlus(int inTimeout);
+//OSStatus micoWlanStartEasyLinkPlus(int inTimeout);
 
 /** @brief  Stop EasyLink configuration procedure
  *  
  *  @retval kNoErr.
  */
-OSStatus micoWlanStopEasyLink(void);
-OSStatus micoWlanStopEasyLinkPlus(void);
+//OSStatus micoWlanStopEasyLink(void);
+//OSStatus micoWlanStopEasyLinkPlus(void);
 
 /** @brief  Start WPS configuration procedure
  *
@@ -463,13 +467,13 @@ OSStatus micoWlanStopWPS(void);
  *
  *  @retval kNoErr.
  */
-OSStatus micoWlanStartAirkiss(int inTimeout);
+//OSStatus micoWlanStartAirkiss(int inTimeout);
 
 /** @brief  Stop wechat airkiss configuration procedure
  *  
  *  @retval kNoErr.
  */
-OSStatus micoWlanStopAirkiss(void);
+//OSStatus micoWlanStopAirkiss(void);
 
 /** @brief  Enable IEEE power save mode
  * 

@@ -20,12 +20,12 @@ static spiffs_cache_page *spiffs_cache_page_get(spiffs *fs, spiffs_page_ix pix) 
     if ((cache->cpage_use_map & (1<<i)) &&
         (cp->flags & SPIFFS_CACHE_FLAG_TYPE_WR) == 0 &&
         cp->pix == pix ) {
-      SPIFFS_CACHE_DBG("CACHE_GET: have cache page %i for %04x\n", i, pix);
+      SPIFFS_CACHE_DBG("CACHE_GET: have cache page %i for %04x\r\n", i, pix);
       cp->last_access = cache->last_access;
       return cp;
     }
   }
-  //SPIFFS_CACHE_DBG("CACHE_GET: no cache for %04x\n", pix);
+  //SPIFFS_CACHE_DBG("CACHE_GET: no cache for %04x\r\n", pix);
   return 0;
 }
 
@@ -39,16 +39,16 @@ static s32_t spiffs_cache_page_free(spiffs *fs, int ix, u8_t write_back) {
         (cp->flags & SPIFFS_CACHE_FLAG_TYPE_WR) == 0 &&
         (cp->flags & SPIFFS_CACHE_FLAG_DIRTY)) {
       u8_t *mem =  spiffs_get_cache_page(fs, cache, ix);
-      res = fs->cfg.hal_write_f(SPIFFS_PAGE_TO_PADDR(fs, cp->pix), SPIFFS_CFG_LOG_PAGE_SZ(fs), mem);
+      res = SPIFFS_HAL_WRITE(fs, SPIFFS_PAGE_TO_PADDR(fs, cp->pix), SPIFFS_CFG_LOG_PAGE_SZ(fs), mem);
     }
 
     cp->flags = 0;
     cache->cpage_use_map &= ~(1 << ix);
 
     if (cp->flags & SPIFFS_CACHE_FLAG_TYPE_WR) {
-      SPIFFS_CACHE_DBG("CACHE_FREE: free cache page %i objid %04x\n", ix, cp->obj_id);
+      SPIFFS_CACHE_DBG("CACHE_FREE: free cache page %i objid %04x\r\n", ix, cp->obj_id);
     } else {
-      SPIFFS_CACHE_DBG("CACHE_FREE: free cache page %i pix %04x\n", ix, cp->pix);
+      SPIFFS_CACHE_DBG("CACHE_FREE: free cache page %i pix %04x\r\n", ix, cp->pix);
     }
   }
 
@@ -98,7 +98,7 @@ static spiffs_cache_page *spiffs_cache_page_allocate(spiffs *fs) {
       spiffs_cache_page *cp = spiffs_get_cache_page_hdr(fs, cache, i);
       cache->cpage_use_map |= (1<<i);
       cp->last_access = cache->last_access;
-      SPIFFS_CACHE_DBG("CACHE_ALLO: allocated cache page %i\n", i);
+      SPIFFS_CACHE_DBG("CACHE_ALLO: allocated cache page %i\r\n", i);
       return cp;
     }
   }
@@ -137,10 +137,7 @@ s32_t spiffs_phys_rd(
   } else {
     if ((op & SPIFFS_OP_TYPE_MASK) == SPIFFS_OP_T_OBJ_LU2) {
       // for second layer lookup functions, we do not cache in order to prevent shredding
-      return fs->cfg.hal_read_f(
-          addr ,
-          len,
-          dst);
+      return SPIFFS_HAL_READ(fs, addr, len, dst);
     }
 #if SPIFFS_CACHE_STATS
     fs->cache_misses++;
@@ -151,8 +148,7 @@ s32_t spiffs_phys_rd(
       cp->flags = SPIFFS_CACHE_FLAG_WRTHRU;
       cp->pix = SPIFFS_PADDR_TO_PAGE(fs, addr);
     }
-
-    s32_t res2 = fs->cfg.hal_read_f(
+    s32_t res2 = SPIFFS_HAL_READ(fs,
         addr - SPIFFS_PADDR_TO_PAGE_OFFSET(fs, addr),
         SPIFFS_CFG_LOG_PAGE_SZ(fs),
         spiffs_get_cache_page(fs, cache, cp->ix));
@@ -186,7 +182,7 @@ s32_t spiffs_phys_wr(
         (op & SPIFFS_OP_TYPE_MASK) != SPIFFS_OP_T_OBJ_LU) {
       // page is being deleted, wipe from cache - unless it is a lookup page
       spiffs_cache_page_free(fs, cp->ix, 0);
-      return fs->cfg.hal_write_f(addr, len, src);
+      return SPIFFS_HAL_WRITE(fs, addr, len, src);
     }
 
     u8_t *mem =  spiffs_get_cache_page(fs, cache, cp->ix);
@@ -195,15 +191,15 @@ s32_t spiffs_phys_wr(
     cache->last_access++;
     cp->last_access = cache->last_access;
 
-    if (cp->flags && SPIFFS_CACHE_FLAG_WRTHRU) {
+    if (cp->flags & SPIFFS_CACHE_FLAG_WRTHRU) {
       // page is being updated, no write-cache, just pass thru
-      return fs->cfg.hal_write_f(addr, len, src);
+      return SPIFFS_HAL_WRITE(fs, addr, len, src);
     } else {
       return SPIFFS_OK;
     }
   } else {
     // no cache page, no write cache - just write thru
-    return fs->cfg.hal_write_f(addr, len, src);
+    return SPIFFS_HAL_WRITE(fs, addr, len, src);
   }
 }
 

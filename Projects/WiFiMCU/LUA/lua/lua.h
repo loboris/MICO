@@ -372,16 +372,15 @@ struct lua_Debug {
 extern int readline4lua(const char *prompt, char *buffer, int length);
 
 enum{
-  TMR=0,
-  GPIO,
-  WIFI,
-  NETTMR,
-  onUART1,
-  onUART2,
+  onTMR = 0,
+  onGPIO,
+  onWIFI,
+  onNet,
+  onUART,
   onMQTT,
   onMQTTmsg,
   onFTP,
-  USER,
+  needUNREF = 0x10,
 };
 
 typedef struct _msg

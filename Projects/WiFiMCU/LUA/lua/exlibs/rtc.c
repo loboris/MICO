@@ -15,8 +15,9 @@
 #include "StringUtils.h"
 #include "time.h" 
 
+extern uint8_t use_wwdg;
+extern unsigned long wdg_tmo;
 extern void luaWdgReload( void );
-extern lua_system_param_t lua_system_param;
 
 #define TM_RTC_Int_Disable       0x00    /*!< Disable RTC wakeup interrupts */
 
@@ -211,7 +212,10 @@ static int rtc_getasc( lua_State* L )
   struct tm currentTime;
    
   if (_get_tm(&currentTime)) {
-    lua_pushstring(L,asctime(&currentTime));
+    char tmpt[32];
+    sprintf(tmpt, "%s", asctime(&currentTime));
+    tmpt[strlen(tmpt)-1] = 0x00;
+    lua_pushstring(L, tmpt);
   }else {
     lua_pushstring(L, "RTC unsupported"); 
   }  
@@ -310,7 +314,7 @@ static int rtc_standby( lua_State* L )
     l_message( NULL, "mode has to be 0 or 1" );
     return 0;
   }
-  if (mode==1 && lua_system_param.use_wwdg == 0) {
+  if (mode==1 && use_wwdg == 0) {
     l_message(NULL,"IWDG active, cannot enter STOP mode."); 
     return 0;
   }
@@ -388,7 +392,7 @@ static int rtc_standbyUntil( lua_State* L )
     l_message( NULL, "mode has to be 0 or 1" );
     return 0;
   }
-  if (mode==1 && lua_system_param.use_wwdg == 0) {
+  if (mode==1 && use_wwdg == 0) {
     l_message(NULL,"IWDG active, cannot enter STOP mode."); 
     return 0;
   }

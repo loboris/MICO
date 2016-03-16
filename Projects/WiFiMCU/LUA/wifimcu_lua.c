@@ -1,20 +1,28 @@
 
-#include "MiCO.h" 
+#include "MiCO.h"
 #include "mico_system.h"
-#include "time.h" 
+#include "time.h"
 #include "platform_config.h"
 #include "CheckSumUtils.h"
 #include "lua.h"
 #include "lauxlib.h"
 #include "MQTTClient.h"
+#include "sntp.h"
 
+typedef struct _ApList {  
+    char ssid[32];  /**< The SSID of an access point.*/
+    char ApPower;   /**< Signal strength, min:0, max:100*/
+    char bssid[6];  /**< The BSSID of an access point.*/
+    char channel;   /**< The RF frequency, 1-13*/
+    SECURITY_TYPE_E security;   /**< Security type, @ref SECURITY_TYPE_E*/
+} _ApList; 
+
+extern char curr_dir[32];
 extern platform_uart_driver_t platform_uart_drivers[];
 extern const platform_uart_t  platform_uart_peripherals[];
 extern unsigned char boot_reason;
-extern void _timer_net_handle( lua_State* gL );
-extern void _do_freeBuf(uint8_t id);
-//extern uint8_t *MQTT_topicbuf;
-//extern uint8_t *MQTT_msgbuf;
+extern void _WiFi_Scan_OK (lua_State *L, char ApNum, _ApList* ApList, uint8_t print);
+
 
 #define DEFAULT_WATCHDOG_TIMEOUT        10*1000  // 10 seconds
 #define main_log(M, ...) custom_log("main", M, ##__VA_ARGS__)
@@ -28,41 +36,67 @@ uint8_t _lua_redir = 0;
 char * _lua_redir_buf = NULL;
 uint16_t _lua_redir_ptr = 0;
 
-//----------------------------------------
-lua_system_param_t lua_system_param =
-{
-  .ID = LUA_PARAMS_ID,
-  .use_wwdg   = 0,
-  .wdg_tmo    = DEFAULT_WATCHDOG_TIMEOUT,
-  .stack_size = 20*1024,
-  .inbuf_size = INBUF_SIZE,
-  .baud_rate  = 115200,
-  .parity     = NO_PARITY,
-  .init_file  = "",
-  .crc = 0
-};
-
 static mico_thread_t lua_queue_thread = NULL;
-mico_mutex_t  lua_queue_mut; // Used to synchronize the queue thread
+static mico_mutex_t  lua_queue_mut; // Used to synchronize the queue thread
 
 static uint32_t wwdgCount = 0;
+uint8_t use_wwdg = 0;
+unsigned long wdg_tmo = 10000;
 
 
-//----------------------------------
-uint16_t _get_luaparamsCRC( void ) {
+//----------------------------------------------------------------
+uint16_t _get_luaparamsCRC(lua_system_param_t* lua_system_param) {
   CRC16_Context paramcrc;
   uint16_t crc = 0;
-  uint8_t *p_id = &lua_system_param.ID;
+  //unsigned char *p_id = lua_system_param->ID;
 
   CRC16_Init( &paramcrc );
-  CRC16_Update( &paramcrc, p_id, sizeof(lua_system_param_t)-sizeof(uint16_t) );
+  CRC16_Update( &paramcrc, lua_system_param, (sizeof(lua_system_param_t)-sizeof(uint16_t)) );
   CRC16_Final( &paramcrc, &crc );
   return crc;
 }
 
+//-----------------------------------------------------------
+int getLua_systemParams(lua_system_param_t* lua_system_param)
+{
+  uint16_t crc = 0;
+  uint32_t lua_param_offset = 0x0;
+
+  MicoFlashRead(MICO_PARTITION_PARAMETER_1, &lua_param_offset , (uint8_t*)lua_system_param, sizeof(lua_system_param_t));
+  crc = _get_luaparamsCRC(lua_system_param);
+  if (lua_system_param->ID != LUA_PARAMS_ID || crc != lua_system_param->crc) return 0;
+  else return 1;
+}
+
+//------------------------------------------------------------
+int saveLua_systemParams(lua_system_param_t* lua_system_param)
+{
+  uint32_t lua_param_offset = 0x0;
+  int err = 0;
+  
+  lua_system_param->crc = _get_luaparamsCRC(lua_system_param);
+  err = MicoFlashErase(MICO_PARTITION_PARAMETER_1, 0, sizeof(lua_system_param_t));
+  if (err != kNoErr) return 0;
+  
+  lua_param_offset = 0;
+  err = MicoFlashWrite(MICO_PARTITION_PARAMETER_1, &lua_param_offset, (uint8_t*)lua_system_param, sizeof(lua_system_param_t));
+  if (err != kNoErr) return 0;
+  return 1;  
+}
+
+//----------------------------------
+int getLua_initFileName(char* fname)
+{
+  lua_system_param_t lua_system_param;
+
+  if (getLua_systemParams(&lua_system_param) == 0) return 0;
+  strcpy(fname, &lua_system_param.init_file[0]);
+  return 1;
+}
+
 //----------------------------------------------------
 void luaWdgReload( void ) {
-  if (lua_system_param.use_wwdg == 0) MicoWdgReload();
+  if (use_wwdg == 0) MicoWdgReload();
   else wwdgCount = 0;
 }
 //----------------------------------------------------
@@ -126,28 +160,36 @@ int lua_getchar(char *inbuf)
     return 0;  //err
 }
 
-extern char gWiFiSSID[];
-extern char gWiFiPSW[];
+//extern char gWiFiSSID[];
+//extern char gWiFiPSW[];
+
 //=========================================
 static void do_queue_task(queue_msg_t* msg)
 {
-  if ((msg->source == TMR) || (msg->source == GPIO))
+  if (msg->L == NULL) return;
+  if (msg->para2 == LUA_NOREF) return;
+
+  lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
+  if ((lua_type(msg->L, -1) != LUA_TFUNCTION) && (lua_type(msg->L, -1) != LUA_TLIGHTFUNCTION)) {
+    // * BAD CB function reference
+    lua_remove(msg->L, -1);
+    return;
+  }
+  uint8_t msgsource = msg->source & 0x0F;
+
+  // ** Check source, cb function is already on lua stack
+  if ((msgsource == onTMR) || (msgsource == onGPIO))
   { // === execute timer or gpio interrupt function ===
-    if(msg->para2 == LUA_NOREF) return;
-    lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
     lua_call(msg->L, 0, 0);
     lua_gc(msg->L, LUA_GCCOLLECT, 0);
   }
-  else if (msg->source == NETTMR)
-  { // === execute net timer interrupt function ===
-    _timer_net_handle(msg->L);
-  }
-  else if (msg->source == onMQTTmsg)
+  else if (msgsource == onMQTTmsg)
   { // === execute onMQTT msg function ===
-    if (msg->para2 == LUA_NOREF) return;
-    if ((msg->para3 == NULL) || (msg->para4 == NULL)) return;
+    if ((msg->para3 == NULL) || (msg->para4 == NULL)) {
+      lua_remove(msg->L, -1);
+      return;
+    }
     
-    lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
     lua_pushlstring(msg->L, (const char*)(msg->para3), msg->para1 >> 16);
     lua_pushinteger(msg->L, msg->para1 & 0xFFFF);
     lua_pushlstring(msg->L, (const char*)(msg->para4), msg->para1 & 0xFFFF);
@@ -158,11 +200,9 @@ static void do_queue_task(queue_msg_t* msg)
     lua_call(msg->L, 3, 0);
     lua_gc(msg->L, LUA_GCCOLLECT, 0);
   }
-  else if (msg->source == onMQTT)
+  else if (msgsource == onMQTT)
   { // === execute onMQTT function ===
     //_mqtt_handler();
-    if(msg->para2 == LUA_NOREF) return;
-    lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
     if ((msg->para1 >> 16) != 0) {
       lua_pushinteger(msg->L, msg->para1 & 0xFFFF);
       lua_pushinteger(msg->L, msg->para1 >> 16);
@@ -174,75 +214,84 @@ static void do_queue_task(queue_msg_t* msg)
     }
     lua_gc(msg->L, LUA_GCCOLLECT, 0);
   }
-  else if ((msg->source == onUART1) || (msg->source == onUART2))
+  else if (msgsource == onUART)
   { // === execute UART ON function ===
-    if (msg->para2 == LUA_NOREF) return;
-    if (msg->para3 == NULL) return;
-    if (msg->L == NULL) {
-      if (msg->source == onUART1) _do_freeBuf(1);
-      else _do_freeBuf(2);
+    if (msg->para3 == NULL) {
+      lua_remove(msg->L, -1);
       return;
     }
-    
-    lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
     lua_pushinteger(msg->L, msg->para1);
     lua_pushlstring(msg->L, (const char*)(msg->para3), msg->para1);
-    if (msg->source == onUART1) _do_freeBuf(1);
-    else _do_freeBuf(2);
+    free(msg->para3);
+    msg->para3 = NULL;
     lua_call(msg->L, 2, 0);
     lua_gc(msg->L, LUA_GCCOLLECT, 0);
   }
-  else if (msg->source == onFTP)
-  { // === execute on FTP function ===
-    if (msg->para2 == LUA_NOREF) return;
-    if (msg->L == NULL) return;
-    
-    lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
-    if (msg->para3 == NULL) {
-      lua_pushinteger(msg->L, msg->para1);
-      lua_call(msg->L, 1, 0);
+  else if ((msgsource == onNet) || (msgsource == onFTP))
+  { // === execute onNet & onFTP function ===
+    uint8_t n = 0;
+    lua_pushinteger(msg->L, msg->para1);
+    n++;
+    if (msg->para3 != NULL) {
+      lua_pushlstring(msg->L, (const char*)(msg->para3), strlen((const char*)msg->para3));
+      free(msg->para3);
+      msg->para3 = NULL;
+      n++;
+    }
+    if (msg->para4 != NULL) {
+      lua_pushlstring(msg->L, (const char*)(msg->para4), strlen((const char*)msg->para4));
+      free(msg->para4);
+      msg->para4 = NULL;
+      n++;
+    }
+    if (n > 0) {
+      lua_call(msg->L, n, 0);
+      lua_gc(msg->L, LUA_GCCOLLECT, 0);
     }
     else {
-      lua_pushinteger(msg->L, msg->para1);
-      lua_pushlstring(msg->L, (const char*)(msg->para3), msg->para1);
+      lua_remove(msg->L, -1);
+    }
+    if ((msg->source & needUNREF) != 0) {
+      luaL_unref(msg->L, LUA_REGISTRYINDEX, msg->para2);
+    }
+  }
+  else if (msgsource == onWIFI)
+  { // === execute wifi function ===
+    if ((msg->source & 0x10) != 0) {
+      _WiFi_Scan_OK(msg->L, msg->para1, (_ApList*)msg->para3, 0);
       free(msg->para3);
       msg->para3 = NULL;
       lua_call(msg->L, 2, 0);
+      lua_gc(msg->L, LUA_GCCOLLECT, 0);
     }
-    lua_gc(msg->L, LUA_GCCOLLECT, 0);
-  }
-  else if(msg->source == USER)
-  { // === execute user function ===
-    if(msg->para2 == LUA_NOREF) return;
-    lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
-    lua_pushstring(msg->L, "User function");
-    lua_call(msg->L, 1, 0);
-    luaL_unref(msg->L, LUA_REGISTRYINDEX, msg->para2);
-    lua_gc(msg->L, LUA_GCCOLLECT, 0);
-  }
-  else if(msg->source == WIFI)
-  { // === execute wifi function ===
-    if(msg->para2 == LUA_NOREF || msg->para1 > 5) return;
-      lua_rawgeti(msg->L, LUA_REGISTRYINDEX, msg->para2);
-    switch(msg->para1)
-    {
-      case 0:lua_pushstring(msg->L, "STATION_UP");lua_call(msg->L, 1, 0);break;
-      case 1:lua_pushstring(msg->L, "STATION_DOWN");lua_call(msg->L, 1, 0);break;
-      case 2:lua_pushstring(msg->L, "AP_UP");lua_call(msg->L, 1, 0);break;
-      case 3:lua_pushstring(msg->L, "AP_DOWN");lua_call(msg->L, 1, 0);break;
-      case 4:lua_pushstring(msg->L, "ERROR");lua_call(msg->L, 1, 0);break;
-      case 5:
-            if(gWiFiSSID[0]==0x00){
-                lua_pushnil(msg->L);lua_pushnil(msg->L);
-              }
-              else{
-                lua_pushstring(msg->L,gWiFiSSID);lua_pushstring(msg->L,gWiFiPSW);
-              }
-              lua_call(msg->L, 2, 0);
-            break;
-    default:lua_pushstring(msg->L, "ERROR");lua_call(msg->L, 1, 0);break;
+    else {
+      if (msg->para1 > 5) {
+        lua_remove(msg->L, -1);
+        return;
+      }
+      uint8_t n = 1;
+      switch(msg->para1) {
+        case 0: lua_pushstring(msg->L, "STATION_UP"); break;
+        case 1: lua_pushstring(msg->L, "STATION_DOWN"); break;
+        case 2: lua_pushstring(msg->L, "AP_UP"); break;
+        case 3: lua_pushstring(msg->L, "AP_DOWN"); break;
+        case 4: lua_pushstring(msg->L, "ERROR"); break;
+        /*case 5:
+                if (gWiFiSSID[0] == 0x00) {
+                  lua_pushnil(msg->L);
+                  lua_pushnil(msg->L);
+                }
+                else {
+                  lua_pushstring(msg->L, gWiFiSSID);
+                  lua_pushstring(msg->L, gWiFiPSW);
+                }
+                n = 2;
+                break;*/
+        default: lua_pushstring(msg->L, "ERROR"); break;
+      }
+      lua_call(msg->L, n, 0);
+      lua_gc(msg->L, LUA_GCCOLLECT, 0);
     }
-    lua_gc(msg->L, LUA_GCCOLLECT, 0);
   }
 }
 
@@ -264,7 +313,7 @@ static void queue_thread(void*arg)
     mico_rtos_unlock_mutex(&lua_queue_mut);
   }
 exit:
-  lua_printf("queue_thread error\r\n");
+  lua_printf("**Queue_thread error**\r\n");
   mico_rtos_delete_thread( NULL );  
 }
 
@@ -278,7 +327,10 @@ int readline4lua(const char *prompt, char *buffer, int buffer_size)
   _lua_redir = 0;
   
 start:
-  lua_printf(prompt); // show prompt
+  if (strcmp(prompt, LUA_PROMPT) == 0) {
+    lua_printf("/%s> ", curr_dir);
+  }
+  else lua_printf(prompt); // show prompt
   line_position = 0;
   memset(buffer, 0, buffer_size);
   while (1)
@@ -348,8 +400,8 @@ static void lua_main_thread(void *data)
   // === Error happened  =============
   lua_printf("lua exited, reboot\r\n");
   
-  if (lua_system_param.use_wwdg != 0) {
-    MicoWdgInitialize( lua_system_param.wdg_tmo);
+  if (use_wwdg != 0) {
+    MicoWdgInitialize(wdg_tmo);
   }
   mico_thread_msleep(500);
   free(lua_rx_data);
@@ -367,7 +419,7 @@ void TIM1_BRK_TIM9_IRQHandler(void)
   if (TIM_GetITStatus(TIM9, TIM_IT_Update) != RESET)
   {
     TIM_ClearITPendingBit(TIM9, TIM_IT_Update);
-    if (wwdgCount < lua_system_param.wdg_tmo) {
+    if (wwdgCount < wdg_tmo) {
       WWDG_SetCounter(0x7E);
     }
     wwdgCount += 20; // +20 msec
@@ -416,46 +468,44 @@ static void wwdg_Config(void)
   TIM_Cmd(TIM9, ENABLE); // and enable TIM9 counter
 }
 
-
 //===========================
 int application_start( void )
 {
-//start
+  //start
+  lua_system_param_t lua_system_param;
   struct tm currentTime;
-  uint32_t lua_param_offset = 0x0;
-  uint16_t crc = 0;
-  uint8_t *p_id = &lua_system_param.ID;
-  char *p_f = &lua_system_param.init_file[0];
   mico_rtc_time_t ttime;
   uint8_t prmstat = 0;
+  uint8_t prmsaved = 0;
     
   platform_check_bootreason();
   MicoInit();
 
   // Read parameters from flash
-  lua_param_offset = 0;
-  MicoFlashRead(MICO_PARTITION_PARAMETER_1, &lua_param_offset , p_id, sizeof(lua_system_param_t));
-  crc = _get_luaparamsCRC();
-
-  if (lua_system_param.ID != LUA_PARAMS_ID || crc != lua_system_param.crc)  {
+  if (getLua_systemParams(&lua_system_param) == 0)  {
+    // initialize system params
+    memset(&lua_system_param, 0x00, sizeof(lua_system_param));
     lua_system_param.ID = LUA_PARAMS_ID;
-    lua_system_param.use_wwdg = 0;
+    //lua_system_param.use_wwdg = 0;
     lua_system_param.wdg_tmo    = DEFAULT_WATCHDOG_TIMEOUT;
     lua_system_param.stack_size = 10*1024;
     lua_system_param.inbuf_size = INBUF_SIZE;
+    //lua_system_param.wifi_start = 0;
+    //lua_system_param.tz = 0;
     lua_system_param.baud_rate = 115200;
     lua_system_param.parity = NO_PARITY;
-    sprintf(p_f,"");
-    lua_system_param.crc = _get_luaparamsCRC();
-    MicoFlashErase(MICO_PARTITION_PARAMETER_1, 0, sizeof(lua_system_param_t));
-    lua_param_offset = 0;
-    MicoFlashWrite(MICO_PARTITION_PARAMETER_1, &lua_param_offset, p_id, sizeof(lua_system_param_t));
+    //memset(&lua_system_param.init_file[0], 0x00, sizeof(lua_system_param.init_file));
+    //memset(&lua_system_param.wifi_ssid[0], 0x00, sizeof(lua_system_param.wifi_ssid));
+    //memset(&lua_system_param.wifi_key[0], 0x00, sizeof(lua_system_param.wifi_key));
     
+    prmsaved = saveLua_systemParams(&lua_system_param);
   }
   else {
     prmstat = 1;
   }
-
+  use_wwdg = lua_system_param.use_wwdg;
+  wdg_tmo = lua_system_param.wdg_tmo;
+  
   //usrinterface
   lua_rx_data = (uint8_t*)malloc(lua_system_param.inbuf_size);
   ring_buffer_init( (ring_buffer_t*)&lua_rx_buffer, (uint8_t*)lua_rx_data, lua_system_param.inbuf_size );
@@ -466,12 +516,17 @@ int application_start( void )
   //MicoUartInitialize( STDIO_UART, &lua_uart_config, (ring_buffer_t*)&lua_rx_buffer );
   platform_uart_init( &platform_uart_drivers[LUA_UART], &platform_uart_peripherals[LUA_UART], &lua_uart_config, (ring_buffer_t*)&lua_rx_buffer );
 
-  lua_printf( "\r\nWiFiMCU Lua starting...(Free memory %d/%d)\r\n",MicoGetMemoryInfo()->free_memory,MicoGetMemoryInfo()->total_memory);
+  lua_printf("\r\nWiFiMCU Lua starting...(Free memory %d/%d)\r\n",MicoGetMemoryInfo()->free_memory,MicoGetMemoryInfo()->total_memory);
   lua_printf("  Lua params: ");
+  
   if (prmstat) lua_printf( "OK");
-  else lua_printf( "BAD, initialized");
+  else {
+    lua_printf( "BAD, initialized");
+    if (prmsaved == 0) lua_printf(", ERROR saving!");
+  }
+  
   lua_printf("\r\n    Watchdog: ");
-  if (lua_system_param.use_wwdg == 0) lua_printf("IWDT");
+  if (use_wwdg == 0) lua_printf("IWDT");
   else lua_printf( "WWDG");
   
   lua_printf("\r\n Boot reason: ");
@@ -497,7 +552,7 @@ int application_start( void )
     currentTime.tm_wday = ttime.weekday;
     currentTime.tm_mon = ttime.month - 1;
     currentTime.tm_year = ttime.year + 100; 
-    lua_printf("Current Time: %s",asctime(&currentTime)); 
+    lua_printf("Current Time: %s\r",asctime(&currentTime)); 
   }
   
   // === watch dog ==============================
@@ -510,12 +565,32 @@ int application_start( void )
     wwdg_Config();
   }
 
+ lua_printf("  WiFi & Ntp: "); 
+  if ((lua_system_param.wifi_start == 1) && (strlen(lua_system_param.wifi_ssid) > 0) &&
+      (strlen(lua_system_param.wifi_key) > 0)) {
+    // ** Start wifi **
+    network_InitTypeDef_st wNetConfig;
+    
+    wNetConfig.dhcpMode = DHCP_Client;
+    wNetConfig.wifi_retry_interval = 1000;
+    strcpy(wNetConfig.wifi_ssid, lua_system_param.wifi_ssid);
+    strcpy(wNetConfig.wifi_key, lua_system_param.wifi_key);
+
+    wNetConfig.wifi_mode = Station;
+    micoWlanStart(&wNetConfig);
+    
+    // * And ntp service *
+    sntp_client_start(lua_system_param.tz, NULL, 0);
+  }
+  else lua_printf("not ");
+  lua_printf("started.\r\n");
+
   // Create queue for interrupt servicing  
   mico_rtos_init_mutex(&lua_queue_mut);
   mico_rtos_init_queue( &os_queue, "queue", sizeof(queue_msg_t), 10 );
   // Create and start queue thread
   if (mico_rtos_create_thread(&lua_queue_thread, MICO_APPLICATION_PRIORITY, "queue", queue_thread, lua_system_param.stack_size / 5 * 2, NULL ) != kNoErr) {
-    lua_printf("error creating queue thread\r\n");
+    lua_printf("\r\nERROR creating queue thread!\r\n");
   }
 
   // Create and start main Lua thread

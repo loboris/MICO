@@ -30,7 +30,6 @@ static int usr_uart_cb_ref      = LUA_NOREF;
 #define USR_UART_LENGTH           512
 #define USR_INBUF_SIZE            USR_UART_LENGTH
 #define USR_OUTBUF_SIZE           USR_UART_LENGTH
-static uint8_t *pinbuf          = NULL;
 static uint8_t *lua_usr_rx_data = NULL;
 static ring_buffer_t lua_usr_rx_buffer;
 static uint8_t usrUART_init = 0;
@@ -50,7 +49,6 @@ static mico_thread_t *plua_usr_usart_thread=NULL;
 typedef struct {
   int         usr_uart_cb_ref;
   lua_State   *gL;
-  uint8_t     *pinbuf;
   
   uint8_t     init;
   uint32_t    baud_rate;
@@ -83,7 +81,6 @@ static swuart_t swUART =
 {
   .usr_uart_cb_ref = LUA_NOREF,
   .gL         = NULL,
-  .pinbuf     = NULL,
   
   .init       = 0,
   .baud_rate  = 115200,
@@ -111,19 +108,6 @@ static swuart_t swUART =
   .rx_nerr    = 0,
   .rx_npar    = 0,
 };
-
-//--------------------------
-void _do_freeBuf(uint8_t id)
-{
-  if (id == 1) {
-    free(pinbuf);
-    pinbuf = NULL;
-  }
-  else if (id == 2) {
-    free(swUART.pinbuf);
-    swUART.pinbuf = NULL;
-  }
-}
 
 // =============================================================================
 // === Software emulated UART ==================================================
@@ -358,19 +342,18 @@ static void lua_usr_usart_thread(void *data)
       }
       if (len1 > 0) {
         if ((mico_get_time() - lastTick1) >= 100) {
-          if (pinbuf == NULL) {
-            len1 = MicoUartGetLengthInBuffer(LUA_USR_UART);
-            pinbuf = (uint8_t*)malloc(len1);
-            MicoUartRecv(LUA_USR_UART, pinbuf, len1, 2);
-            queue_msg_t msg;
+          len1 = MicoUartGetLengthInBuffer(LUA_USR_UART);
+          queue_msg_t msg;
+          msg.para3 = (uint8_t*)malloc(len1);
+          if (msg.para3 != NULL) {
+            MicoUartRecv(LUA_USR_UART, msg.para3, len1, 2);
             msg.L = gL;
-            msg.source = onUART1;
+            msg.source = onUART;
             msg.para1 = len1;
-            msg.para3 = pinbuf;
             msg.para2 = usr_uart_cb_ref;
             mico_rtos_push_to_queue( &os_queue, &msg,0);
-            len1 = 0;
           }
+          len1 = 0;
         }
       }
     }
@@ -383,19 +366,18 @@ static void lua_usr_usart_thread(void *data)
       }
       if (len2 > 0) {
         if ((mico_get_time() - lastTick2) >= 100) {
-          if (swUART.pinbuf == NULL) {
-            len2 = swUART.rx_len;
-            swUART.pinbuf = (uint8_t*)malloc(len2);
-            len2 = swUART_get(swUART.pinbuf, len2);
-            queue_msg_t msg;
+          len2 = swUART.rx_len;
+          queue_msg_t msg;
+          msg.para3 = (uint8_t*)malloc(len2);
+          if (msg.para3 != NULL) {
+            uint16_t len = swUART_get(msg.para3, len2);
             msg.L = swUART.gL;
-            msg.source = onUART2;
+            msg.source = onUART;
             msg.para1 = len2;
-            msg.para3 = swUART.pinbuf;
             msg.para2 = swUART.usr_uart_cb_ref;
             mico_rtos_push_to_queue( &os_queue, &msg, 0);
-            len2 = 0;
           }
+          len2 = 0;
         }
       }
     }

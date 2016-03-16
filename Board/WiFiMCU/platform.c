@@ -402,7 +402,7 @@ const mico_logic_partition_t mico_partitions[] =
     .partition_owner           = MICO_FLASH_EMBEDDED,
     .partition_description     = "Bootloader",
     .partition_start_addr      = 0x08000000,
-    .partition_length          =     0x8000,    //32k bytes
+    .partition_length          =     0x8000,       // 32k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_DIS,
   },
   [MICO_PARTITION_APPLICATION] =
@@ -410,7 +410,7 @@ const mico_logic_partition_t mico_partitions[] =
     .partition_owner           = MICO_FLASH_EMBEDDED,
     .partition_description     = "Application",
     .partition_start_addr      = 0x0800C000,
-    .partition_length          =    0x74000,   //464k bytes
+    .partition_length          =    0x74000,       // 464k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_DIS,
   },
   [MICO_PARTITION_RF_FIRMWARE] =
@@ -418,26 +418,25 @@ const mico_logic_partition_t mico_partitions[] =
     .partition_owner           = MICO_FLASH_SPI,
     .partition_description     = "RF Firmware",
     .partition_start_addr      = 0x2000,
-    .partition_length          = 0x3E000,  //248k bytes
+    .partition_length          = 0x3E000,          // 248k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_DIS,
   },
+/*
   [MICO_PARTITION_OTA_TEMP] =
   {
     .partition_owner           = MICO_FLASH_SPI,
     .partition_description     = "OTA Storage",
     .partition_start_addr      = 0x40000,
-    //.partition_length          = 0x70000, //448k bytes
-    .partition_length          = 0x4000, //16k bytes
+    .partition_length          = 0x0000,           // 0k bytes (not used)
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_EN,
   },
+*/
   [MICO_PARTITION_LUA] =
   {
     .partition_owner           = MICO_FLASH_SPI,
     .partition_description     = "LUA Storage",
-    //.partition_start_addr      = 0xB0000,
-    //.partition_length          = 0x150000, //1344k bytes
-    .partition_start_addr      = 0x44000,
-    .partition_length          = 0x1BC000, //1776k bytes
+    .partition_start_addr      = 0x40000,
+    .partition_length          = 0x1C0000,         // 1792k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_EN,
   },
   [MICO_PARTITION_PARAMETER_1] =
@@ -445,7 +444,7 @@ const mico_logic_partition_t mico_partitions[] =
     .partition_owner           = MICO_FLASH_SPI,
     .partition_description     = "PARAMETER1",
     .partition_start_addr      = 0x0,
-    .partition_length          = 0x1000, // 4k bytes
+    .partition_length          = 0x1000,           // 4k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_EN,
   },
   [MICO_PARTITION_PARAMETER_2] =
@@ -453,13 +452,15 @@ const mico_logic_partition_t mico_partitions[] =
     .partition_owner           = MICO_FLASH_SPI,
     .partition_description     = "PARAMETER2",
     .partition_start_addr      = 0x1000,
-    .partition_length          = 0x1000, //4k bytes
+    .partition_length          = 0x1000,           //4k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_EN,
-  },
+  }
+/*
   [MICO_PARTITION_ATE] =
   {
     .partition_owner           = MICO_FLASH_NONE,
   }
+*/
 };
 
 

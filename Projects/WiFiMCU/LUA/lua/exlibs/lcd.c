@@ -197,8 +197,7 @@ extern uint8_t DejaVuSans12[];
 extern uint8_t DejaVuSans24[];
 
 extern spiffs fs;
-extern volatile int file_fd;
-int mode2flag(char *mode);
+extern uint8_t checkFileName(int len, const char* name, char* newname, uint8_t addcurrdir, uint8_t exists);
 
 static uint8_t TFT_SPI_ID = 255;
 uint8_t TFT_pinDC  = 255;
@@ -2083,10 +2082,13 @@ static int lcd_image( lua_State* L )
   int ysize = luaL_checkinteger( L, 4 );
   fname = luaL_checklstring( L, 5, &len );
   
-  if( len > SPIFFS_OBJ_NAME_LEN ) {
-    l_message(NULL,"filename too long.");
+  char fullname[SPIFFS_OBJ_NAME_LEN] = {0};
+  if (checkFileName(len, fname, fullname, 1, 1) != 1) {
+    l_message(NULL, "[FTP fil] Bad file name or file not found!\r\n");
     return 0;
   }
+  len = strlen(fullname);
+
   if ((xsize > _width) || (ysize > _height)) {
     l_message(NULL,"image too big.");
     return 0;
@@ -2094,14 +2096,11 @@ static int lcd_image( lua_State* L )
 
   if ((x+xsize) > _width) xendsize = _width-1;
   else xendsize = x+xsize-1;
-  if(FILE_NOT_OPENED!=file_fd){
-    SPIFFS_close(&fs,file_fd);
-    file_fd = FILE_NOT_OPENED;
-  }
-  
+
+  spiffs_file file_fd = FILE_NOT_OPENED;
   // Open the file
-  file_fd = SPIFFS_open(&fs,(char*)fname,mode2flag("r"),0);
-  if(file_fd < FILE_NOT_OPENED){
+  file_fd = SPIFFS_open(&fs, fullname, SPIFFS_RDONLY, 0);
+  if (file_fd <= FILE_NOT_OPENED) {
     file_fd = FILE_NOT_OPENED;
     l_message(NULL,"Error opening file.");
     return 0;
@@ -2129,8 +2128,8 @@ static int lcd_image( lua_State* L )
     else xrd = 0;
   }while ((xrd > 0) && (ysize > 0));
   
-  if(FILE_NOT_OPENED!=file_fd){
-    SPIFFS_close(&fs,file_fd);
+  if (FILE_NOT_OPENED != file_fd) {
+    SPIFFS_close(&fs, file_fd);
     file_fd = FILE_NOT_OPENED;
   }
   

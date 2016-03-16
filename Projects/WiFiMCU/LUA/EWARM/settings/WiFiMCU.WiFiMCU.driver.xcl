@@ -14,7 +14,11 @@
 
 "--device=STM32F411CE" 
 
-"--multicore_nr_of_cores=1" 
+"--drv_interface=SWD" 
+
+"--stlink_reset_strategy=0,0" 
+
+"--drv_swo_clock_setup=100000000,0,2000000" 
 
 
 

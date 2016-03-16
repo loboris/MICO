@@ -18,25 +18,50 @@
 #include <stddef.h>
 // ----------- >8 ------------
 
+#ifndef LOBO_SPIFFS_DBG
+//#define LOBO_SPIFFS_DBG
+#endif
+
+#include "mico_system.h"
+
 // compile time switches
 
+#ifdef LOBO_SPIFFS_DBG
+extern uint8_t spiffs_debug;
 // Set generic spiffs debug output call.
-#ifndef SPIFFS_DGB
+#ifndef SPIFFS_DBG
+#define SPIFFS_DBG(...) if (spiffs_debug & 0x40) printf(__VA_ARGS__)
+#endif
+// Set spiffs debug output call for garbage collecting.
+#ifndef SPIFFS_GC_DBG
+#define SPIFFS_GC_DBG(...) if (spiffs_debug & 0x04) printf(__VA_ARGS__)
+#endif
+// Set spiffs debug output call for caching.
+#ifndef SPIFFS_CACHE_DBG
+#define SPIFFS_CACHE_DBG(...) if (spiffs_debug & 0x80) printf(__VA_ARGS__)
+#endif
+// Set spiffs debug output call for system consistency checks.
+#ifndef SPIFFS_CHECK_DBG
+#define SPIFFS_CHECK_DBG(...) if (spiffs_debug & 0x08) printf(__VA_ARGS__)
+#endif
+#else
+// Set generic spiffs debug output call.
+#ifndef SPIFFS_DBG
 #define SPIFFS_DBG(...) //printf(__VA_ARGS__)
 #endif
 // Set spiffs debug output call for garbage collecting.
-#ifndef SPIFFS_GC_DGB
+#ifndef SPIFFS_GC_DBG
 #define SPIFFS_GC_DBG(...) //printf(__VA_ARGS__)
 #endif
 // Set spiffs debug output call for caching.
-#ifndef SPIFFS_CACHE_DGB
+#ifndef SPIFFS_CACHE_DBG
 #define SPIFFS_CACHE_DBG(...) //printf(__VA_ARGS__)
 #endif
 // Set spiffs debug output call for system consistency checks.
-#ifndef SPIFFS_CHECK_DGB
+#ifndef SPIFFS_CHECK_DBG
 #define SPIFFS_CHECK_DBG(...) //printf(__VA_ARGS__)
 #endif
-
+#endif
 // Enable/disable API functions to determine exact number of bytes
 // for filedescriptor and cache buffers. Once decided for a configuration,
 // this can be disabled to reduce flash.
@@ -57,7 +82,7 @@
 
 // Enable/disable statistics on caching. Debug/test purpose only.
 #ifndef  SPIFFS_CACHE_STATS
-#define SPIFFS_CACHE_STATS              1
+#define SPIFFS_CACHE_STATS              0
 #endif
 #endif
 
@@ -74,7 +99,7 @@
 
 // Enable/disable statistics on gc. Debug/test purpose only.
 #ifndef SPIFFS_GC_STATS
-#define SPIFFS_GC_STATS                 1
+#define SPIFFS_GC_STATS                 0
 #endif
 
 // Garbage collecting examines all pages in a block which and sums up
@@ -101,14 +126,14 @@
 
 // Object name maximum length.
 #ifndef SPIFFS_OBJ_NAME_LEN
-#define SPIFFS_OBJ_NAME_LEN             (32)
+#define SPIFFS_OBJ_NAME_LEN             (64)
 #endif
 
 // Size of buffer allocated on stack used when copying data.
 // Lower value generates more read/writes. No meaning having it bigger
 // than logical page size.
 #ifndef SPIFFS_COPY_BUFFER_STACK
-#define SPIFFS_COPY_BUFFER_STACK        (64)
+#define SPIFFS_COPY_BUFFER_STACK        (128)
 #endif
 
 // Enable this to have an identifiable spiffs filesystem. This will look for
@@ -116,7 +141,18 @@
 // not on mount point. If not, SPIFFS_format must be called prior to mounting
 // again.
 #ifndef SPIFFS_USE_MAGIC
-#define SPIFFS_USE_MAGIC                (0)
+#define SPIFFS_USE_MAGIC                (1)
+#endif
+
+#if SPIFFS_USE_MAGIC
+// Only valid when SPIFFS_USE_MAGIC is enabled. If SPIFFS_USE_MAGIC_LENGTH is
+// enabled, the magic will also be dependent on the length of the filesystem.
+// For example, a filesystem configured and formatted for 4 megabytes will not
+// be accepted for mounting with a configuration defining the filesystem as 2
+// megabytes.
+#ifndef SPIFFS_USE_MAGIC_LENGTH
+#define SPIFFS_USE_MAGIC_LENGTH         (0)
+#endif
 #endif
 
 // SPIFFS_LOCK and SPIFFS_UNLOCK protects spiffs from reentrancy on api level
@@ -124,13 +160,12 @@
 
 // define this to enter a mutex if you're running on a multithreaded system
 #ifndef SPIFFS_LOCK
-#define SPIFFS_LOCK(fs)
+#define SPIFFS_LOCK(fs) //mico_rtos_lock_mutex(&spiffs_mut);
 #endif
 // define this to exit a mutex if you're running on a multithreaded system
 #ifndef SPIFFS_UNLOCK
-#define SPIFFS_UNLOCK(fs)
+#define SPIFFS_UNLOCK(fs) //mico_rtos_unlock_mutex(&spiffs_mut);
 #endif
-
 
 // Enable if only one spiffs instance with constant configuration will exist
 // on the target. This will reduce calculations, flash and memory accesses.
@@ -164,6 +199,35 @@
 #define SPIFFS_ALIGNED_OBJECT_INDEX_TABLES       0
 #endif
 
+// Enable this if you want the HAL callbacks to be called with the spiffs struct
+#ifndef SPIFFS_HAL_CALLBACK_EXTRA
+#define SPIFFS_HAL_CALLBACK_EXTRA         0
+#endif
+
+// Enable this if you want to add an integer offset to all file handles
+// (spiffs_file). This is useful if running multiple instances of spiffs on
+// same target, in order to recognise to what spiffs instance a file handle
+// belongs.
+// NB: This adds config field fh_ix_offset in the configuration struct when
+// mounting, which must be defined.
+#ifndef SPIFFS_FILEHDL_OFFSET
+#define SPIFFS_FILEHDL_OFFSET                 0
+#endif
+
+// Enable this to compile a read only version of spiffs.
+// This will reduce binary size of spiffs. All code comprising modification
+// of the file system will not be compiled. Some config will be ignored.
+// HAL functions for erasing and writing to spi-flash may be null. Cache
+// can be disabled for even further binary size reduction (and ram savings).
+// Functions modifying the fs will return SPIFFS_ERR_RO_NOT_IMPL.
+// If the file system cannot be mounted due to aborted erase operation and
+// SPIFFS_USE_MAGIC is enabled, SPIFFS_ERR_RO_ABORTED_OPERATION will be
+// returned.
+// Might be useful for e.g. bootloaders and such.
+#ifndef SPIFFS_READ_ONLY
+#define SPIFFS_READ_ONLY                      0
+#endif
+
 // Set SPIFFS_TEST_VISUALISATION to non-zero to enable SPIFFS_vis function
 // in the api. This function will visualize all filesystem using given printf
 // function.
@@ -176,19 +240,19 @@
 #endif
 // spiffs_printf argument for a free page
 #ifndef SPIFFS_TEST_VIS_FREE_STR
-#define SPIFFS_TEST_VIS_FREE_STR          "_"
+#define SPIFFS_TEST_VIS_FREE_STR          "."
 #endif
 // spiffs_printf argument for a deleted page
 #ifndef SPIFFS_TEST_VIS_DELE_STR
-#define SPIFFS_TEST_VIS_DELE_STR          "/"
+#define SPIFFS_TEST_VIS_DELE_STR          "#"
 #endif
 // spiffs_printf argument for an index page for given object id
 #ifndef SPIFFS_TEST_VIS_INDX_STR
-#define SPIFFS_TEST_VIS_INDX_STR(id)      "i"
+#define SPIFFS_TEST_VIS_INDX_STR(id)      "I"
 #endif
 // spiffs_printf argument for a data page for given object id
 #ifndef SPIFFS_TEST_VIS_DATA_STR
-#define SPIFFS_TEST_VIS_DATA_STR(id)      "d"
+#define SPIFFS_TEST_VIS_DATA_STR(id)      "D"
 #endif
 #endif
 
@@ -205,7 +269,7 @@ typedef unsigned char u8_t;
 
 // Block index type. Make sure the size of this type can hold
 // the highest number of all blocks - i.e. spiffs_file_system_size / log_block_size
-typedef u16_t spiffs_block_ix;
+typedef u8_t spiffs_block_ix;
 // Page index type. Make sure the size of this type can hold
 // the highest page number of all pages - i.e. spiffs_file_system_size / log_page_size
 typedef u16_t spiffs_page_ix;

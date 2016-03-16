@@ -44,16 +44,17 @@
 #define NTP_Root_Delay           0x8000
 #define NTP_Root_Dispersion      0xa00b0000
 
+static uint8_t ntp_time_set = 0;
+static uint8_t ntp_thread_started = 0;
 static volatile bool _wifiConnected = false;
 static mico_semaphore_t  _wifiConnected_sem = NULL;
 
 static int ntp_time_zone = 0;
 static bool log = 0;
-
 #define ntp_log(M, ...) if (log == true) printf(M, ##__VA_ARGS__)
-#define ntp_log_trace() custom_log_trace("NTP client")
+//#define ntp_log_trace() custom_log_trace("NTP client")
 
-char *NTP_Server  = "time1.google.com";
+static char NTP_Server[32]  = {0};
 
 struct NtpPacket
 {
@@ -74,9 +75,22 @@ struct NtpPacket
 	uint32_t trans_ts_frac;
 };
 
+//--------------------------
+uint8_t isNtpTimeSet( void )
+{
+  return ntp_time_set;
+}
+
+//-------------------------------
+uint8_t ntpTthreadStarted( void )
+{
+  return ntp_thread_started;
+}
+
+//-----------------------------------------------------------
 static void ntpNotify_WifiStatusHandler(int event, void *arg)
 {
-  ntp_log_trace();
+  //ntp_log_trace();
   UNUSED_PARAMETER(arg);
   switch (event) {
   case NOTIFY_STATION_UP:
@@ -92,9 +106,10 @@ static void ntpNotify_WifiStatusHandler(int event, void *arg)
   return;
 }
 
+//-------------------------------------
 static void NTPClient_thread(void *arg)
 {
-  ntp_log_trace();
+  //ntp_log_trace();
   OSStatus err = kUnknownErr;
   UNUSED_PARAMETER( arg );
   
@@ -110,6 +125,8 @@ static void NTPClient_thread(void *arg)
   mico_rtc_time_t time;
   LinkStatusTypeDef wifi_link;
   int contry = 0;
+  
+  ntp_thread_started = 1;
   
   // Register notifications
   err = mico_system_notify_register( mico_notify_WIFI_STATUS_CHANGED, (void *)ntpNotify_WifiStatusHandler, NULL );
@@ -144,7 +161,6 @@ static void NTPClient_thread(void *arg)
 
    contry=0;
    while(1) {
-     //err = gethostbyname((char *)NTP_Server, (uint8_t *)ipstr, 16);
      err = gethostbyname(NTP_Server, (uint8_t *)ipstr, 16);
      contry+=1;
      if (contry > 4) { require_noerr(err, exit); }
@@ -190,22 +206,29 @@ static void NTPClient_thread(void *arg)
       time.month = currentTime->tm_mon + 1;
       time.year = (currentTime->tm_year + 1900)%100;
       MicoRtcSetTime( &time );
+      ntp_time_set = 1;
       goto exit;
     }
   }
 exit:
-    if( err!=kNoErr ) ntp_log("\r\nNTP client exited with err = %d", err);
-    mico_system_notify_remove( mico_notify_WIFI_STATUS_CHANGED, (void *)ntpNotify_WifiStatusHandler );
-    if(_wifiConnected_sem) mico_rtos_deinit_semaphore(&_wifiConnected_sem);
-    SocketClose(&Ntp_fd);
-    mico_rtos_delete_thread(NULL);
-    return;
+  if ((log) && (err != kNoErr)) {
+    ntp_log("\r\nNTP client exited with error = %d", err);
+  }
+  mico_system_notify_remove( mico_notify_WIFI_STATUS_CHANGED, (void *)ntpNotify_WifiStatusHandler );
+  if(_wifiConnected_sem) mico_rtos_deinit_semaphore(&_wifiConnected_sem);
+  SocketClose(&Ntp_fd);
+  ntp_thread_started = 0;
+  mico_rtos_delete_thread(NULL);
+  return;
 }
 
-OSStatus sntp_client_start( int tz, char *ntpserv, bool lg )
+//----------------------------------------------------------------
+OSStatus sntp_client_start( int tz, const char *ntpserv, bool lg )
 {
+  ntp_time_set = 0;
   ntp_time_zone = tz;
-  NTP_Server = ntpserv;
+  if (ntpserv != NULL) sprintf(NTP_Server, ntpserv);
+  else sprintf(NTP_Server, "time1.google.com");
   log = lg;
   
   mico_rtos_init_semaphore(&_wifiConnected_sem, 1);

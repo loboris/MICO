@@ -33,4 +33,7 @@
 
 #include "common.h"
 
-OSStatus sntp_client_start( int tz, char *ntpserv, bool lg );
+uint8_t isNtpTimeSet( void );
+uint8_t ntpTthreadStarted( void );
+
+OSStatus sntp_client_start( int tz, const char *ntpserv, bool lg );

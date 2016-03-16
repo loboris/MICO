@@ -32,6 +32,7 @@
 #pragma once
 
 #include "Common.h"
+#include "Curve25519/curve25519-donna.h"
 
 enum {
     MD5             =  0,      /* hash type unique */
@@ -73,6 +74,9 @@ void Md5Update(md5_context *ctx, unsigned char *input, int ilen);
  * @param output   MD5 checksum result
  */
 void Md5Final(md5_context *ctx, unsigned char output[16]);
+
+
+
 
 
 

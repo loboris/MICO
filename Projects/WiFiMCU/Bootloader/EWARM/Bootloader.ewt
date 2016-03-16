@@ -1061,6 +1061,21 @@
       <file>
         <name>$PROJ_DIR$\..\..\..\..\Board\WiFiMCU\platform_config.h</name>
       </file>
+      <file>
+        <name>$PROJ_DIR$\..\spiffs.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\spiffs_config.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\spiffs_hydrogen.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\spiffs_nucleus.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\spiffs_nucleus.h</name>
+      </file>
     </group>
   </group>
   <group>

@@ -21,10 +21,15 @@
 #define FILE_NOT_OPENED 0
 
 extern mico_queue_t os_queue;
-extern spiffs fs;
-extern volatile int file_fd;
-extern int mode2flag(char *mode);
 extern void luaWdgReload( void );
+extern spiffs fs;
+extern uint8_t checkFileName(int len, const char* name, char* newname, uint8_t addcurrdir, uint8_t exists);
+extern uint8_t fileExists(char* name);
+
+static mico_mutex_t  ftp_mut = NULL; // Used to synchronize the ftp thread
+
+#define FILE_NOT_OPENED 0
+static volatile spiffs_file file_fd = FILE_NOT_OPENED;
 
 static bool log = false;
 #define ftp_log(M, ...) if (log == true) printf(M, ##__VA_ARGS__)
@@ -65,6 +70,8 @@ enum _req_actions{
 #define RECV_TOFILE      0
 #define RECV_TOSTRING    1
 
+#define MIN_RECVDATABUF_LEN 1024
+
 //ftp Cmd socket
 typedef struct {
   int socket;             // TCP socket
@@ -97,21 +104,26 @@ static char *ftpuser = NULL;
 static char *ftppass = NULL;
 static char *ftpfile = NULL;
 static char *ftpresponse = NULL;
+static char *recvBuf = NULL;
+static char *recvDataBuf = NULL;
+static char *sendDataBuf = NULL;
+
 static bool ftp_thread_is_started = false;
 static uint8_t data_done = 1;
 static uint8_t cmd_done = 1;
 static uint8_t status = FTP_NOT_CONNECTED;
-static char *recvBuf = NULL;
 static uint16_t recvLen = 0;
-static char *recvDataBuf = NULL;
-static char *sendDataBuf = NULL;
 static uint16_t recvDataLen = 0;
-static uint16_t max_recv_datalen = 1024;
+static int sendDataLen = 0;
+static uint16_t max_recv_datalen = MIN_RECVDATABUF_LEN*2;
+static uint16_t recvDataBufLen = MIN_RECVDATABUF_LEN;
 static int file_status = 0;
 static int file_size = 0;
 static uint8_t list_type = 0;
 static uint8_t send_type = 0;
 static uint8_t recv_type = 0;
+static uint8_t data_ready = 0;
+static uint8_t data_get = 0;
 
 
 //-------------------------------------------------------
@@ -136,17 +148,15 @@ static void _micoNotify_FTPClientConnectedHandler(int fd)
 }
 
 //---------------------------------------
-static void closeCmdSocket(uint8_t unreg)
+static void closeCmdSocket( void )
 {
   if (ftpCmdSocket == NULL) return;
 
   //unref cb functions
   if (gL != NULL) {
-    if (unreg) {
-      if (ftpCmdSocket->disconnect_cb != LUA_NOREF)
-        luaL_unref(gL, LUA_REGISTRYINDEX, ftpCmdSocket->disconnect_cb);
-    }
-    ftpCmdSocket->disconnect_cb = LUA_NOREF;
+    /*if (ftpCmdSocket->disconnect_cb != LUA_NOREF)
+      luaL_unref(gL, LUA_REGISTRYINDEX, ftpCmdSocket->disconnect_cb);
+    ftpCmdSocket->disconnect_cb = LUA_NOREF;*/
     
     if (ftpCmdSocket->logon_cb != LUA_NOREF)
       luaL_unref(gL, LUA_REGISTRYINDEX, ftpCmdSocket->logon_cb);
@@ -220,45 +230,63 @@ static int _openDataSocket( void )
 
   if (recvDataBuf == NULL) {
     // create recv data buffer
-    recvDataBuf = malloc(max_recv_datalen+4);
+    recvDataBuf = malloc(MIN_RECVDATABUF_LEN+4);
+    recvDataBufLen = MIN_RECVDATABUF_LEN;
     if (recvDataBuf == NULL) {
       free(ftpDataSocket);
       ftpDataSocket = NULL;
       return -3;
     }
-    memset(recvDataBuf, 0, max_recv_datalen);
+    memset(recvDataBuf, 0, MIN_RECVDATABUF_LEN+4);
   }
   recvDataLen = 0;
   status &= ~FTP_DATACONNECTED;
   return 0;
 }
 
-//------------------------------------
-static void _ftp_deinit(uint8_t unreg)
+//-----------------------------
+static void _ftp_deinit( void )
 {
-  closeCmdSocket(unreg);
-  free(ftpCmdSocket);
-  ftpCmdSocket = NULL;
+  ftp_log("[FTP ini] Deinit start\r\n" );
   closeDataSocket();
   free(ftpDataSocket);
   ftpDataSocket = NULL;
   
-  free( pDomain4Dns);
+  closeCmdSocket();
+  free(ftpCmdSocket);
+  ftpCmdSocket = NULL;
+  
+  free(pDomain4Dns);
   pDomain4Dns=NULL;
-  free( ftpuser);
+  free(ftpuser);
   ftpuser=NULL;
-  free( ftppass);
+  free(ftppass);
   ftppass=NULL;
-  free( ftpfile);
+  free(ftpfile);
   ftpfile=NULL;
-  free( recvBuf);
+  free(recvBuf);
   recvBuf=NULL;
-  free( recvDataBuf);
+  free(recvDataBuf);
   recvDataBuf=NULL;
+  free(sendDataBuf);
+  sendDataBuf=NULL;
   free(ftpresponse);
   ftpresponse = NULL;
-  if ((gL != NULL) & (unreg == 0)) ftp_log("[FTP end] FTP SESSION CLOSED.\r\n");
+
+  data_done = 1;
+  cmd_done = 1;
+  recvLen = 0;
+  recvDataLen = 0;
+  max_recv_datalen = MIN_RECVDATABUF_LEN*2;
+  file_status = 0;
+  file_size = 0;
+  list_type = 0;
+  send_type = 0;
+  recv_type = 0;
+
+  gL = NULL;
   status = FTP_NOT_CONNECTED;
+  ftp_log("[FTP ini] Deinit end\r\n" );
 }
 
 //-----------------------------------------
@@ -283,95 +311,11 @@ static int _sendData(const char *data, int len)
   else return 0;
 }
 
-//----------------------------------
-static void _saveData(uint8_t close)
-{
-  if (!(status & FTP_RECEIVING)) {
-    ftp_log("[FTP dta] Not receiving!\r\n");
-    file_status = -4;
-    return;
-  }
-  if ((ftpfile == NULL) || (file_fd == FILE_NOT_OPENED)) {
-    ftp_log("[FTP dta] Receive file not opened\r\n");
-    file_status = -2;
-    return;
-  }
-
-  if (close == 0) {  
-    if (SPIFFS_write(&fs, (spiffs_file)file_fd, (char*)recvDataBuf, recvDataLen) < 0)
-    { //failed
-      SPIFFS_fflush(&fs,file_fd);
-      SPIFFS_close(&fs,file_fd);
-      file_fd = FILE_NOT_OPENED;
-      ftp_log("\r\n[FTP dta] Write to local file failed\r\n");
-      file_status = -3;
-    }
-    else {
-      ftp_log("\r[FTP dta] received: %d", recvDataLen);
-      file_status += recvDataLen;
-    }
-  }
-  else { // close file;
-    SPIFFS_fflush(&fs,file_fd);
-    SPIFFS_close(&fs,file_fd);
-    file_fd = FILE_NOT_OPENED;
-    free(ftpfile);
-    ftpfile = NULL;
-    if (close == 2) {
-      ftp_log("\r\n[FTP dta] Data ERROR, file closed\r\n");
-      file_status = -1;
-    }
-    else {
-      ftp_log("\r\n[FTP dta] Data file closed\r\n");
-    }
-  }
-}
-
-//---------------------
-uint8_t _sendFile(void)
-{
-  if ((ftpfile == NULL) || (file_fd == FILE_NOT_OPENED)) {
-    ftp_log("[FTP dta] Send file not opened\r\n");
-    file_status = -1;
-    return 1;
-  }
-  if (recvDataBuf == NULL) {
-    ftp_log("[FTP dta] Buffer error\r\n");
-    file_status = -2;
-    return 1;
-  }
-  if (file_status >= file_size) return 1;
-
-  uint16_t len = 1020;
-  int rdlen;
-  if (max_recv_datalen < len) len = max_recv_datalen-4;
-  rdlen = SPIFFS_read(&fs, (spiffs_file)file_fd, (char*)recvDataBuf, len);
-  if (rdlen > 0) {
-    if (!_sendData(recvDataBuf, rdlen)) {
-      ftp_log("[FTP dta] Error sending data\r\n");
-      file_status = -3;
-      return 1;
-    }
-    else {
-      file_status += rdlen;
-      ftp_log("\r[FTP dta] %.*f %%", 1, (float)(((float)file_status/(float)file_size)*100.0));
-      if (file_status >= file_size) return 1;
-      else return 0;
-    }
-  }
-  else if (rdlen <= 0) {
-    ftp_log("[FTP dta] Error reading from file (%d)\r\n", rdlen);
-    file_status = -4;
-    return 1;
-  }
-  else return 1;
-}
-
 //-----------------------
 uint8_t _sendString(void)
 {
   if (sendDataBuf == NULL) {
-    ftp_log("[FTP dta] Buffer error\r\n");
+    ftp_log("\r[FTP dta] Buffer error\r\n");
     file_status = -2;
     return 1;
   }
@@ -381,13 +325,13 @@ uint8_t _sendString(void)
   if ((file_size - file_status) < len) len = file_size - file_status;
   
   if (!_sendData(sendDataBuf+file_status, len)) {
-    ftp_log("[FTP dta] Error sending data\r\n");
+    ftp_log("\r[FTP dta] Error sending data\r\n");
     file_status = -3;
     return 1;
   }
   else {
     file_status += len;
-    ftp_log("\r[FTP dta] %.*f %%", 1, (float)(((float)file_status/(float)file_size)*100.0));
+    ftp_log("\r[FTP dta] %.*f %%\r\n", 1, (float)(((float)file_status/(float)file_size)*100.0));
     if (file_status >= file_size) return 1;
     else return 0;
   }
@@ -524,7 +468,8 @@ static void response( void )
   }
   else if ((cmd == 150) || (cmd == 125)) {
     // mark: Accepted data connection
-    if ((ftpfile != NULL) && ftpDataSocket != NULL) {
+    if ((ftpfile != NULL) && (ftpDataSocket != NULL) &&
+        (ftpCmdSocket->clientLastFlag == REQ_ACTION_DOSEND)) {
       status |= FTP_SENDING;
       if ((send_type & SEND_STRING)) {
         ftp_log("[FTP dta] Sending string to %s (%d)\r\n", ftpfile, file_size);
@@ -533,7 +478,10 @@ static void response( void )
         ftp_log("[FTP dta] Sending file %s (%d)\r\n", ftpfile, file_size);
       }
     }
-    else _setResponse(cmd);
+    else {
+      //if ((status & FTP_RECEIVING) == 0) _setResponse(cmd);
+      _setResponse(cmd);
+    }
   }
   else if (cmd == 227) {
     // entering passive mod
@@ -578,16 +526,16 @@ static void response( void )
         else {
           // Data socket connected, initialize action
           if (ftpCmdSocket->clientLastFlag == REQ_ACTION_LIST) {
-            ftpCmdSocket->clientLastFlag = NO_ACTION;
             ftpCmdSocket->clientFlag = REQ_ACTION_DOLIST;
+            ftpCmdSocket->clientLastFlag = ftpCmdSocket->clientFlag;
           }
           else if (ftpCmdSocket->clientLastFlag == REQ_ACTION_RECV) {
-            ftpCmdSocket->clientLastFlag = NO_ACTION;
             ftpCmdSocket->clientFlag = REQ_ACTION_DORECV;
+            ftpCmdSocket->clientLastFlag = ftpCmdSocket->clientFlag;
           }
           else if (ftpCmdSocket->clientLastFlag == REQ_ACTION_SEND) {
-            ftpCmdSocket->clientLastFlag = NO_ACTION;
             ftpCmdSocket->clientFlag = REQ_ACTION_DOSEND;
+            ftpCmdSocket->clientLastFlag = ftpCmdSocket->clientFlag;
           }
         }
       }
@@ -610,10 +558,12 @@ static void _thread_ftp(void*inContext)
   int k;
   uint32_t timeout = 0;
   uint8_t recv_tmo = 0;
+  queue_msg_t msg;
 
   t_val.tv_sec = 0;
   t_val.tv_usec = 5000;
 
+  mico_rtos_lock_mutex(&ftp_mut);
   timeout = mico_get_time();
   ftp_log("\r\n[FTP trd] FTP THREAD STARTED\r\n");
   
@@ -625,7 +575,7 @@ static void _thread_ftp(void*inContext)
     err = gethostbyname((char *)pDomain4Dns, (uint8_t *)pIPstr, 16);
     if (err != kNoErr) {
       k--;
-      mico_thread_msleep(50);
+      mico_thread_msleep(10);
     }
   }while ((err != kNoErr) && (k > 0));
   
@@ -661,7 +611,9 @@ static void _thread_ftp(void*inContext)
   // ===========================================================================
   // Main Thread loop
   while (1) {
+    mico_rtos_unlock_mutex(&ftp_mut);
     mico_thread_msleep(5);
+    mico_rtos_lock_mutex(&ftp_mut);
         
     if (ftpCmdSocket == NULL) goto terminate;
 
@@ -687,14 +639,15 @@ static void _thread_ftp(void*inContext)
       
       ftp_log("[FTP cmd] Socket disconnected\r\n");
       if (ftpCmdSocket->disconnect_cb != LUA_NOREF) {
-        queue_msg_t msg;
         msg.L = gL;
-        msg.source = onFTP;
+        msg.source = onFTP | needUNREF;
         msg.para1 = 0;
+        msg.para3 = NULL;
+        msg.para4 = NULL;
         msg.para2 = ftpCmdSocket->disconnect_cb;
         mico_rtos_push_to_queue( &os_queue, &msg, 0);
       }
-      closeCmdSocket(0);
+      closeCmdSocket();
       continue;
     }
     //REQ_ACTION_QUIT
@@ -795,11 +748,11 @@ static void _thread_ftp(void*inContext)
     else if (ftpCmdSocket->clientFlag == REQ_ACTION_LOGGED) {
       ftpCmdSocket->clientFlag=NO_ACTION;
       if (ftpCmdSocket->logon_cb != LUA_NOREF) {
-        queue_msg_t msg;
         msg.L = gL;
         msg.source = onFTP;
         msg.para1 = 1;
         msg.para3 = NULL;
+        msg.para4 = NULL;
         msg.para2 = ftpCmdSocket->logon_cb;
         mico_rtos_push_to_queue( &os_queue, &msg, 0);
       }
@@ -808,13 +761,13 @@ static void _thread_ftp(void*inContext)
     else if (ftpCmdSocket->clientFlag == REQ_ACTION_LIST_RECEIVED) {
       ftpCmdSocket->clientFlag=NO_ACTION;
       if (ftpCmdSocket->list_cb != LUA_NOREF) {
-        queue_msg_t msg;
         msg.L = gL;
         msg.source = onFTP;
         msg.para1 = recvDataLen;
         msg.para2 = ftpCmdSocket->list_cb;
         msg.para3 = (uint8_t*)malloc(recvDataLen+4);
-        if (msg.para3 != NULL) memcpy((char*)msg.para3, recvDataBuf, recvDataLen);
+        msg.para4 = NULL;
+        if (msg.para3 != NULL) memcpy((char*)msg.para3, recvDataBuf, recvDataLen+1);
 
         mico_rtos_push_to_queue( &os_queue, &msg, 0);
       }
@@ -823,14 +776,14 @@ static void _thread_ftp(void*inContext)
     else if (ftpCmdSocket->clientFlag == REQ_ACTION_RECEIVED) {
       ftpCmdSocket->clientFlag=NO_ACTION;
       if (ftpCmdSocket->received_cb != LUA_NOREF) {
-        queue_msg_t msg;
         msg.L = gL;
         msg.source = onFTP;
         msg.para1 = file_status;
         msg.para3 = NULL;
-        if (recv_type == RECV_TOSTRING) {
+        msg.para4 = NULL;
+        if ((recv_type == RECV_TOSTRING) && (file_status > 0)) {
           msg.para3 = (uint8_t*)malloc(recvDataLen+4);
-          if (msg.para3 != NULL) memcpy((char*)msg.para3, recvDataBuf, recvDataLen);
+          if (msg.para3 != NULL) memcpy((char*)msg.para3, recvDataBuf, recvDataLen+1);
         }
         msg.para2 = ftpCmdSocket->received_cb;
 
@@ -841,11 +794,11 @@ static void _thread_ftp(void*inContext)
     else if (ftpCmdSocket->clientFlag == REQ_ACTION_SENT) {
       ftpCmdSocket->clientFlag=NO_ACTION;
       if (ftpCmdSocket->sent_cb != LUA_NOREF) {
-        queue_msg_t msg;
         msg.L = gL;
         msg.source = onFTP;
         msg.para1 = file_status;
         msg.para3 = NULL;
+        msg.para4 = NULL;
         msg.para2 = ftpCmdSocket->sent_cb;
 
         mico_rtos_push_to_queue( &os_queue, &msg, 0);
@@ -857,20 +810,40 @@ static void _thread_ftp(void*inContext)
       FD_ZERO(&wrset);
       FD_SET(ftpDataSocket->socket, &wrset);
       // check socket state
+      t_val.tv_sec = 0;
+      t_val.tv_usec = 5000;
+      mico_rtos_unlock_mutex(&ftp_mut);
       select(ftpDataSocket->socket+1, NULL, &wrset, NULL, &t_val);
+      mico_rtos_lock_mutex(&ftp_mut);
       
       if (FD_ISSET(ftpDataSocket->socket, &wrset)) {
         int err;
-        if ((send_type & SEND_STRING)) err = _sendString();
-        else err = _sendFile();
+        if ((send_type & SEND_STRING)) { // sending from string
+          err = _sendString();
+        }
+        else { // sending from file
+          if (data_get == 1) {
+            data_get = 2; // get data from file from main thread
+            mico_rtos_unlock_mutex(&ftp_mut);
+            mico_thread_msleep(5);
+            mico_rtos_lock_mutex(&ftp_mut);
+            
+            if (data_get == 1) {
+              err = 0;
+              // got data to send
+              if (!_sendData(recvDataBuf, sendDataLen)) {
+                ftp_log("[FTP dta] Error sending data\r\n");
+                file_status = -3;
+                data_get = 3; // abort
+              }
+            }
+            else err = -1;
+          }
+          else err = -1;
+        }
+        
         if (err != 0) {
           closeDataSocket();
-          // close file;
-          if (file_fd != FILE_NOT_OPENED) {
-            SPIFFS_close(&fs,file_fd);
-            file_fd = FILE_NOT_OPENED;
-            ftp_log("\r\n[FTP dta] Data file closed\r\n");
-          }
           data_done = 1;
           status &= ~FTP_SENDING;
           ftpCmdSocket->clientFlag = REQ_ACTION_SENT;
@@ -885,11 +858,16 @@ static void _thread_ftp(void*inContext)
     int maxfd = ftpCmdSocket->socket;
     FD_SET(ftpCmdSocket->socket, &readset);
     if ( (ftpDataSocket != NULL) && ((status & FTP_DATACONNECTED)) ) {
+      // check also the data socket
       if (ftpDataSocket->socket > maxfd) maxfd = ftpDataSocket->socket;
       FD_SET(ftpDataSocket->socket, &readset);
     }
     // ** check sockets state
+    t_val.tv_sec = 0;
+    t_val.tv_usec = 5000;
+    mico_rtos_unlock_mutex(&ftp_mut);
     select(maxfd+1, &readset, NULL, NULL, &t_val);
+    mico_rtos_lock_mutex(&ftp_mut);
 
     // ** Check COMMAND socket
     if (FD_ISSET(ftpCmdSocket->socket, &readset)) {
@@ -919,14 +897,20 @@ static void _thread_ftp(void*inContext)
     if ( (ftpDataSocket != NULL) && ((status & FTP_DATACONNECTED)) ) {
       if (FD_ISSET(ftpDataSocket->socket, &readset)) {
         // read received data to buffer
-        int rcv_len = recv(ftpDataSocket->socket, (recvDataBuf+recvDataLen), max_recv_datalen-recvDataLen-1, 0);
+        // recvDataLen contains the total length of received data
+        int rcv_len = -1;
+        if (recvDataBuf != NULL) {
+          rcv_len = recv(ftpDataSocket->socket, (recvDataBuf+recvDataLen), recvDataBufLen-recvDataLen-1, 0);
+        }
 
         if (rcv_len <= 0) { // failed
+          // == Check if Data socket was receiving ==
           if (!(status & (FTP_RECEIVING | FTP_LISTING))) {
-            ftp_log("\r\n[FTP dta] Disconnect!\r\n");
-            closeDataSocket();
-            file_status = -9;
+            // Finish all operattions on data socket
             data_done = 1;
+            file_status = -9;
+            // Close data socket
+            closeDataSocket();
           }
           continue;
         }
@@ -934,17 +918,47 @@ static void _thread_ftp(void*inContext)
           if ((status & FTP_RECEIVING) && (recv_type == RECV_TOFILE)) {
             // === write received data to file ===
             recvDataLen = rcv_len;
-            _saveData(0);
+            data_ready = 1;
+            uint32_t tmo = mico_get_time();
+            while (data_ready > 0) { // wait until block is written to fs in main thread
+              if ((mico_get_time() - tmo) > 1000) break;
+              mico_rtos_unlock_mutex(&ftp_mut);
+              mico_thread_msleep(5);
+              mico_rtos_lock_mutex(&ftp_mut);
+            }
             recvDataLen = 0;
           }
           else if ((status & FTP_LISTING) || ((status & FTP_RECEIVING) && (recv_type == RECV_TOSTRING))) {
-            if ((recvDataLen + rcv_len) < (max_recv_datalen-16)) recvDataLen += rcv_len;
-            else recvDataLen = max_recv_datalen-16;
-            *(recvDataBuf + recvDataLen) = '\0';
+            // receiving to string (buffer)
+            if ((recvDataLen + rcv_len) < (recvDataBufLen-128)) recvDataLen += rcv_len;
+            else {
+              // make room for more data
+              if ((recvDataBufLen+256) <= max_recv_datalen) {
+                recvDataBuf = realloc(recvDataBuf, (recvDataBufLen+256+4));
+                if (recvDataBuf == NULL) {
+                  // create recv data buffer
+                  recvDataBuf = malloc(MIN_RECVDATABUF_LEN+4);
+                  recvDataBufLen = MIN_RECVDATABUF_LEN;
+                  memset(recvDataBuf, 0, MIN_RECVDATABUF_LEN+4);
+                  ftp_log("\r\n[FTP cmd] Data buffer reallocation error!\r\n");
+                  data_done = 1;
+                  file_status = -9;
+                  recvDataLen = 0;
+                  // Close data socket
+                  closeDataSocket();
+                }
+                else {
+                  recvDataBufLen += 256;
+                  recvDataLen += rcv_len;
+                }
+              }
+              else recvDataLen = recvDataBufLen-16;
+            }
+            if (recvDataBuf != NULL) *(recvDataBuf + recvDataLen) = '\0';
           }
+          recv_tmo = 0;
         }
         timeout = mico_get_time();
-        recv_tmo = 0;
       }
     }
 
@@ -954,19 +968,18 @@ static void _thread_ftp(void*inContext)
     
     recv_tmo = 0;
 
-    // == Check if something was received from Command socket ==
-    if (recvLen > 0) {
-      // == Analize response ===
-      response();
-      recvLen = 0;
-      memset(recvBuf, 0, MAX_RECV_LEN);
-    }
-
     // == Check if Data socket was receiving ==
     if ((status & (FTP_RECEIVING | FTP_LISTING))) {
       // Finish all operattions on data socket
       if ((status & FTP_RECEIVING) && (recv_type == RECV_TOFILE)) {
-        _saveData(1);
+        data_ready = 2;
+        uint32_t tmo = mico_get_time();
+        while (data_ready > 0) { // inform the main thread of transfer end
+          if ((mico_get_time() - tmo) > 1000) break;
+          mico_rtos_unlock_mutex(&ftp_mut);
+          mico_thread_msleep(5);
+          mico_rtos_lock_mutex(&ftp_mut);
+        }
         recvDataLen = 0;
       }
       else {
@@ -989,16 +1002,54 @@ static void _thread_ftp(void*inContext)
       closeDataSocket();
       data_done = 1;
     }
+
+    // == Check if something was received from Command socket ==
+    if (recvLen > 0) {
+      // == Analize response ===
+      response();
+      recvLen = 0;
+      memset(recvBuf, 0, MAX_RECV_LEN);
+    }
   } // while
 
 terminate:
-  _ftp_deinit(0);
-  ftp_log("\r\n[FTP trd] FTP THREAD TERMINATED\r\n");
+  _ftp_deinit();
+
   ftp_thread_is_started = false;
+  mico_rtos_unlock_mutex(&ftp_mut);
+  ftp_log("\r\n[FTP trd] FTP THREAD TERMINATED\r\n");
+
   mico_rtos_delete_thread( NULL );
 }
 // ==================================
 
+//-----------------------------
+int _stopThread( uint8_t wait )
+{
+  int res = 0;
+  
+  mico_rtos_lock_mutex(&ftp_mut);
+
+  if ( (ftp_thread_is_started) && (ftpCmdSocket != NULL) ) {
+    ftpCmdSocket->clientFlag = REQ_ACTION_QUIT;
+    
+    if (wait == 1) {
+      // wait max 10 sec for disconnect
+      uint32_t tmo = mico_get_time();
+      while (ftp_thread_is_started) {
+        if ((mico_get_time() - tmo) > 10000) break;
+        mico_rtos_unlock_mutex(&ftp_mut);
+        mico_thread_msleep(100);
+        mico_rtos_lock_mutex(&ftp_mut);
+        luaWdgReload();
+      }
+      if (ftp_thread_is_started) res = -1;
+    }
+  }
+
+  mico_rtos_unlock_mutex(&ftp_mut);
+  return res;
+}
 
 //stat = ftp.new(serv,port,user,pass [,buflen])
 //=================================
@@ -1006,32 +1057,50 @@ static int lftp_new( lua_State* L )
 {
 
   size_t dlen=0, ulen=0, plen=0;
-  _ftp_deinit(1);
-  gL = NULL;
+  int port, socketHandle, err;
+  uint32_t opt;
+  const char *user;
+  const char *pass;
+  
+  if (ftp_mut == NULL) {
+    mico_rtos_init_mutex(&ftp_mut);
+  }
+
+  err = _stopThread(1);
+  if (err == -1) {
+    ftp_log("[FTP usr] Thread still running!\r\n" );
+    lua_pushinteger(L, -9);
+    return 1;
+  }
+  
+  mico_rtos_lock_mutex(&ftp_mut);
+
+  _ftp_deinit();
   
   const char *domain = luaL_checklstring( L, 1, &dlen );
   if (dlen>128 || domain == NULL) {
     ftp_log("[FTP usr] Domain needed\r\n" );
     lua_pushinteger(L, -1);
-    return 1;
+    goto exit;
   }
-  int port = luaL_checkinteger( L, 2 );
-  const char *user = luaL_checklstring( L, 3, &ulen );
+  port = luaL_checkinteger( L, 2 );
+  user = luaL_checklstring( L, 3, &ulen );
   if (ulen>128 || user == NULL) {
-    ftp_log("[FTP usr] Eser needed\r\n" );
+    ftp_log("[FTP usr] User needed\r\n" );
     lua_pushinteger(L, -2);
-    return 1;
+    goto exit;
   }
-  const char *pass = luaL_checklstring( L, 4, &plen );
+  pass = luaL_checklstring( L, 4, &plen );
   if (plen>128 || pass == NULL)  {
     ftp_log("[FTP usr] Pass needed\r\n" );
     lua_pushinteger(L, -3);
-    return 1;
+    goto exit;
   }
-  max_recv_datalen = 1024;
+
+  max_recv_datalen = MIN_RECVDATABUF_LEN*2;
   if (lua_gettop(L) >= 5) {
     int maxdl = luaL_checkinteger(L, 5);
-    if ((maxdl >= 512) && (maxdl <= 4096)) max_recv_datalen = (uint16_t)maxdl;
+    if ((maxdl >= MIN_RECVDATABUF_LEN) && (maxdl <= (MIN_RECVDATABUF_LEN*10))) max_recv_datalen = (uint16_t)maxdl;
   }
 
   // allocate buffers
@@ -1039,21 +1108,21 @@ static int lftp_new( lua_State* L )
   ftpuser=(char*)malloc(ulen+1);
   ftppass=(char*)malloc(plen+1);
   if ((pDomain4Dns==NULL) || (ftpuser==NULL) || (ftppass==NULL)) {
-    _ftp_deinit(0);    
+    _ftp_deinit();    
     ftp_log("[FTP usr] Memory allocation failed\r\n" );
     lua_pushinteger(L, -4);
-    return 1;
+    goto exit;
   }
   strcpy(pDomain4Dns,domain);
   strcpy(ftpuser,user);
   strcpy(ftppass,pass);
 
-  int socketHandle = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  socketHandle = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (socketHandle < 0) {
-    _ftp_deinit(0);    
+    _ftp_deinit();    
     ftp_log("[FTP usr] Open CMD socket failed\r\n" );
     lua_pushinteger(L, -5);
-    return 1;
+    goto exit;
   }
   
   ftpCmdSocket = NULL;
@@ -1061,10 +1130,10 @@ static int lftp_new( lua_State* L )
   
   ftpCmdSocket = (ftpCmdSocket_t*)malloc(sizeof(ftpCmdSocket_t));
   if (ftpCmdSocket == NULL) {
-    _ftp_deinit(0);    
+    _ftp_deinit();    
     ftp_log("[FTP usr] Memory allocation failed\r\n" );
     lua_pushinteger(L, -6);
-    return 1;
+    goto exit;
   }
 
   ftpCmdSocket->socket = socketHandle;
@@ -1076,19 +1145,23 @@ static int lftp_new( lua_State* L )
   ftpCmdSocket->clientFlag = NO_ACTION;
   ftpCmdSocket->clientLastFlag = NO_ACTION;
   ftpCmdSocket->addr.s_port = port;
+  
   status = FTP_NOT_CONNECTED;
-  uint32_t opt=0;
-  int err = setsockopt(socketHandle,IPPROTO_IP,SO_BLOCKMODE,&opt,4); // non block mode
+  opt=0;
+  err = setsockopt(socketHandle,IPPROTO_IP,SO_BLOCKMODE,&opt,4); // non block mode
   if (err < 0) {
-    _ftp_deinit(0);    
+    _ftp_deinit();    
     ftp_log("[FTP usr] Set socket options failed\r\n" );
     lua_pushinteger(L, -7);
-    return 1;
+    goto exit;
   }
 
   gL = L;
   ftp_log("[FTP usr] FTP client configured.\r\n" );
   lua_pushinteger(L, 0);
+
+exit:
+  mico_rtos_unlock_mutex(&ftp_mut);
   return 1;
 }
 
@@ -1096,7 +1169,9 @@ static int lftp_new( lua_State* L )
 //===================================
 static int lftp_start( lua_State* L )
 {
+  uint32_t tmo;
   LinkStatusTypeDef wifi_link;
+  
   int err = micoWlanGetLinkStatus( &wifi_link );
 
   if ( wifi_link.is_connected == false ) {
@@ -1105,15 +1180,18 @@ static int lftp_start( lua_State* L )
     return 1;
   }
   
+  mico_rtos_lock_mutex(&ftp_mut);
+
   if ( (gL == NULL) || (ftpCmdSocket == NULL) ) {
     ftp_log("[FTP usr] Execute ftp.new first!\r\n" );
     lua_pushinteger(L, -2);
-    return 1;
+    goto exit;
   }
+  
   if (ftp_thread_is_started) {
-    ftp_log("[FTP usr] Already started!\r\n" );
+    ftp_log("[FTP usr] Thread already started, execute net.stop() first!\r\n" );
     lua_pushinteger(L, -3);
-    return 1;
+    goto exit;
   }
   
   mico_system_notify_register( mico_notify_TCP_CLIENT_CONNECTED, (void *)_micoNotify_FTPClientConnectedHandler, NULL );
@@ -1121,28 +1199,33 @@ static int lftp_start( lua_State* L )
   // all setup, start the ftp thread
   if (!ftp_thread_is_started) {
     if (mico_rtos_create_thread(NULL, MICO_APPLICATION_PRIORITY-1, "Ftp_Thread", _thread_ftp, 1024, NULL) != kNoErr) {
-      _ftp_deinit(0);    
+      _ftp_deinit();    
       ftp_log("[FTP usr] Create thread failed\r\n" );
       lua_pushinteger(L, -4);
-      return 1;
+      goto exit;
     }
     else ftp_thread_is_started = true;
   } 
 
   if (ftpCmdSocket->logon_cb != LUA_NOREF) {
     lua_pushinteger(L, 0);
-    return 1;
+    goto exit;
   }
   
   // wait max 10 sec for login
-  uint32_t tmo = mico_get_time();
+  tmo = mico_get_time();
   while ( (ftp_thread_is_started) && !(status & FTP_LOGGED) ) {
     if ((mico_get_time() - tmo) > 10000) break;
+    mico_rtos_unlock_mutex(&ftp_mut);
     mico_thread_msleep(100);
+    mico_rtos_lock_mutex(&ftp_mut);
     luaWdgReload();
   }
   if (!(status & FTP_LOGGED)) lua_pushinteger(L, -4);
   else lua_pushinteger(L, 0);
+
+exit:
+  mico_rtos_unlock_mutex(&ftp_mut);
   return 1;
 }
 
@@ -1150,31 +1233,15 @@ static int lftp_start( lua_State* L )
 //===================================
 static int lftp_stop( lua_State* L )
 {
-  if ( (ftp_thread_is_started) && (ftpCmdSocket != NULL) ) {
-    ftpCmdSocket->clientFlag = REQ_ACTION_QUIT;
-
-    if (ftpCmdSocket->disconnect_cb != LUA_NOREF) {
-      lua_pushinteger(L, 0);
-      return 1;
-    }
-    // wait max 10 sec for disconnect
-    uint32_t tmo = mico_get_time();
-    while (ftp_thread_is_started) {
-      if ((mico_get_time() - tmo) > 10000) break;
-      mico_thread_msleep(100);
-      luaWdgReload();
-    }
-    if (!ftp_thread_is_started) {
-      _ftp_deinit(0);    
-      lua_pushinteger(L, 0);
-    }
-    else lua_pushinteger(L, -1);
-  }
-  else lua_pushinteger(L, 0);
+  int res = 1;
+  
+  if (ftpCmdSocket->disconnect_cb != LUA_NOREF) res = _stopThread(0);
+  else res = _stopThread(1);
+  lua_pushinteger(L, res);
   return 1;
 }
 
-//ftp.debuf(dbg)
+//ftp.debug(dbg)
 //===================================
 static int lftp_debug( lua_State* L )
 {
@@ -1190,58 +1257,54 @@ static int lftp_debug( lua_State* L )
 //================================
 static int lftp_on( lua_State* L )
 {
+  const char *method;
+  uint8_t reg_func = 0;
+  
+  mico_rtos_lock_mutex(&ftp_mut);
+  
   if ( (gL == NULL) || (ftpCmdSocket == NULL) ) {
     ftp_log("[FTP usr] Execute ftp.new first!" );
     lua_pushinteger(L, -1);
-    return 1;
-  }
-  if (ftp_thread_is_started) {
-    ftp_log("[FTP usr] Use before FTP is started!" );
-    lua_pushinteger(L, -2);
-    return 1;
+    goto exit;
   }
 
   size_t sl;
-  const char *method = luaL_checklstring( L, 1, &sl );
+  method = luaL_checklstring( L, 1, &sl );
   if (method == NULL) {
     ftp_log("[FTP usr] Method string needed" );
     lua_pushinteger(L, -3);
-    return 1;
+    goto exit;
   }
   
   if ((lua_type(L, 2) == LUA_TFUNCTION) || (lua_type(L, 2) == LUA_TLIGHTFUNCTION)) {
     lua_pushvalue(L, 2);
-  }
-  else {
-    ftp_log("[FTP usr] CB function needed" );
-    lua_pushinteger(L, -4);
-    return 1;
+    reg_func = 1;
   }
   
   if ((strcmp(method,"login") == 0) && (sl == strlen("login"))) {
     if (ftpCmdSocket->logon_cb != LUA_NOREF)
       luaL_unref(gL,LUA_REGISTRYINDEX, ftpCmdSocket->logon_cb);
-    ftpCmdSocket->logon_cb = luaL_ref(L, LUA_REGISTRYINDEX);
+    if (reg_func == 1) ftpCmdSocket->logon_cb = luaL_ref(L, LUA_REGISTRYINDEX);
   }
   else if ((strcmp(method,"disconnect") == 0) && (sl == strlen("disconnect"))) {
     if (ftpCmdSocket->disconnect_cb != LUA_NOREF)
       luaL_unref(gL,LUA_REGISTRYINDEX, ftpCmdSocket->disconnect_cb);
-    ftpCmdSocket->disconnect_cb = luaL_ref(L, LUA_REGISTRYINDEX);
+    if (reg_func == 1) ftpCmdSocket->disconnect_cb = luaL_ref(L, LUA_REGISTRYINDEX);
   }
   else if ((strcmp(method,"receive") == 0) && (sl == strlen("receive"))) {
     if (ftpCmdSocket->received_cb != LUA_NOREF)
       luaL_unref(gL,LUA_REGISTRYINDEX, ftpCmdSocket->received_cb);
-    ftpCmdSocket->received_cb = luaL_ref(L, LUA_REGISTRYINDEX);
+    if (reg_func == 1) ftpCmdSocket->received_cb = luaL_ref(L, LUA_REGISTRYINDEX);
   }
   else if ((strcmp(method,"send") == 0) && (sl == strlen("send"))) {
     if (ftpCmdSocket->sent_cb != LUA_NOREF)
       luaL_unref(gL,LUA_REGISTRYINDEX, ftpCmdSocket->sent_cb);
-    ftpCmdSocket->sent_cb = luaL_ref(L, LUA_REGISTRYINDEX);
+    if (reg_func == 1) ftpCmdSocket->sent_cb = luaL_ref(L, LUA_REGISTRYINDEX);
   }
   else if ((strcmp(method,"list") == 0) && (sl == strlen("list"))) {
     if (ftpCmdSocket->list_cb != LUA_NOREF)
       luaL_unref(gL,LUA_REGISTRYINDEX, ftpCmdSocket->list_cb);
-    ftpCmdSocket->list_cb = luaL_ref(L, LUA_REGISTRYINDEX);
+    if (reg_func == 1) ftpCmdSocket->list_cb = luaL_ref(L, LUA_REGISTRYINDEX);
   }
   else {
     ftp_log("[FTP usr] Unknown CB function: %s", method);
@@ -1249,30 +1312,10 @@ static int lftp_on( lua_State* L )
   }
 
   lua_pushinteger(L, 0);
-  return 1;
-}
 
-//------------------------------
-static int _openFile(char *mode)
-{
-  // open the file
-  if (ftpfile == NULL) {
-    ftp_log("[FTP fil] Ftpfile not assigned\r\n" );
-    return -1;
-  }
-  ftp_log("[FTP fil] Opening local file: %s\r\n", ftpfile );
-  if (FILE_NOT_OPENED != file_fd) {
-    ftp_log("[FTP fil] Closing file first\r\n" );
-    SPIFFS_close(&fs,file_fd);
-    file_fd = FILE_NOT_OPENED;
-  }
-  file_fd = SPIFFS_open(&fs, (char*)ftpfile, mode2flag(mode), 0);
-  if (file_fd <= FILE_NOT_OPENED) {
-    ftp_log("[FTP fil] Error opening local file: %d\r\n", file_fd );
-    file_fd = FILE_NOT_OPENED;
-    return -2;
-  }
-  return 0;
+exit:
+  mico_rtos_unlock_mutex(&ftp_mut);
+  return 1;
 }
 
 //-----------------------------------------------
@@ -1280,31 +1323,115 @@ static int _getFName(lua_State* L, uint8_t index)
 {
   free(ftpfile);
   ftpfile = NULL;
-  if (lua_gettop(L) < index) return -3;
+  if (lua_gettop(L) < index) return -3; // no file arg exists
   
   size_t len = 0;
   const char *fname = luaL_checklstring( L, index, &len );
-  if (len > SPIFFS_OBJ_NAME_LEN || fname == NULL) {
-    ftp_log("[FTP fil] Bad name or length > %d\r\n", SPIFFS_OBJ_NAME_LEN);
+  if ((len < 1) || (len >= SPIFFS_OBJ_NAME_LEN) || (fname == NULL)) {
+    ftp_log("[FTP fil] Bad file name\r\n" );
     return -1;
   }
-  ftpfile=(char*)malloc(len+1);
-  if (ftpfile==NULL) {
+
+  ftpfile = (char*)malloc(SPIFFS_OBJ_NAME_LEN);
+  if (ftpfile == NULL) {
     ftp_log("[FTP fil] Memory allocation failed\r\n" );
     return -2;
   }
-  strcpy(ftpfile,fname);
+  strcpy(ftpfile, fname);
   return 0;
 }
 
-//ftp.list(ltype, otype [,dir])
+// open local file for sending or receiving
+//-------------------------
+int _openFile(uint8_t mode)
+{
+  
+  // open the file
+  if (ftpfile == NULL) {
+    ftp_log("[FTP fil] File name not allocated\r\n");
+    return -1;
+  }
+
+  if (FILE_NOT_OPENED != file_fd) {
+    SPIFFS_close(&fs, file_fd);
+    file_fd = FILE_NOT_OPENED;
+  }
+
+  uint8_t check = 1;
+  int mde = SPIFFS_RDONLY;
+  char fullname[SPIFFS_OBJ_NAME_LEN] = {0};
+  uint8_t res = 0;
+  
+  if (mode == 1) {
+    check = 0;
+    mde = SPIFFS_WRONLY|SPIFFS_CREAT|SPIFFS_TRUNC;
+  }
+  res = checkFileName(strlen(ftpfile), ftpfile, fullname, 1, check);
+  if ((mode == 0) && (res != 2)) {
+      ftp_log("[FTP fil] File '%s' not found\r\n", fullname);
+      return -2;
+  }
+  if (res == 0) {
+    ftp_log("[FTP fil] Bad file name: '%s'\r\n", fullname);
+    return -2;
+  }
+  
+  if ((mode == 1) && (fileExists(fullname))) {
+    ftp_log("[FTP fil] Deleting existing file '%s'\r\n", fullname);
+    SPIFFS_remove(&fs, fullname);
+  }
+
+  file_fd = SPIFFS_open(&fs, fullname, mde, 0);
+  if (file_fd <= FILE_NOT_OPENED) {
+    ftp_log("[FTP fil] Error opening file '%s'\r\n", fullname);
+    return -3;
+  }
+
+  ftp_log("[FTP fil] Opened local file '%s' for ", fullname);
+  if (mode == 0) {
+    ftp_log("reading\r\n"); 
+    // reading, get file size
+    spiffs_stat s;
+    SPIFFS_fstat(&fs, file_fd, &s);
+    ftp_log("[FTP fil] File size: %d\r\n", s.size);
+    if (s.size == 0) {
+      if (FILE_NOT_OPENED != file_fd) SPIFFS_close(&fs, file_fd);
+      return -4;
+    }
+    else return s.size;
+  }
+  else {
+    ftp_log("writing\r\n"); 
+  }
+  return 0;
+}
+
+//-------------------------------
+uint8_t _waitDataSocketFree(void)
+{
+  uint32_t tmo = mico_get_time();
+  while (ftpDataSocket != NULL) {
+    if ((mico_get_time() - tmo) > 5000) break;
+    mico_rtos_unlock_mutex(&ftp_mut);
+    mico_thread_msleep(50);
+    mico_rtos_lock_mutex(&ftp_mut);
+    luaWdgReload();
+  }
+  if (ftpDataSocket != NULL) {
+    closeDataSocket();
+    ftp_log("[FTP usr] Data socket not free!\r\n" );
+    return 0;
+  }
+  return 1;
+}
+
+//ftp.list(ltype, otype [,remotedir])
 //===================================
 static int lftp_list( lua_State* L )
 {
   int err = 0;
   uint16_t dptr = 0;
   uint8_t n = 0;
-  uint8_t i = 0;
   int nlin = 0;
   char buf[255] = {0};
   uint32_t tmo;
@@ -1312,15 +1439,21 @@ static int lftp_list( lua_State* L )
   uint8_t ltype = luaL_checkinteger(L, 1);
   uint8_t otype = luaL_checkinteger(L, 2);
   if (otype == 1) ltype = 1;
-  err = _getFName(L, 3);
-  err = 0;
+  _getFName(L, 3); // get remote dir/file spec
   
+  mico_rtos_lock_mutex(&ftp_mut);
+
   if ((gL == NULL) || (ftpCmdSocket == NULL) || (!(status & FTP_LOGGED))) {
     ftp_log("[FTP usr] Login first\r\n" );
     err = -1;
     goto exit;
   }
 
+  if (!_waitDataSocketFree()) {
+    err = -2;
+    goto exit;
+  }
+  
   list_type = ltype;
   data_done = 0;
   ftpCmdSocket->clientFlag = REQ_ACTION_LIST;
@@ -1333,9 +1466,13 @@ static int lftp_list( lua_State* L )
   tmo = mico_get_time();
   while (data_done == 0) {
     if ((mico_get_time() - tmo) > 10000) break;
+    mico_rtos_unlock_mutex(&ftp_mut);
     mico_thread_msleep(60);
+    mico_rtos_lock_mutex(&ftp_mut);
     luaWdgReload();
   }
+  _waitDataSocketFree();
+
   if (data_done == 0) {
     ftp_log("[FTP usr] Timeout: list not received\r\n" );
     err = -3;
@@ -1351,7 +1488,7 @@ static int lftp_list( lua_State* L )
   if (otype != 1) {
     printf("===================\r\n");
     printf("FTP directory list:");
-    if (recvDataLen == (max_recv_datalen-16)) {
+    if (recvDataLen >= (recvDataBufLen-16)) {
       printf(" (buffer full)");
     }
     printf("\r\n");
@@ -1360,6 +1497,7 @@ static int lftp_list( lua_State* L )
     lua_newtable( L );
   }
 
+  nlin = 0;
   while (dptr < recvDataLen) {
     if (*(recvDataBuf+dptr) == '\0') break;
     if ((*(recvDataBuf+dptr) == '\n') || (*(recvDataBuf+dptr) == '\r') || (n >= 254)) {
@@ -1369,7 +1507,7 @@ static int lftp_list( lua_State* L )
         if (otype != 1) printf("%s\r\n", &buf[0]);
         else {
           lua_pushstring( L, &buf[0] );
-          lua_rawseti(L,-2,i++);
+          lua_rawseti(L,-2,nlin);
         }
         n = 0;
       }
@@ -1383,17 +1521,19 @@ static int lftp_list( lua_State* L )
     if (otype != 1) printf("%s\r\n", &buf[0]);
     else {
       lua_pushstring( L, &buf[0] );
-      lua_rawseti(L,-2,i++);
+      lua_rawseti(L,-2, nlin);
     }
   }
   if (otype != 1) {
     printf("===================\r\n");
     lua_pushinteger(L, nlin);
+    mico_rtos_unlock_mutex(&ftp_mut);
     return 1;
   }
   else {
     ftp_log("[FTP usr] List received to table\r\n" );
     lua_pushinteger(L, nlin);
+    mico_rtos_unlock_mutex(&ftp_mut);
     return 2;
   }
   
@@ -1401,9 +1541,11 @@ exit:
   if (otype == 1) {
     lua_newtable( L );
     lua_pushinteger(L, err);
+    mico_rtos_unlock_mutex(&ftp_mut);
     return 2;
   }
   lua_pushinteger(L, err);
+  mico_rtos_unlock_mutex(&ftp_mut);
   return 1;
 }
 
@@ -1411,28 +1553,34 @@ exit:
 //===================================
 static int lftp_chdir( lua_State* L )
 {
+  uint32_t tmo;
+  
+  mico_rtos_lock_mutex(&ftp_mut);
+  
   if ( (gL == NULL) || (ftpCmdSocket == NULL) || (!(status & FTP_LOGGED)) ) {
     ftp_log("[FTP usr] Login first\r\n" );
     lua_pushinteger(L, -1);
-    return 1;
+    goto exit;
   }
-  _getFName(L, 1);
+  _getFName(L, 1); // get remote dir
 
   free(ftpresponse);
   ftpresponse = NULL;
   cmd_done = 0;
-  uint32_t tmo = mico_get_time();
   ftpCmdSocket->clientFlag = REQ_ACTION_CHDIR;
 
+  tmo = mico_get_time();
   while (cmd_done == 0) {
-    if ((mico_get_time() - tmo) > 4000) break;
+    if ((mico_get_time() - tmo) > 5000) break;
+    mico_rtos_unlock_mutex(&ftp_mut);
     mico_thread_msleep(60);
+    mico_rtos_lock_mutex(&ftp_mut);
     luaWdgReload();
   }
   if (cmd_done == 0) {
     ftp_log("[FTP usr] Timeout\r\n" );
     lua_pushinteger(L, -2);
-    return 1;
+    goto exit;
   }
 
   lua_pushinteger(L, 0);
@@ -1442,27 +1590,36 @@ static int lftp_chdir( lua_State* L )
     ftpresponse = NULL;
   }
   else lua_pushstring(L, "?");
+  mico_rtos_unlock_mutex(&ftp_mut);
   return 2;
+
+exit:
+  mico_rtos_unlock_mutex(&ftp_mut);
+  return 1;
+  
 }
 
 //ftp.recv(file [,tostr])
 //===================================
 static int lftp_recv( lua_State* L )
 {
+  int max_fsize = 32 * 1024;
+
+  mico_rtos_lock_mutex(&ftp_mut);
+
   if ( (gL == NULL) || (ftpCmdSocket == NULL) || (!(status & FTP_LOGGED)) ) {
     ftp_log("[FTP usr] Login first\r\n" );
     lua_pushinteger(L, -11);
-    return 1;
+    goto exit;
   }
 
-  if (_getFName(L, 1) < 0) {
-    ftp_log("[FTP fil] File name missing\r\n" );
-    lua_pushinteger(L, -12);
-    return 1;
+  if (!_waitDataSocketFree()) {
+    lua_pushinteger(L, -15);
+    goto exit;
   }
-  if (_openFile("w") < 0) {
-    lua_pushinteger(L, -13);
-    return 1;
+  if (_getFName(L, 1) < 0) {
+    lua_pushinteger(L, -12);
+    goto exit;
   }
   
   recv_type = RECV_TOFILE;
@@ -1470,17 +1627,110 @@ static int lftp_recv( lua_State* L )
     int tos = luaL_checkinteger(L, 2);
     if (tos == 1) recv_type = RECV_TOSTRING;
   }
+
+  if (recv_type == RECV_TOFILE) {
+    // get max file size
+    uint32_t total, used;
+    SPIFFS_info(&fs, &total, &used);
+    if ((total > 2000000) || (used > 2000000) || (used > total)) {
+      ftp_log("[FTP fil] File system error\r\n" );
+      lua_pushinteger(L, -16);
+      goto exit;
+    }
+    max_fsize = total - used - (10 *1024);
+    if (max_fsize < 10*1024) {
+      ftp_log("[FTP fil] No space left on fs!\r\n" );
+      lua_pushinteger(L, -17);
+      goto exit;
+    }
+    if (max_fsize > (512*1024)) max_fsize = 512*1024;
+    ftp_log("[FTP fil] Max file size: %d\r\n", max_fsize);
+    // open the file
+    if (_openFile(1) < 0) {
+      lua_pushinteger(L, -13);
+      goto exit;
+    }
+  }
+  
+  data_ready = 0;
   data_done = 0;
   ftpCmdSocket->clientFlag = REQ_ACTION_RECV;
   
-  if (ftpCmdSocket->received_cb == LUA_NOREF) {
-    // no cb function, wait until file received (max 10 sec)
+  if (recv_type == RECV_TOFILE) {
+    // ** receiving to file,
+    //    we have to handle saving to file from THIS thread
+    uint32_t tmo = mico_get_time();
+    while ((mico_get_time() - tmo) < 4000) {
+      mico_rtos_unlock_mutex(&ftp_mut);
+      mico_thread_msleep(5);
+      mico_rtos_lock_mutex(&ftp_mut);
+
+      if (data_ready == 1) {
+        // some data received, write to file
+        if (!(status & FTP_RECEIVING)) file_status = -4;
+        else if (file_fd == FILE_NOT_OPENED) file_status =  -2;
+        else if ((recvDataBuf != NULL) && (recvDataLen > 0)) {
+          if ((file_status + recvDataLen) < max_fsize) {
+            // OK to write
+            int writen = SPIFFS_write(&fs, file_fd, (char*)recvDataBuf, recvDataLen);
+            mico_thread_msleep(5);
+            
+            if (writen != recvDataLen) { //failed
+              SPIFFS_fflush(&fs, file_fd);
+              SPIFFS_close(&fs, (spiffs_file)file_fd);
+              file_fd = FILE_NOT_OPENED;
+              ftp_log("\r\n[FTP dta] Write to file failed (%d)\r\n", writen);
+              file_status = -3;
+            }
+            else {
+              SPIFFS_fflush(&fs, file_fd);
+              file_status += recvDataLen;
+              ftp_log("\r[FTP dta] Received %d byte(s)", file_status);
+            }
+          }
+          else {
+            // file too large, no space left to write
+            file_status += recvDataLen;
+            ftp_log("\r[FTP dta] Max size exceded: %d byte(s)", file_status);
+          }
+        }
+        data_ready = 0;
+        tmo = mico_get_time();
+      }
+      else if (data_ready == 2) {
+        data_ready = 0;
+        break;
+      }
+      luaWdgReload();
+    }
+    if (file_fd != FILE_NOT_OPENED) {
+      SPIFFS_fflush(&fs, file_fd);
+      SPIFFS_close(&fs, file_fd);
+      file_fd = FILE_NOT_OPENED;
+    }
+    free(ftpfile);
+    ftpfile = NULL;
+    if (file_status >= max_fsize) {
+      ftp_log("\r\n[FTP dta] File too big, truncated\r\n");
+    }
+    else {
+      ftp_log("\r\n[FTP dta] Data file closed\r\n");
+    }
+    lua_pushinteger(L, file_status);
+    _waitDataSocketFree();
+  }
+  else if ((recv_type == RECV_TOSTRING) && (ftpCmdSocket->received_cb == LUA_NOREF)) {
+    // no cb function & receive to string,
+    // wait until file received (max 10 sec)
     uint32_t tmo = mico_get_time();
     while (!data_done) {
       if ((mico_get_time() - tmo) > 10000) break;
+      mico_rtos_unlock_mutex(&ftp_mut);
       mico_thread_msleep(60);
+      mico_rtos_lock_mutex(&ftp_mut);
       luaWdgReload();
     }
+    _waitDataSocketFree();
     if (!data_done) {
       ftp_log("[FTP usr] Timeout: file not received\r\n" );
       lua_pushinteger(L, -14);
@@ -1488,24 +1738,29 @@ static int lftp_recv( lua_State* L )
     else {
       ftp_log("[FTP usr] File received\r\n" );
       lua_pushinteger(L, file_status);
-      if (recv_type == RECV_TOSTRING) {
-        lua_pushstring(L, recvDataBuf);
-        return 2;
-      }
+      lua_pushstring(L, recvDataBuf);
+      mico_rtos_unlock_mutex(&ftp_mut);
+      return 2;
     }
   }
   else lua_pushinteger(L, 0);
+
+exit:
+  mico_rtos_unlock_mutex(&ftp_mut);
   return 1;
 }
 
-//ftp.send(file [,append])
+//ftp.send(localfile [,append])
 //==================================
 static int lftp_send( lua_State* L )
 {
+  mico_rtos_lock_mutex(&ftp_mut);
+  uint32_t tmo;
+  
   if ( (gL == NULL) || (ftpCmdSocket == NULL) || (!(status & FTP_LOGGED)) ) {
     ftp_log("[FTP usr] Login first\r\n" );
     lua_pushinteger(L, -11);
-    return 1;
+    goto exit;
   }
   if (lua_gettop(L) >= 2) {
     send_type = (uint8_t)luaL_checkinteger(L, 2);
@@ -1513,101 +1768,153 @@ static int lftp_send( lua_State* L )
   }
   else send_type = SEND_OVERWRITTE;
   
-  if (_getFName(L, 1) < 0) {
-    ftp_log("[FTP fil] File name missing\r\n" );
-    lua_pushinteger(L, -12);
-    return 1;
+  if (!_waitDataSocketFree()) {
+    lua_pushinteger(L, -15);
+    goto exit;
   }
-  if (_openFile("r") < 0) {
+  if (_getFName(L, 1) < 0) {
+    lua_pushinteger(L, -12);
+    goto exit;
+  }
+  file_size = _openFile(0);
+  if ( file_size < 0) {
+    file_size = 0;
     lua_pushinteger(L, -13);
-    return 1;
+    goto exit;
   }
 
-  spiffs_stat s;
-  // Get file size
-  SPIFFS_fstat(&fs, file_fd, &s);
-  file_size = s.size;
-  
   data_done = 0;
+  data_get = 1;
   ftpCmdSocket->clientFlag = REQ_ACTION_SEND;
   
-  if (ftpCmdSocket->sent_cb == LUA_NOREF) {
-    // no cb function, wait until file received (max 10 sec)
-    uint32_t tmo = mico_get_time();
-    while (!data_done) {
-      if ((mico_get_time() - tmo) > 10000) break;
-      mico_thread_msleep(60);
-      luaWdgReload();
+  // ** sending from file,
+  //    we have to handle saving to file from THIS thread
+  tmo = mico_get_time();
+  while ((mico_get_time() - tmo) < 4000) {
+    mico_rtos_unlock_mutex(&ftp_mut);
+    mico_thread_msleep(5);
+    mico_rtos_lock_mutex(&ftp_mut);
+    if (data_get == 2) {
+      data_get = 0;
+      if (ftpfile == NULL) {
+        ftp_log("\r[FTP dta] Send file not valid\r\n");
+        file_status = -1;
+        break;
+      }
+      else if (recvDataBuf == NULL) {
+        ftp_log("\r[FTP dta] Buffer error\r\n");
+        file_status = -2;
+        break;
+      }
+      else if (file_status >= file_size) {
+        break;
+      }
+      else {
+        uint16_t len = MIN_RECVDATABUF_LEN-4;
+        if (recvDataBufLen < len) len = recvDataBufLen-4;
+        sendDataLen = SPIFFS_read(&fs, file_fd, (char*)recvDataBuf, len);
+        if (sendDataLen > 0) {
+          file_status += sendDataLen;
+          ftp_log("\r[FTP dta] %.*f %%", 1, (float)(((float)file_status/(float)file_size)*100.0));
+          data_get = 1; // send data
+          tmo = mico_get_time();
+        }
+        else if (sendDataLen < 0) {
+          ftp_log("\r[FTP dta] Error reading from file (%d)\r\n", sendDataLen);
+          file_status = -4;
+          break;
+        }
+        else break;
+      }
     }
-    if (!data_done) {
-      ftp_log("[FTP usr] Timeout: file not sent\r\n" );
-      lua_pushinteger(L, -14);
+    else if (data_get == 3) {
+      // abort, error sending
+      break;
     }
-    else {
-      ftp_log("[FTP usr] File sent\r\n" );
-      lua_pushinteger(L, file_status);
-    }
+    luaWdgReload();
   }
-  else lua_pushinteger(L, 0);
+  data_get = 0;
+  if ((mico_get_time() - tmo) > 4000) {
+    ftp_log("\r[FTP dta] Timeout while sending data\r\n");
+  }
+  // Close file
+  if (file_fd != FILE_NOT_OPENED) {
+    SPIFFS_fflush(&fs, file_fd);
+    SPIFFS_close(&fs, file_fd);
+    file_fd = FILE_NOT_OPENED;
+  }
+  free(ftpfile);
+  ftpfile = NULL;
+  ftp_log("\r\n[FTP dta] Data file closed\r\n");
+  lua_pushinteger(L, file_status);
+  _waitDataSocketFree();
+
+exit:
+  mico_rtos_unlock_mutex(&ftp_mut);
   return 1;
 }
 
-//ftp.sendstring(file, str [,append])
+//ftp.sendstring(remotefile, str [,append])
 //========================================
 static int lftp_sendstring( lua_State* L )
 {
-  if ((gL != NULL) && (ftpCmdSocket != NULL)) {
-    if ((status & FTP_LOGGED)) {
-      if (lua_gettop(L) >= 3) {
-        send_type = (uint8_t)luaL_checkinteger(L, 3);
-        if (send_type != SEND_APPEND) send_type = SEND_OVERWRITTE;
-      }
-      else send_type = SEND_OVERWRITTE;
-      send_type |= SEND_STRING;
-
-      if (_getFName(L, 1) < 0) {
-        ftp_log("[FTP fil] File name missing\r\n" );
-        lua_pushinteger(L, -13);
-        return 1;
-      }
-      
-      size_t len;
-      sendDataBuf = (char*)luaL_checklstring( L, 2, &len );
-      if (sendDataBuf == NULL) {
-        ftp_log("[FTP fil] Bad string\r\n");
-        lua_pushinteger(L, -14);
-      }
-      else {
-        file_size = len;
-        data_done = 0;
-        ftpCmdSocket->clientFlag = REQ_ACTION_SEND;
-      
-        uint32_t tmo = mico_get_time();
-        while (!data_done) {
-          if ((mico_get_time() - tmo) > 10000) break;
-          mico_thread_msleep(60);
-          luaWdgReload();
-        }
-        if (!data_done) {
-          ftp_log("[FTP usr] Timeout: string not sent\r\n" );
-          lua_pushinteger(L, -15);
-        }
-        else {
-          ftp_log("[FTP usr] String sent\r\n" );
-          lua_pushinteger(L, file_status);
-        }
-        sendDataBuf = NULL;
-      }
-    }
-    else {
-      ftp_log("[FTP usr] Not logged\r\n" );
-      lua_pushinteger(L, -12);
-    }
-  }
-  else {
+  mico_rtos_lock_mutex(&ftp_mut);
+  
+  if ((gL == NULL) || (ftpCmdSocket == NULL) || ((status & FTP_LOGGED) == 0)) {
     ftp_log("[FTP usr] Login first\r\n" );
     lua_pushinteger(L, -11);
+    goto exit;
   }
+
+  if (lua_gettop(L) >= 3) {
+    send_type = (uint8_t)luaL_checkinteger(L, 3);
+    if (send_type != SEND_APPEND) send_type = SEND_OVERWRITTE;
+  }
+  else send_type = SEND_OVERWRITTE;
+  send_type |= SEND_STRING;
+
+  if (_getFName(L, 1) < 0) {
+    lua_pushinteger(L, -12);
+    goto exit;
+  }
+  
+  size_t len;
+  sendDataBuf = (char*)luaL_checklstring( L, 2, &len );
+  if ((sendDataBuf == NULL) || (len <= 0)) {
+    ftp_log("[FTP fil] Bad string\r\n");
+    lua_pushinteger(L, -14);
+  }
+  else {
+    if (!_waitDataSocketFree()) {
+      lua_pushinteger(L, -15);
+      goto exit;
+    }
+    file_size = len;
+    data_done = 0;
+    ftpCmdSocket->clientFlag = REQ_ACTION_SEND;
+  
+    uint32_t tmo = mico_get_time();
+    while (!data_done) {
+      if ((mico_get_time() - tmo) > 10000) break;
+      mico_rtos_unlock_mutex(&ftp_mut);
+      mico_thread_msleep(60);
+      mico_rtos_lock_mutex(&ftp_mut);
+      luaWdgReload();
+    }
+    _waitDataSocketFree();
+    if (!data_done) {
+      ftp_log("[FTP usr] Timeout: string not sent\r\n" );
+      lua_pushinteger(L, -15);
+    }
+    else {
+      ftp_log("[FTP usr] String sent\r\n" );
+      lua_pushinteger(L, file_status);
+    }
+    sendDataBuf = NULL;
+  }
+
+exit:
+  mico_rtos_unlock_mutex(&ftp_mut);
   return 1;
 }
 
@@ -1633,6 +1940,8 @@ const LUA_REG_TYPE ftp_map[] =
 
 LUALIB_API int luaopen_ftp(lua_State *L)
 {
+
+  mico_rtos_init_mutex(&ftp_mut);
 
 #if LUA_OPTIMIZE_MEMORY > 0
     return 0;

@@ -77,7 +77,7 @@ static uint32_t _GetWRPSector(uint32_t Address);
 static OSStatus internalFlashProtect(uint32_t StartAddress, uint32_t EndAddress, bool enable);
 #endif
 #ifdef USE_MICO_SPI_FLASH
-static OSStatus spiFlashErase(uint32_t StartAddress, uint32_t EndAddress);
+OSStatus spiFlashErase(uint32_t StartAddress, uint32_t EndAddress);
 #endif
 
 

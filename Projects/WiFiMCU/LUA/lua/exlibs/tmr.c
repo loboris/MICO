@@ -100,7 +100,7 @@ static void _tmr_handler( void* arg )
   {
     queue_msg_t msg;
     msg.L = gL;
-    msg.source = TMR;
+    msg.source = onTMR;
     //msg.para1 = tmr_cb_ref[id];
     msg.para2 = tmr_cb_ref[id];
     mico_rtos_push_to_queue( &os_queue, &msg,0);
@@ -141,6 +141,22 @@ static int ltmr_start( lua_State* L )
   return 0;
 }
 
+
+static int ltmr_find( lua_State* L )
+{
+  uint8_t tmr = NUM_TMR+1;
+  for (int i=0; i<NUM_TMR; i++) {
+    if (tmr_is_started[i] == false) {
+      tmr = i;
+      break;
+    }
+  }
+  if (tmr < NUM_TMR) lua_pushinteger(L, tmr);
+  else lua_pushnil(L);
+  return 1;
+}
+
+
 #define MIN_OPT_LEVEL       2
 #include "lrodefs.h"
 const LUA_REG_TYPE tmr_map[] =
@@ -152,6 +168,7 @@ const LUA_REG_TYPE tmr_map[] =
   { LSTRKEY( "stop" ), LFUNCVAL( ltmr_stop ) },
   { LSTRKEY( "stopall" ), LFUNCVAL( ltmr_stopall ) },
   { LSTRKEY( "wdclr" ), LFUNCVAL( ltmr_wdclr) },
+  { LSTRKEY( "find" ), LFUNCVAL( ltmr_find) },
 #if LUA_OPTIMIZE_MEMORY > 0
 #endif   
   {LNILKEY, LNILVAL}

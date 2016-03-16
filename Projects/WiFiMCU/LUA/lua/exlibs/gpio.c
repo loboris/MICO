@@ -57,7 +57,7 @@ static void _gpio_irq_handler( void* arg )
   {
     queue_msg_t msg;
     msg.L = gL;
-    msg.source = GPIO;
+    msg.source = onGPIO;
     //msg.para1;
     msg.para2 = gpio_cb_ref[id];;
     mico_rtos_push_to_queue( &os_queue, &msg,0);

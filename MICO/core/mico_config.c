@@ -65,8 +65,6 @@ const uint32_t mico_nmode_enable = true;
 
 #ifdef DEBUG
 int mico_debug_enabled = 1;
-#else
-int mico_debug_enabled = 0;
 #endif
 
 #ifdef SDIO_1_BIT
