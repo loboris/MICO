@@ -48,13 +48,7 @@ print("\r\n--File system infomation--")
 free,used,total=file.info();
 print("last:  "..free.." bytes")
 print("used:  "..used.." bytes")
-print("totol: "..total.." bytes")
-
---list the files
-print("\r\n-- File list (from table) --")
-for k,v in pairs(file.list()) do 
-	print("name: "..k.."  size(bytes): "..v) 
-end
+print("total: "..total.." bytes")
 
 --print file list
 print("\r\n-- Print file list --")
@@ -97,11 +91,35 @@ dummyFile("myLua1.lua")
 dummyFile("myLua2.lua")
 dummyFile("myLua3.lua")
 
--- move file from one dir to another
-file.rename("/testdir/myFile2", "/temp/myDir3/myFile2")
-
 -- goto root directory
 file.chdir("/")
+
+--list the files using table
+local cdir, filet, fnlen
+print("\r\n-- File list (from table) --")
+cdir, filet = file.list(5)
+print("Files in directory '"..cdir.."'")
+--find max name length, so we can format the output
+fnlen = 5
+for k,v in pairs(filet) do 
+	if string.len(k) > fnlen then
+		fnlen = string.len(k)
+	end
+end
+
+print(string.format("%"..fnlen.."s", "Name:").."  Size:")
+for k,v in pairs(filet) do
+	if v < 0 then
+		-- directory
+		print(string.format("%"..fnlen.."s", k).."  <DIR>")
+	else
+		print(string.format("%"..fnlen.."s", k).."  "..v)
+	end
+end
+
+
+-- move file from one dir to another
+file.rename("/testdir/myFile2", "/temp/myDir3/myFile2")
 
 -- print directory tree
 print("\r\n-- Print files and directories list --")

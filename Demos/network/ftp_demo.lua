@@ -55,10 +55,10 @@ ftp.list(1,0)
 prntitle("Get and print file list (detailes)")
 ftp.list(0,0)
 
-prntitle("Get file list from directory 'net' to table")
-tbllist, n = ftp.list(1,1,"net")
+prntitle("Get file list from directory 'demos/network' to table")
+tbllist, n = ftp.list(1,1,"demos/network")
 if n > 0 then
-	print("'net' directory list:")
+	print("'demos/network' directory list:")
 	for i=1,n,1 do
 		print(tbllist[i])
 	end
@@ -66,8 +66,8 @@ else
 	print("No list received, error: ", n)
 end
 
-prntitle("Change remote directory to 'net' and receive small file")
-stat = ftp.chdir("/net")
+prntitle("Change remote directory to 'demos/net' and receive small file")
+stat = ftp.chdir("demos/network")
 if stat == 0 then
 	stat = ftp.recv("webserver.lua")
 	if stat > 0 then
@@ -127,7 +127,7 @@ else
 end
 
 prntitle("Receive bigger remote file to local file")
-ftp.chdir("/lcd")
+ftp.chdir("demos/lcd")
 
 stat = ftp.recv("wifimcu.img")
 if stat < 0 then
@@ -163,6 +163,7 @@ end
 prntitle("Try to get too BIG file, will be truncated!")
 
 file.remove("bigfile.bin") -- if exists
+
 stat = ftp.recv("bigfile.bin")
 if stat < 0 then
 	print("Error receiving the file: ", stat)

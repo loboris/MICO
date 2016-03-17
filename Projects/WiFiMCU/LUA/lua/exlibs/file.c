@@ -75,8 +75,137 @@ static int *fs_check = NULL;
 #define NAK_TIMEOUT             (1000)
 #define MAX_ERRORS              (45)
 
+// fnmatch defines
+#define	FNM_NOMATCH	1	// Match failed.
 
+#define	FNM_NOESCAPE	0x01	// Disable backslash escaping.
+#define	FNM_PATHNAME	0x02	// Slash must be matched by slash.
+#define	FNM_PERIOD	0x04	// Period must be matched by period.
+#define	FNM_LEADING_DIR	0x08	// Ignore /<tail> after Imatch.
+#define	FNM_CASEFOLD	0x10	// Case insensitive search.
+#define FNM_PREFIX_DIRS	0x20	// Directory prefixes of pattern match too.
 
+#define	EOS	        '\0'
+
+//-----------------------------------------------------------------------
+static const char * rangematch(const char *pattern, char test, int flags)
+{
+  int negate, ok;
+  char c, c2;
+
+  /*
+   * A bracket expression starting with an unquoted circumflex
+   * character produces unspecified results (IEEE 1003.2-1992,
+   * 3.13.2).  This implementation treats it like '!', for
+   * consistency with the regular expression syntax.
+   * J.T. Conklin (conklin@ngai.kaleida.com)
+   */
+  if ( (negate = (*pattern == '!' || *pattern == '^')) ) ++pattern;
+
+  if (flags & FNM_CASEFOLD) test = tolower((unsigned char)test);
+
+  for (ok = 0; (c = *pattern++) != ']';) {
+    if (c == '\\' && !(flags & FNM_NOESCAPE)) c = *pattern++;
+    if (c == EOS) return (NULL);
+
+    if (flags & FNM_CASEFOLD) c = tolower((unsigned char)c);
+
+    if (*pattern == '-' && (c2 = *(pattern+1)) != EOS && c2 != ']') {
+      pattern += 2;
+      if (c2 == '\\' && !(flags & FNM_NOESCAPE)) c2 = *pattern++;
+      if (c2 == EOS) return (NULL);
+
+      if (flags & FNM_CASEFOLD) c2 = tolower((unsigned char)c2);
+
+      if ((unsigned char)c <= (unsigned char)test &&
+          (unsigned char)test <= (unsigned char)c2) ok = 1;
+    }
+    else if (c == test) ok = 1;
+  }
+  return (ok == negate ? NULL : pattern);
+}
+
+//-------------------------------------------------------------
+int fnmatch(const char *pattern, const char *string, int flags)
+{
+  const char *stringstart;
+  char c, test;
+
+  for (stringstart = string;;)
+    switch (c = *pattern++) {
+    case EOS:
+      if ((flags & FNM_LEADING_DIR) && *string == '/') return (0);
+      return (*string == EOS ? 0 : FNM_NOMATCH);
+    case '?':
+      if (*string == EOS) return (FNM_NOMATCH);
+      if (*string == '/' && (flags & FNM_PATHNAME)) return (FNM_NOMATCH);
+      if (*string == '.' && (flags & FNM_PERIOD) &&
+          (string == stringstart ||
+          ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
+              return (FNM_NOMATCH);
+      ++string;
+      break;
+    case '*':
+      c = *pattern;
+      // Collapse multiple stars.
+      while (c == '*') c = *++pattern;
+
+      if (*string == '.' && (flags & FNM_PERIOD) &&
+          (string == stringstart ||
+          ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
+              return (FNM_NOMATCH);
+
+      // Optimize for pattern with * at end or before /.
+      if (c == EOS)
+        if (flags & FNM_PATHNAME)
+          return ((flags & FNM_LEADING_DIR) ||
+                    strchr(string, '/') == NULL ?
+                    0 : FNM_NOMATCH);
+        else return (0);
+      else if (c == '/' && flags & FNM_PATHNAME) {
+        if ((string = strchr(string, '/')) == NULL) return (FNM_NOMATCH);
+        break;
+      }
+
+      // General case, use recursion.
+      while ((test = *string) != EOS) {
+        if (!fnmatch(pattern, string, flags & ~FNM_PERIOD)) return (0);
+        if (test == '/' && flags & FNM_PATHNAME) break;
+        ++string;
+      }
+      return (FNM_NOMATCH);
+    case '[':
+      if (*string == EOS) return (FNM_NOMATCH);
+      if (*string == '/' && flags & FNM_PATHNAME) return (FNM_NOMATCH);
+      if ((pattern = rangematch(pattern, *string, flags)) == NULL) return (FNM_NOMATCH);
+      ++string;
+      break;
+    case '\\':
+      if (!(flags & FNM_NOESCAPE)) {
+        if ((c = *pattern++) == EOS) {
+          c = '\\';
+          --pattern;
+        }
+      }
+      // FALLTHROUGH
+    default:
+      if (c == *string)
+              ;
+      else if ((flags & FNM_CASEFOLD) &&
+               (tolower((unsigned char)c) ==
+                tolower((unsigned char)*string)))
+              ;
+      else if ((flags & FNM_PREFIX_DIRS) && *string == EOS &&
+           ((c == '/' && string != stringstart) ||
+           (string == stringstart+1 && *stringstart == '/')))
+              return (0);
+      else
+              return (FNM_NOMATCH);
+      string++;
+      break;
+    }
+  // NOTREACHED
+}
 
 //------------------------------------------------------------
 static s32_t lspiffs_read(u32_t addr, u32_t size, u8_t *dst) {
@@ -304,7 +433,6 @@ static uint8_t isDir(char* name, uint8_t trim)
   else return 0;
 }
 
-/*
 //------------------------------------------------
 static void getFileName(char* name, char* outname)
 {
@@ -317,8 +445,8 @@ static void getFileName(char* name, char* outname)
     len--;
   }
   strcpy(outname, name+len);
+  if (outname[strlen(outname)-1] == '/') outname[strlen(outname)-1] = '\0';
 }
-*/
 
 // appends '/' to 'name'
 //---------------------------------
@@ -1232,7 +1360,7 @@ exit:
   else if (fsize == -3) printf("\r\nAborted.\r\n");
   else if (fsize == -4) printf("\r\nFile size too big, aborted.\r\n");
   else if (fsize == -5) printf("\r\nWrong file name or file exists!\r\n");
-  else printf("\r\nReceive failed!");
+  else printf("\r\nReceive failed!\r\n");
   
   if (fsize > 0) listDir(curr_dir, 0, 0);
 
@@ -1266,7 +1394,7 @@ static int file_send( lua_State* L )
     const char * newfname = luaL_checklstring( L, 2, &len );
     res = checkFileName(len, newfname, newfullname, 0, 0);
     if ((res > 0) && (!fileInDir(newfullname))) newname = 1;
-    else printf("Wrong 'send as' name, sending as '%s'", fullname);
+    else printf("Wrong 'send as' name, sending as '%s'\r\n", fullname);
   }
 
   // Open the file
@@ -1959,14 +2087,59 @@ static int file_state( lua_State* L )
   return 2;
 }
 
-//======================================
-static int file_fullname( lua_State* L )
+// file.find("name", ["all"])
+//==================================
+static int file_find( lua_State* L )
 {
-  size_t len;
-  const char *fname = luaL_checklstring( L, 1, &len );
-  char fullname[SPIFFS_OBJ_NAME_LEN] = {0};
-  if (checkFileName(len, fname, fullname, 1, 0) == 0) lua_pushnil(L);
-  else lua_pushstring(L, fullname);
+  uint8_t err = 1;
+  uint8_t allfiles = 0;
+
+  if (SPIFFS_mounted(&fs) == true) {
+    size_t len;
+    const char *fname = luaL_checklstring( L, 1, &len );
+    if ((len > 0) && (fname != NULL)) {
+      char filename[SPIFFS_OBJ_NAME_LEN] = {0};
+      if (lua_gettop(L) > 1) {
+        if (lua_isstring(L, 2)) {
+          const char *sall = luaL_checklstring( L, 2, &len );
+          if (strcmp(sall, "all") == 0) {
+            allfiles = 1;
+            lua_newtable( L );
+          }
+        }
+      }
+      err = 0;
+      
+      spiffs_DIR d;
+      struct spiffs_dirent e;
+      struct spiffs_dirent *pe = &e;
+      int n = 0;
+
+      SPIFFS_opendir(&fs, "/", &d);
+      // find the file matching name
+      while ((pe = SPIFFS_readdir(&d, pe))) {
+        getFileName((char*)pe->name, filename);
+        if (fnmatch(fname, filename, (FNM_PATHNAME || FNM_PERIOD)) == 0) {
+          //printf("%s\r\n", (char*)pe->name);
+          lua_pushstring(L, (char*)pe->name);
+          if (allfiles) {
+            lua_rawseti(L, -2, ++n);
+          }
+          else {
+            break;
+          }
+        }
+      }
+      if (allfiles) lua_pushinteger(L, n);
+      SPIFFS_closedir(&d);
+    }
+  }
+  
+  if (err) {
+    lua_pushnil(L);
+    return 1;
+  }
+  else if (allfiles) return 2;
   return 1;
 }
 
@@ -2144,7 +2317,7 @@ const LUA_REG_TYPE file_map[] =
   { LSTRKEY( "mkdir" ), LFUNCVAL( file_mkdir ) },
   { LSTRKEY( "chdir" ), LFUNCVAL( file_chdir ) },
   { LSTRKEY( "rmdir" ), LFUNCVAL( file_rmdir ) },
-  { LSTRKEY( "fullname" ), LFUNCVAL( file_fullname ) },
+  { LSTRKEY( "find" ), LFUNCVAL( file_find ) },
 #ifdef LOBO_SPIFFS_DBG
   { LSTRKEY( "debug" ), LFUNCVAL( file_debug ) },
 #endif

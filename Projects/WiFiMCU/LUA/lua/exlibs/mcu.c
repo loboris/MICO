@@ -106,24 +106,24 @@ static int get_sparams( lua_State* L )
   lua_system_param_t lua_system_param;
 
   if (getLua_systemParams(&lua_system_param) == 1) {
-    printf("   use_wwdg = %d", lua_system_param.use_wwdg);
-    printf("    wdg_tmo = %d", lua_system_param.wdg_tmo);
-    printf(" stack_size = %d", lua_system_param.stack_size);
-    printf(" inbuf_size = %d", lua_system_param.inbuf_size);
-    printf("  init_file = \"%s\"", lua_system_param.init_file);
-    printf("  wifi_ssid = \"%s\"", lua_system_param.wifi_ssid);
-    printf("   wifi_key = \"%s\"", lua_system_param.wifi_key);
-    printf(" wifi_start = %d", lua_system_param.wifi_start);
-    printf("         tz = %d", lua_system_param.tz);
-    printf("  baud_rate = %d", lua_system_param.baud_rate);
+    printf("   use_wwdg = %d\r\n", lua_system_param.use_wwdg);
+    printf("    wdg_tmo = %d\r\n", lua_system_param.wdg_tmo);
+    printf(" stack_size = %d\r\n", lua_system_param.stack_size);
+    printf(" inbuf_size = %d\r\n", lua_system_param.inbuf_size);
+    printf("  init_file = \"%s\"\r\n", lua_system_param.init_file);
+    printf("  wifi_ssid = \"%s\"\r\n", lua_system_param.wifi_ssid);
+    printf("   wifi_key = \"%s\"\r\n", lua_system_param.wifi_key);
+    printf(" wifi_start = %d\r\n", lua_system_param.wifi_start);
+    printf("         tz = %d\r\n", lua_system_param.tz);
+    printf("  baud_rate = %d\r\n", lua_system_param.baud_rate);
     if (lua_system_param.parity == NO_PARITY)
-      printf("     parity = 'n'");
+      printf("     parity = 'n'\r\n");
     else if (lua_system_param.parity == ODD_PARITY)
-      printf("     parity = 'o'");
+      printf("     parity = 'o'\r\n");
     else if (lua_system_param.parity == EVEN_PARITY)
-      printf("     parity = 'e'");
+      printf("     parity = 'e'\r\n");
   }
-  else printf("Error or BAD crc");
+  else printf("Error or BAD crc\r\n");
   
   return 0;
 }
