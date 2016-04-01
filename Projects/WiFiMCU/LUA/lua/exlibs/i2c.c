@@ -415,8 +415,9 @@ static int i2c_read( lua_State* L )
   }
   
   if (size > 512) size = 512;
-  
+
   uint8_t b[512];
+  memset(b, 0xFF, 512);
   int i=0;
   uint8_t data;
 
@@ -484,11 +485,9 @@ static int i2c_read( lua_State* L )
   else {
     lua_pushinteger( L, size);
     lua_newtable(L);
-    if (id == 0) {
-      for( i = 0; i < size; i ++ ) {
-        lua_pushinteger( L, b[i] );
-        lua_rawseti(L,-2,i + 1);
-      }
+    for( i = 0; i < size; i ++ ) {
+      lua_pushinteger( L, b[i] );
+      lua_rawseti(L, -2, i + 1);
     }
   }
   
